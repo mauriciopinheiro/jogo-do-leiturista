@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>TESTE V3 — Encerramento Narrativo SEMAE (O Arco do Cão)</title>
+  <title>TESTE V4 — Encerramento Narrativo SEMAE (Corrigido & Perfeito)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -73,9 +73,9 @@
 
     .tap-hint {
       position: absolute; top: calc(14px + var(--safe-top)); right: 14px; z-index: 5;
-      padding: 6px 12px; border-radius: 999px; background: rgba(12, 50, 111, 0.82);
-      color: #fff; font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.4);
-      pointer-events: none; opacity: 0.85;
+      padding: 6px 12px; border-radius: 999px; background: rgba(12, 50, 111, 0.85);
+      color: #fff; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.4);
+      pointer-events: none; opacity: 0.9;
     }
     .tap-hint.hidden { display: none; }
   </style>
@@ -85,7 +85,7 @@
   <section class="jogo-wrap">
     <canvas id="game" width="540" height="960" aria-label="Animação de encerramento do jogo"></canvas>
     
-    <div class="tap-hint" id="tapHint">👆 Toque para avançar</div>
+    <div class="tap-hint hidden" id="tapHint">👆 Toque na tela para avançar o ato</div>
 
     <div class="overlay" id="overlay">
       <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -119,7 +119,6 @@
   const tapHint = document.getElementById('tapHint');
 
   let W = 540, H = 960, groundY = Math.round(H * 0.79);
-  let isLandscape = false;
 
   // SINTETIZADOR WEBAUDIO PROCEDURAL
   let audioCtx = null;
@@ -153,23 +152,23 @@
     notes.forEach((n, i) => setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80));
   }
 
-  // MÁQUINA DE ESTADOS DA CUTSCENE (5 CENAS ENQUADRADAS)
+  // MÁQUINA DE ESTADOS DA CUTSCENE (5 CENAS ENQUADRADAS CORRETAMENTE)
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 2200 },    // 0s - 2.2s: Montagem 5/5 Fases
-    { id: 1, name: 'conclusion', duration: 3500 }, // 2.2s - 5.7s: Plano 1 (SEMAE + Kombi)
-    { id: 2, name: 'reencounter', duration: 3500 },// 5.7s - 9.2s: Plano 2 (Cão se aproxima e senta)
-    { id: 3, name: 'friendship', duration: 4000 }, // 9.2s - 13.2s: Plano 3 (Agacha, ração, carinho e coração)
-    { id: 4, name: 'epilogue', duration: 4000 }    // 13.2s - 17.2s: Plano 4 (Caminhada Parallax Pôr do Sol)
+    { id: 0, name: 'montage', duration: 2400 },    // 0s - 2.4s: Montagem 5/5 Fases
+    { id: 1, name: 'conclusion', duration: 3800 }, // 2.4s - 6.2s: Plano 1 (Chegada ao SEMAE)
+    { id: 2, name: 'reencounter', duration: 3800 },// 6.2s - 10.0s: Plano 2 (Cão entra da esquerda e senta em W*0.35)
+    { id: 3, name: 'friendship', duration: 4200 }, // 10.0s - 14.2s: Plano 3 (Leiturista agacha em W*0.46, ração, carinho e coração)
+    { id: 4, name: 'epilogue', duration: 4200 }    // 14.2s - 18.4s: Plano 4 (Caminhada Parallax Lado a Lado no Pôr do Sol)
   ];
 
   const state = {
     running: false, sceneIdx: 0, sceneTimer: 0, globalTime: 0,
-    bannerText: '', bannerSub: '', bannerLife: 0,
+    bannerText: '', bannerSub: '', bannerAlpha: 1,
     hasWatchedFirstTime: false
   };
 
-  const player = { x: -80, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'walking' };
-  const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, sitting: false, happy: false };
+  const player = { x: -80, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'walking', facing: 1 };
+  const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, sitting: false, happy: false, facing: 1 };
   let bowlPos = null;
   let heartAlpha = 0;
   let bgScroll = 0;
@@ -177,14 +176,12 @@
   function resizeCanvas() {
     const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return;
     H = 960; W = Math.max(360, Math.round(H * (r.width / r.height))); groundY = Math.round(H * 0.79);
-    isLandscape = (W / H) > 0.85;
     canvas.width = W; canvas.height = H;
-    
-    if (state.running) repositionActorsForCurrentScene();
+    player.y = groundY - player.h; dog.y = groundY - dog.h;
   }
 
-  function showBanner(text, sub = '', life = 90) {
-    state.bannerText = text; state.bannerSub = sub; state.bannerLife = life;
+  function showBanner(text, sub = '') {
+    state.bannerText = text; state.bannerSub = sub; state.bannerAlpha = 1;
   }
 
   function advanceScene() {
@@ -201,40 +198,37 @@
 
   function initCurrentScene() {
     state.sceneTimer = 0;
-    state.bannerLife = 0;
     
     if (state.sceneIdx === 0) {
-      // Montagem das Fases
+      // Montagem das 5 Fases
       playFanfare();
     } else if (state.sceneIdx === 1) {
-      // Plano 1 — Conclusão no SEMAE
-      player.x = -80; player.y = groundY - player.h; player.state = 'walking'; player.legPhase = 0;
+      // Plano 1 — Conclusão no SEMAE (Leiturista entra caminhando até a Kombi/Prédio)
+      player.x = -80; player.state = 'walking'; player.facing = 1; player.legPhase = 0;
       dog.x = -200; dog.sitting = false; dog.happy = false;
-      showBanner('535 LEITURAS CONCLUÍDAS', 'Fim do turno nas 5 rotas SEMAE desta jornada', 90);
+      showBanner('535 LEITURAS CONCLUÍDAS', 'Fim do turno nas 5 rotas SEMAE desta jornada');
       playCalmSound();
     } else if (state.sceneIdx === 2) {
-      // Plano 2 — O Reencontro sem ameaça
-      player.x = W * 0.32; player.state = 'idle'; player.legPhase = 0;
-      dog.x = -80; dog.sitting = false; dog.happy = false; dog.legPhase = 0;
-      showBanner('Depois de tantas ruas, ele finalmente se acalmou.', 'O cão da rota já não parece ameaçador', 90);
+      // Plano 2 — O Reencontro sem Ameaça
+      // Leiturista parado na direita em W*0.55 virado para a esquerda (facing -1)
+      player.x = W * 0.55; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
+      // Cão entra da esquerda (-60) e caminha até W*0.35, depois senta virado para a direita (facing 1)
+      dog.x = -60; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
+      showBanner('Depois de tantas ruas, ele finalmente se acalmou.', 'O cão da rota já não parece ameaçador');
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       // Plano 3 — O Gesto de Carinho & Ração
-      player.x = W * 0.32; player.state = 'idle';
-      dog.x = W * 0.52; dog.sitting = true; dog.happy = false;
+      player.x = W * 0.55; player.state = 'walking'; player.facing = -1;
+      dog.x = W * 0.35; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO AMIGO DA ROTA', 'Gesto de carinho e acolhimento', 90);
+      showBanner('UM NOVO AMIGO DA ROTA', 'Gesto de carinho e acolhimento');
     } else if (state.sceneIdx === 4) {
-      // Plano 4 — Epílogo Parallax no Pôr do Sol
-      player.x = W * 0.42; player.state = 'walkingWithDog'; player.legPhase = 0;
-      dog.x = W * 0.52; dog.sitting = false; dog.happy = true; dog.legPhase = 0;
-      showBanner('AMIGOS DE JORNADA PARA SEMPRE', 'Reconhecimento pelo trabalho no SEMAE Piracicaba', 100);
+      // Plano 4 — Epílogo Parallax no Pôr do Sol (Ambos virados para a direita walking side-by-side)
+      player.x = W * 0.40; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
+      dog.x = W * 0.48; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
+      showBanner('AMIGOS DE JORNADA PARA SEMPRE', 'Reconhecimento pelo trabalho no SEMAE Piracicaba');
       playFanfare();
     }
-  }
-
-  function repositionActorsForCurrentScene() {
-    player.y = groundY - player.h; dog.y = groundY - dog.h;
   }
 
   function startCutscene() {
@@ -255,15 +249,15 @@
     tapHint.classList.add('hidden');
     
     modalTitle.textContent = '🏆 JOGO CONCLUÍDO COM SUCESSO!';
-    modalText.innerHTML = `🎉 <b>PARABÉNS, LEITURISTA DO SEMAE!</b><br>Você percorreu com dedicação as 5 rotas desta jornada, concluiu os 535 hidrômetros e ganhou a amizade do leal companheiro de percurso!`;
+    modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você percorreu com dedicação as 5 rotas desta jornada, concluiu os 535 hidrômetros e ganhou a amizade do leal companheiro de percurso!`;
     
     statsBox.style.display = 'grid';
     unlockBox.style.display = 'block';
     
-    startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶';
+    startBtn.textContent = '▶ ASSISTIR NOVAMENTE 🔁';
     replayBtn.style.display = 'block';
     
-    render(); // Renderiza o frame estático final 1 vez sem consumir bateria!
+    render(); // Renderiza o quadro estático final sem consumir bateria!
   }
 
   function update(dt) {
@@ -271,7 +265,6 @@
     const step = Math.min(2.5, dt / 16.6667 || 1);
     state.globalTime += step;
     state.sceneTimer += dt;
-    if (state.bannerLife > 0) state.bannerLife -= step;
 
     const currentSceneConfig = CUTSCENE_SCENES[state.sceneIdx];
     
@@ -280,34 +273,39 @@
       return;
     }
 
-    // LÓGICA ESPECÍFICA DE CADA CENA
+    // LÓGICA DE MOVIMENTO E ANIMAÇÃO POR CENA
     if (state.sceneIdx === 1) {
-      // Plano 1: Leiturista chega ao SEMAE
+      // Plano 1: Leiturista avança da esquerda até W*0.35
       if (player.x < W * 0.35) { player.x += 2.0 * step; player.legPhase += 0.22 * step; }
       else { player.state = 'idle'; player.legPhase = 0; }
     } else if (state.sceneIdx === 2) {
-      // Plano 2: Cão entra devagar, para em W*0.48 e senta
-      if (dog.x < W * 0.48) { dog.x += 1.6 * step; dog.legPhase += 0.18 * step; }
+      // Plano 2: Cão avança da esquerda até W*0.35 e senta de frente para o Leiturista (que está em W*0.55)
+      if (dog.x < W * 0.35) { dog.x += 1.6 * step; dog.legPhase += 0.18 * step; }
       else { dog.sitting = true; dog.legPhase = 0; }
     } else if (state.sceneIdx === 3) {
-      // Plano 3: Leiturista avança 30px, agacha, coloca pote, cão aproxima, carinho + coração!
+      // Plano 3: Interação real sem sobreposição!
       const t = state.sceneTimer;
-      if (t < 1000) {
-        if (player.x < W * 0.38) { player.x += 1.2 * step; player.legPhase += 0.18 * step; }
-      } else if (t < 2000) {
+      if (t < 1100) {
+        // Leiturista avança da direita (W*0.55) em direção ao Cão (W*0.35), parando em W*0.46
+        if (player.x > W * 0.46) { player.x -= 1.0 * step; player.legPhase += 0.18 * step; }
+        else { player.state = 'idle'; }
+      } else if (t < 2200) {
+        // Leiturista se agacha em W*0.46 e coloca o potinho de ração em W*0.40
         player.state = 'kneeling';
-        bowlPos = { x: player.x + 35, y: groundY - 14 };
-      } else if (t < 3000) {
-        if (dog.x > W * 0.46) { dog.x -= 0.8 * step; dog.sitting = false; dog.legPhase += 0.15 * step; }
+        bowlPos = { x: W * 0.40, y: groundY - 14 };
+      } else if (t < 3300) {
+        // Cão se aproxima um tiquinho do pote (W*0.37), Leiturista faz carinho (petting)
+        if (dog.x < W * 0.37) { dog.x += 0.5 * step; dog.sitting = false; dog.legPhase += 0.12 * step; }
         else { dog.sitting = true; }
         player.state = 'petting';
         dog.happy = true;
       } else {
+        // Coração flutua suavemente após o carinho!
         if (heartAlpha === 0) playPettingChord();
         heartAlpha = Math.min(1, heartAlpha + 0.05 * step);
       }
     } else if (state.sceneIdx === 4) {
-      // Plano 4: Caminhada Parallax Juntos
+      // Plano 4: Caminhada em Parallax Lado a Lado
       bgScroll += 1.8 * step;
       player.legPhase += 0.22 * step;
       dog.legPhase += 0.25 * step;
@@ -315,14 +313,12 @@
   }
 
   // DESENHO RESPONSIVO DE TEXTO QUEBRADO NO CANVAS (drawWrappedText)
-  function drawWrappedText(text, sub, y = H * 0.26, maxW = W * 0.86) {
-    if (!text || state.bannerLife <= 0) return;
+  function drawWrappedText(text, sub, y = H * 0.24, maxW = W * 0.86) {
+    if (!text) return;
     ctx.save();
-    const alpha = Math.min(1, state.bannerLife / 20);
-    ctx.globalAlpha = alpha;
     ctx.textAlign = 'center';
     
-    let fontSize = Math.min(23, Math.max(16, Math.floor(W * 0.05)));
+    let fontSize = Math.min(22, Math.max(16, Math.floor(W * 0.048)));
     ctx.font = `900 ${fontSize}px system-ui, sans-serif`;
     
     const words = text.split(' ');
@@ -347,7 +343,7 @@
     }
 
     if (sub) {
-      let subSize = Math.max(13, fontSize - 6);
+      let subSize = Math.max(13, fontSize - 5);
       ctx.font = `800 ${subSize}px system-ui, sans-serif`;
       ctx.strokeStyle = 'rgba(12, 50, 111, 0.92)'; ctx.lineWidth = 5; ctx.fillStyle = '#ffffff';
       ctx.strokeText(sub, W / 2, lineY + 4);
@@ -368,15 +364,15 @@
     
     let y = H * 0.32;
     for (let i = 0; i < phases.length; i++) {
-      if (elapsed > i * 350) {
-        ctx.font = '900 18px system-ui'; ctx.fillStyle = '#ffffff';
+      if (elapsed > i * 380) {
+        ctx.font = '900 17px system-ui'; ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'left'; ctx.fillText(`FASE ${i + 1} - ${phases[i]}`, W * 0.18, y);
         ctx.fillStyle = '#FFCD07'; ctx.fillText('✓', W * 0.80, y);
       }
       y += 44;
     }
 
-    if (elapsed > 1800) {
+    if (elapsed > 2000) {
       ctx.font = '900 22px system-ui'; ctx.fillStyle = '#FFCD07'; ctx.textAlign = 'center';
       ctx.fillText('5/5 ROTAS CONCLUÍDAS! 🏆', W / 2, H * 0.76);
     }
@@ -386,7 +382,7 @@
     const isDusk = (state.sceneIdx === 4);
     const g = ctx.createLinearGradient(0, 0, 0, H);
     if (isDusk) {
-      g.addColorStop(0, '#c2410c'); g.addColorStop(1, '#431407');
+      g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#7c2d12');
     } else {
       g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#fde047');
     }
@@ -441,6 +437,7 @@
     ctx.save();
     const x = dog.x, y = dog.y + (dog.sitting ? 0 : Math.sin(dog.legPhase * 2) * 2);
     ctx.translate(x, y);
+    if (dog.facing === -1) ctx.scale(-1, 1);
 
     // Sombra dinâmica do cão
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; ctx.beginPath(); ctx.ellipse(36, 46, 30, 6, 0, 0, Math.PI * 2); ctx.fill();
@@ -473,7 +470,7 @@
     ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + tailWag, -4, -6); ctx.stroke();
 
-    // Coração com surgimento suave (delay emocional)
+    // Coração com surgimento suave
     if (heartAlpha > 0) {
       ctx.globalAlpha = heartAlpha;
       ctx.fillStyle = '#FF4D6D'; ctx.font = '900 20px system-ui'; ctx.fillText('❤️', 38, -12);
@@ -488,11 +485,14 @@
     const isKneeling = player.state === 'kneeling' || player.state === 'petting';
     const y = player.y + (isKneeling ? 18 : Math.sin(player.legPhase * 2) * 2.2);
 
+    ctx.translate(x, y);
+    if (player.facing === -1) ctx.scale(-1, 1);
+
     // Sombra dinâmica sob os pés do Leiturista
     ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
-    ctx.beginPath(); ctx.ellipse(x + 23, groundY + 4, isKneeling ? 28 : 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(23, groundY - y + 4, isKneeling ? 28 : 22, 7, 0, 0, Math.PI * 2); ctx.fill();
 
-    const hipL = { x: x + 18, y: y + 55 }, hipR = { x: x + 28, y: y + 55 };
+    const hipL = { x: 18, y: 55 }, hipR = { x: 28, y: 55 };
     
     function calcLeg(hip, phaseOffset) {
       if (isKneeling) {
@@ -522,23 +522,23 @@
     ctx.moveTo(legL.foot.x - 2, legL.foot.y); ctx.lineTo(legL.foot.x + 7, legL.foot.y + 1);
     ctx.moveTo(legR.foot.x - 2, legR.foot.y); ctx.lineTo(legR.foot.x + 7, legR.foot.y + 1); ctx.stroke();
 
-    rounded(x + 6, y + 20, 37, 42, 9, '#1351B4');
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(x + 8, y + 38, 33, 5);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', x + 12, y + 32);
+    rounded(6, 20, 37, 42, 9, '#1351B4');
+    ctx.fillStyle = '#FFCD07'; ctx.fillRect(8, 38, 33, 5);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', 12, 32);
 
     // Braço & Acessório
     if (player.state === 'petting') {
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x + 35, y + 28); ctx.lineTo(x + 58, y + 32); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(35, 28); ctx.lineTo(58, 32); ctx.stroke();
     } else {
-      rounded(x + 42, y + 32, 22, 16, 3, '#fef08a');
-      ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 42, y + 32, 22, 16);
-      ctx.fillStyle = '#1351B4'; ctx.font = '900 10px system-ui'; ctx.fillText('📋', x + 46, y + 44);
+      rounded(42, 32, 22, 16, 3, '#fef08a');
+      ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; ctx.strokeRect(42, 32, 22, 16);
+      ctx.fillStyle = '#1351B4'; ctx.font = '900 10px system-ui'; ctx.fillText('📋', 46, 44);
     }
 
-    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
-    ctx.fillRect(x + 20, y + 4, 24, 5);
+    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(24, 10, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(22, 6, 15, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(20, 4, 24, 5);
 
     ctx.restore();
   }
@@ -585,11 +585,7 @@
   });
 
   startBtn.addEventListener('click', () => {
-    if (state.hasWatchedFirstTime) {
-      alert('Iniciando o modo Turno Infinito!');
-    } else {
-      startCutscene();
-    }
+    startCutscene();
   });
 
   replayBtn.addEventListener('click', () => {
