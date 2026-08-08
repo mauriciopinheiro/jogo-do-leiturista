@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>Encerramento Narrativo SEMAE — Protótipo V5 (Cão Visível & Corrigido)</title>
+  <title>Encerramento Narrativo SEMAE — Desktop & Mobile Responsive</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -25,11 +25,24 @@
       color: #17324d; user-select: none;
     }
     body { position: fixed; inset: 0; }
+    
     .app, .jogo-wrap {
       position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
-      overflow: hidden; background: #092040;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; background: radial-gradient(circle at center, #0c326f 0%, #081c38 100%);
     }
-    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    
+    /* DESKTOP E MOBILE RESPONSIVO: SEM DISTORÇÃO E SEM ESTICAR O CANVAS */
+    canvas {
+      display: block;
+      height: 100%;
+      max-height: 100dvh;
+      max-width: 100vw;
+      aspect-ratio: 9 / 16;
+      object-fit: contain;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+      touch-action: none;
+    }
     
     .overlay {
       position: absolute; inset: 0; z-index: 10; display: grid; place-items: center;
@@ -127,7 +140,7 @@
   const startBtn = document.getElementById('startBtn'), replayBtn = document.getElementById('replayBtn'), statsBox = document.getElementById('statsBox'), unlockBox = document.getElementById('unlockBox');
   const tapHint = document.getElementById('tapHint'), liveAnnouncer = document.getElementById('liveAnnouncer');
 
-  let W = 540, H = 960, groundY = Math.round(H * 0.79);
+  const W = 540, H = 960, groundY = Math.round(H * 0.79);
   let audioCtx = null;
   let audioTimeouts = [];
 
@@ -190,12 +203,7 @@
   let lastTs = 0;
   let rafId = 0;
 
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
   function resizeCanvas() {
-    const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return;
-    const calcW = Math.round(960 * (r.width / r.height));
-    W = clamp(calcW, 360, 720); H = 960; groundY = Math.round(H * 0.79);
     canvas.width = W; canvas.height = H;
     player.y = groundY - player.h; dog.y = groundY - dog.h;
   }
@@ -463,7 +471,7 @@
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
+      ctx.fillStyle = '#1351B4'; ctx.fillRect(32, 22, 8, 12);
 
       const leg1 = Math.sin(dog.legPhase) * 9;
       ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
