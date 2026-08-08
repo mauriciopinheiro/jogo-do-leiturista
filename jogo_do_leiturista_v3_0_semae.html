@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#1351B4" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Jogo do Leiturista 3.0 — SEMAE Piracicaba</title>
+  <style>
+    :root {
+      --semae-azul: #1351B4;
+      --semae-azul-escuro: #0C326F;
+      --semae-verde: #168821;
+      --semae-destaque: #FFCD07;
+      --semae-fundo: #092040;
+      --petroleo: #08202F;
+      --agua: #17A8CF;
+      --agua-clara: #5FDCF2;
+      --alerta: #FF9F1C;
+      --erro: #E04A5F;
+      --texto: #17324d;
+      --painel: rgba(255, 255, 255, 0.96);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      background: var(--semae-fundo); font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--texto); overscroll-behavior: none; user-select: none; -webkit-user-select: none;
+    }
+    body { position: fixed; inset: 0; }
+    .app, .jogo-wrap {
+      position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+      overflow: hidden; background: linear-gradient(180deg, #6bbdf4 0%, #bce3fb 100%);
+    }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: pointer; }
+    
+    /* HUD SUPERIOR DE ROTAS */
+    .hud {
+      position: absolute; z-index: 4;
+      top: calc(8px + var(--safe-top)); left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right));
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; pointer-events: none;
+    }
+    .card {
+      min-width: 0; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px; background: rgba(12, 50, 111, 0.90); color: #fff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      font-weight: 800;
+    }
+    .card:nth-child(3) { grid-column: 1 / -1; padding-block: 6px; }
+    .card small {
+      display: block; overflow: hidden; font-size: clamp(0.55rem, 2.4vw, 0.68rem);
+      line-height: 1.1; text-overflow: ellipsis; text-transform: uppercase;
+      letter-spacing: 0.05em; white-space: nowrap; color: #a5d8ff; opacity: 0.9;
+    }
+    .card strong {
+      display: block; overflow: hidden; margin-top: 1px;
+      font-family: Consolas, "SF Mono", monospace; font-size: clamp(0.80rem, 3.8vw, 1.05rem);
+      line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; color: #ffffff;
+    }
+    .badge-fase {
+      display: inline-block; padding: 2px 6px; border-radius: 6px;
+      background: var(--semae-destaque); color: #0c326f; font-weight: 900; font-size: 0.72rem; margin-right: 4px;
+    }
+    .perigo {
+      height: 7px; margin-top: 5px; overflow: hidden; border-radius: 999px;
+      background: #08202f; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .perigo > span {
+      display: block; width: 80%; height: 100%; background: var(--semae-verde);
+      transition: width 0.12s linear, background 0.15s ease;
+    }
+    
+    .touch-hint {
+      position: absolute; left: 50%; bottom: calc(20px + var(--safe-bottom)); z-index: 5;
+      transform: translateX(-50%); padding: 8px 16px; border: 1.5px solid rgba(255, 255, 255, 0.9);
+      border-radius: 999px; background: rgba(19, 81, 180, 0.88); color: #fff;
+      font-size: clamp(0.72rem, 3.2vw, 0.88rem); font-weight: 900; letter-spacing: 0.03em;
+      white-space: nowrap; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis;
+      pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    }
+    .touch-hint.hidden { opacity: 0; transform: translate(-50%, 8px); }
+
+    .quick-controls {
+      position: absolute; right: calc(8px + var(--safe-right)); top: calc(140px + var(--safe-top));
+      z-index: 7; display: grid; gap: 8px;
+    }
+    .mini-btn {
+      min-width: 48px; min-height: 42px; padding: 6px 8px; border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px; background: rgba(12, 50, 111, 0.90); color: #fff; font-weight: 900;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); touch-action: manipulation;
+    }
+    .mini-btn[disabled] { opacity: 0.45; cursor: default; }
+
+    /* OVERLAY E MODAL */
+    .overlay {
+      position: absolute; inset: 0; z-index: 10; display: grid; place-items: center;
+      padding: calc(16px + var(--safe-top)) calc(14px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(14px + var(--safe-left));
+      background: linear-gradient(rgba(9, 32, 64, 0.65), rgba(9, 32, 64, 0.85));
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .overlay[hidden] { display: none; }
+    .modal {
+      width: min(100%, 450px); max-height: 88dvh; overflow: auto; padding: clamp(16px, 4.5vw, 24px);
+      border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 24px; background: var(--painel);
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .modal h2 { margin: 0 0 6px; color: var(--semae-azul-escuro); font-size: clamp(1.35rem, 6.5vw, 1.85rem); line-height: 1.1; }
+    .modal p { margin: 6px 0; font-size: clamp(0.84rem, 3.5vw, 0.96rem); line-height: 1.35; color: #233e5c; }
+    
+    .fases-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 12px 0;
+    }
+    .fase-card {
+      padding: 8px 4px; border: 1.5px solid #b8d4f5; border-radius: 10px; background: #eaf3ff;
+      cursor: pointer; text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--semae-azul-escuro);
+      transition: all 0.15s ease;
+    }
+    .fase-card.ativa { border-color: var(--semae-azul); background: var(--semae-azul); color: #fff; }
+    .fase-card.bloqueada { opacity: 0.55; cursor: not-allowed; background: #e0e6ed; border-color: #cbd5e1; }
+    
+    .mission {
+      margin: 10px 0 !important; padding: 10px 12px; border-radius: 12px;
+      background: #fff8d6; border: 1px solid #ffe066; color: #5c4300; font-weight: 850; text-align: left;
+      font-size: 0.88rem;
+    }
+    .controles-texto { display: grid; gap: 6px; margin: 10px 0; }
+    .controle-item { padding: 8px 10px; border-radius: 10px; background: #f0f6ff; font-size: clamp(0.76rem, 3.2vw, 0.86rem); line-height: 1.3; text-align: left; border: 1px solid #d5e5f7; }
+    
+    .botao {
+      width: 100%; min-height: 54px; border: 0; border-radius: 16px; padding: 12px 18px;
+      background: var(--semae-destaque); color: #3b2b00; font-size: 1.05rem; font-weight: 1000;
+      cursor: pointer; box-shadow: 0 5px 0 #d9a800; touch-action: manipulation; margin-top: 8px;
+    }
+    .botao:active { box-shadow: 0 2px 0 #d9a800; transform: translateY(3px); }
+    
+    .skin-btn {
+      width: 100%; min-height: 42px; margin: 0 0 8px; border: 1px solid #bce0fd;
+      border-radius: 12px; background: #f0f8ff; color: var(--semae-azul-escuro); font-weight: 850; font-size: 0.86rem; touch-action: manipulation;
+    }
+    .utility-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .utility-btn {
+      min-height: 40px; border: 1px solid #bce0fd; border-radius: 10px; background: #fff;
+      color: var(--semae-azul-escuro); font-weight: 800; cursor: pointer; touch-action: manipulation; font-size: 0.82rem;
+    }
+    .version { font: 700 0.72rem/1.2 Consolas, monospace; opacity: 0.7; margin-top: 6px; }
+    .collection { font-size: 0.76rem !important; opacity: 0.75; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  </style>
+</head>
+<body>
+<main class="app">
+  <section class="jogo-wrap" aria-label="Jogo do Leiturista SEMAE 3.0">
+    <canvas id="game" width="540" height="960" tabindex="-1" aria-label="Área de jogo. Toque ou pressione Espaço para pular."></canvas>
+    
+    <!-- HUD DE ROTAS DO SCI -->
+    <div class="hud" aria-hidden="true">
+      <div class="card">
+        <small id="hudFaseBairro"><span class="badge-fase">FASE 1</span> SAO DIMAS</small>
+        <strong id="hudRotaInfo">SETOR 36 · ROTA 129</strong>
+      </div>
+      <div class="card">
+        <small id="hudRuaAtual">Rua Ajudante Albano</small>
+        <strong id="hudHidrometroCount">💧 0 / 15</strong>
+      </div>
+      <div class="card">
+        <small>Ameaça do cão</small>
+        <strong id="distance">Seguro</strong>
+        <div class="perigo"><span id="dangerBar"></span></div>
+        <small id="missionHud">Rota carregando…</small>
+      </div>
+    </div>
+
+    <div class="touch-hint" id="touchHint">👆 SEGURE PARA PULAR ALTO · SOLTE PARA BAIXO</div>
+    
+    <div class="quick-controls" aria-label="Controles rápidos">
+      <button class="mini-btn" id="pauseBtn" type="button" disabled aria-label="Pausar jogo">Ⅱ</button>
+      <button class="mini-btn" id="musicBtn" type="button" disabled aria-label="Alternar música">♫ ON</button>
+      <button class="mini-btn" id="sfxBtn" type="button" disabled aria-label="Alternar efeitos sonoros">FX ON</button>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <h2 id="modalTitle">Leiturista SEMAE 3.0</h2>
+        <p id="modalText">Faça a leitura dos hidrômetros nas rotas reais do SEMAE Piracicaba a bordo da Kombi Branca!</p>
+        
+        <p style="margin-top:10px; margin-bottom:2px; font-weight:800; font-size:0.82rem; color:#0c326f;">SELECIONE A FASE DA ROTA SCI:</p>
+        <div class="fases-grid" id="fasesGrid"></div>
+
+        <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SCI...</p>
+
+        <div class="controles-texto">
+          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca no início da rua e embarca na Kombi na chegada!</div>
+          <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure na tela ou use Espaço/↑/W. Soltar cedo = salto curto. <b>P:</b> Pausar.</div>
+          <div class="controle-item">🔥 <b>Combo & Turbo:</b> 12 leituras em sequência ativam o <b>Fluxo de Leitura SEMAE</b>.</div>
+        </div>
+
+        <button class="skin-btn" id="skinBtn" type="button">👕 Uniforme: Azul SEMAE Clássico</button>
+        <div class="utility-row">
+          <button class="utility-btn" id="musicModalBtn" type="button">♫ Música: ligada</button>
+          <button class="utility-btn" id="sfxModalBtn" type="button">🔊 Efeitos: ligados</button>
+        </div>
+        <div class="utility-row">
+          <button class="utility-btn" id="exportBtn" type="button">⬇ Exportar progresso</button>
+          <button class="utility-btn" id="importBtn" type="button">⬆ Importar progresso</button>
+        </div>
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+        <p class="collection" id="collectionText">Coleção: 1/5 visuais desbloqueados</p>
+        <p class="version" id="versionText">v3.0.0 · SEMAE Piracicaba SCI</p>
+        
+        <button class="botao" id="startBtn" type="button">TOQUE PARA INICIAR A ROTA</button>
+      </div>
+    </div>
+
+    <div id="live" class="sr-only" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  
+  // DADOS REAIS EXTRAÍDOS DO BANCO PRODUÇÃO SCI (SEMAE PIRACICABA)
+  const ROTAS_SCI = [
+    {
+      fase: 1,
+      nome_fase: "Fase 1 - São Dimas (Inicial)",
+      setor: 36,
+      rota: 129,
+      bairro: "SAO DIMAS",
+      total_hidrometros: 15,
+      ruas: [
+        { cd_lograd: 5424, nome_rua: "Rua Ajudante Albano", hidrometros: 8 },
+        { cd_lograd: 1487, nome_rua: "Avenida Holanda", hidrometros: 7 }
+      ]
+    },
+    {
+      fase: 2,
+      nome_fase: "Fase 2 - Vila Rezende (Aprendiz)",
+      setor: 13,
+      rota: 157,
+      bairro: "CENTRO / VILA REZENDE",
+      total_hidrometros: 45,
+      ruas: [
+        { cd_lograd: 5422, nome_rua: "Rua Saldanha Marinho", hidrometros: 22 },
+        { cd_lograd: 2307, nome_rua: "Travessa Orestes Miglioranza", hidrometros: 16 },
+        { cd_lograd: 495, nome_rua: "Travessa Benedito Salustiano Cruz", hidrometros: 7 }
+      ]
+    },
+    {
+      fase: 3,
+      nome_fase: "Fase 3 - Bairro dos Alemães (Intermediário)",
+      setor: 44,
+      rota: 207,
+      bairro: "BAIRRO DOS ALEMAES",
+      total_hidrometros: 95,
+      ruas: [
+        { cd_lograd: 5580, nome_rua: "Rua Rio Branco", hidrometros: 46 },
+        { cd_lograd: 5582, nome_rua: "Rua Silva Jardim", hidrometros: 29 },
+        { cd_lograd: 1687, nome_rua: "Travessa João Guerra", hidrometros: 12 },
+        { cd_lograd: 725, nome_rua: "Travessa Comercial", hidrometros: 8 }
+      ]
+    },
+    {
+      fase: 4,
+      nome_fase: "Fase 4 - Jaraguá (Avançado)",
+      setor: 19,
+      rota: 147,
+      bairro: "JARAGUA",
+      total_hidrometros: 150,
+      ruas: [
+        { cd_lograd: 2013, nome_rua: "Avenida Maria Teodora", hidrometros: 103 },
+        { cd_lograd: 2087, nome_rua: "Rua Maria Nazareth", hidrometros: 26 },
+        { cd_lograd: 290, nome_rua: "Rua Antônio Gil de Oliveira", hidrometros: 7 },
+        { cd_lograd: 1668, nome_rua: "Rua João Ferreira de Camargo", hidrometros: 6 },
+        { cd_lograd: 2402, nome_rua: "Rua Antônio Vieira", hidrometros: 4 },
+        { cd_lograd: 990, nome_rua: "Rua Anésia", hidrometros: 4 }
+      ]
+    },
+    {
+      fase: 5,
+      nome_fase: "Fase 5 - Recanto do Piracicamirim (Mestre)",
+      setor: 31,
+      rota: 57,
+      bairro: "RECANTO DO PIRACICAMIRIM",
+      total_hidrometros: 230,
+      ruas: [
+        { cd_lograd: 981, nome_rua: "Avenida Aniger Francisco Maria Melillo", hidrometros: 59 },
+        { cd_lograd: 2780, nome_rua: "Avenida Sidney Luiz Brajão", hidrometros: 41 },
+        { cd_lograd: 2131, nome_rua: "Avenida Mary Nassif Curiacos", hidrometros: 18 },
+        { cd_lograd: 157, nome_rua: "Avenida Álvaro Corrêa de Toledo", hidrometros: 16 },
+        { cd_lograd: 547, nome_rua: "Avenida Bruno Ferraioli", hidrometros: 13 },
+        { cd_lograd: 1235, nome_rua: "Rua Faustino Fernandes de Souza", hidrometros: 12 },
+        { cd_lograd: 214, nome_rua: "Rua Ângelo do Amaral", hidrometros: 11 },
+        { cd_lograd: 2820, nome_rua: "Rua Tancredo de Almeida Neves", hidrometros: 9 },
+        { cd_lograd: 3077, nome_rua: "Rua Zoraide Brasil Vieira", hidrometros: 8 },
+        { cd_lograd: 1159, nome_rua: "Rua Elias Zaidan Maluf", hidrometros: 7 },
+        { cd_lograd: 2105, nome_rua: "Rua Mário Alexandrino", hidrometros: 7 },
+        { cd_lograd: 2267, nome_rua: "Rua Octávio Perecin", hidrometros: 6 },
+        { cd_lograd: 1129, nome_rua: "Rua Durval Fiorentino Cobra", hidrometros: 6 },
+        { cd_lograd: 3589, nome_rua: "Rua Mário Sérgio Baltieri", hidrometros: 5 },
+        { cd_lograd: 3590, nome_rua: "Rua José Lucafo", hidrometros: 5 },
+        { cd_lograd: 3591, nome_rua: "Rua Luiz Gomes de Oliveira", hidrometros: 4 },
+        { cd_lograd: 3593, nome_rua: "Rua Fernando Rogério Batista Abreu", hidrometros: 2 },
+        { cd_lograd: 3592, nome_rua: "Rua Isaura Sebastião dos Santos", hidrometros: 1 }
+      ]
+    }
+  ];
+
+  const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+  const hudFaseBairro = document.getElementById('hudFaseBairro'), hudRotaInfo = document.getElementById('hudRotaInfo');
+  const hudRuaAtual = document.getElementById('hudRuaAtual'), hudHidrometroCount = document.getElementById('hudHidrometroCount');
+  const distanceEl = document.getElementById('distance'), dangerBar = document.getElementById('dangerBar'), missionHud = document.getElementById('missionHud');
+  const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText'), missionLine = document.getElementById('missionLine'), startBtn = document.getElementById('startBtn'), skinBtn = document.getElementById('skinBtn'), collectionText = document.getElementById('collectionText'), live = document.getElementById('live'), touchHint = document.getElementById('touchHint');
+  const pauseBtn = document.getElementById('pauseBtn'), musicBtn = document.getElementById('musicBtn'), sfxBtn = document.getElementById('sfxBtn'), musicModalBtn = document.getElementById('musicModalBtn'), sfxModalBtn = document.getElementById('sfxModalBtn'), exportBtn = document.getElementById('exportBtn'), importBtn = document.getElementById('importBtn'), importFile = document.getElementById('importFile'), versionText = document.getElementById('versionText');
+  const fasesGrid = document.getElementById('fasesGrid');
+
+  let W = 540, H = 960, groundY = Math.round(H * 0.79); const gravity = 0.82;
+  const APP_ID = 'jogo-do-leiturista-3', APP_VERSION = '3.0.0', SAVE_SCHEMA = 1, SAVE_KEY = `semae.${APP_ID}.v${SAVE_SCHEMA}`, MAX_SAVE_BYTES = 256 * 1024;
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n)), rand = (a, b) => a + Math.random() * (b - a), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  const rawStore = {
+    get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
+  };
+  function fnv1a(t) { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16).padStart(8, '0'); }
+  function saveCore(d) { return { app: d.app, versaoJogo: d.versaoJogo, versaoEsquema: d.versaoEsquema, criadoEm: d.criadoEm, estado: d.estado }; }
+  function signSave(d) { return `fnv1a-${fnv1a(JSON.stringify(saveCore(d)))}`; }
+  function validateSave(d) {
+    if (!d || typeof d !== 'object' || d.app !== APP_ID || d.versaoEsquema !== SAVE_SCHEMA || typeof d.criadoEm !== 'string' || !d.estado || typeof d.estado !== 'object' || typeof d.assinatura !== 'string') return false;
+    const e = d.estado;
+    if (!Number.isFinite(e.lifetimeReadings) || e.lifetimeReadings < 0 || !Number.isFinite(e.best) || !Number.isInteger(e.selectedSkin) || typeof e.maxUnlockedFase !== 'number') return false;
+    return signSave(d) === d.assinatura;
+  }
+  function loadSaved() { try { const raw = rawStore.get(SAVE_KEY); if (!raw || raw.length > MAX_SAVE_BYTES) return null; const d = JSON.parse(raw); return validateSave(d) ? d : null; } catch { return null; } }
+
+  const saved = loadSaved();
+  const skins = [
+    { name: 'Azul SEMAE Clássico', need: 0, body: '#1351B4', pants: '#0C326F', cap: '#083F73', stripe: '#FFCD07', trail: '#37a8e8' },
+    { name: 'Colete Amarelo Operacional', need: 25, body: '#f0b429', pants: '#0C326F', cap: '#1351B4', stripe: '#ffffff', trail: '#ffe36d' },
+    { name: 'Boné Vermelho ETE', need: 60, body: '#147a5b', pants: '#0e4a37', cap: '#d84242', stripe: '#ffffff', trail: '#ff7a69' },
+    { name: 'Equipe Verde Meio Ambiente', need: 120, body: '#2a9d58', pants: '#17324d', cap: '#1351B4', stripe: '#FFCD07', trail: '#69db8b' },
+    { name: 'Refletivo Noturno SEMAE', need: 250, body: '#263a50', pants: '#111b27', cap: '#f4d35e', stripe: '#5FDCF2', trail: '#d8f3ff' }
+  ];
+
+  let lifetimeReadings = saved ? saved.estado.lifetimeReadings : 0;
+  let selectedSkin = clamp(saved ? saved.estado.selectedSkin : 0, 0, skins.length - 1);
+  let maxUnlockedFase = saved ? saved.estado.maxUnlockedFase : 1;
+  let currentSelectedFase = 1;
+  const audioPrefs = { musicOn: saved ? saved.estado.musicOn : true, sfxOn: saved ? saved.estado.sfxOn : true };
+
+  function unlockedSkins() { return skins.map((s, i) => ({ s, i })).filter(x => lifetimeReadings >= x.s.need); }
+  function normalizeSkin() { const u = unlockedSkins(); if (!u.some(x => x.i === selectedSkin)) selectedSkin = u[u.length - 1]?.i || 0; updateCollectionUI(); }
+  function updateCollectionUI() { const u = unlockedSkins(); const s = skins[selectedSkin]; skinBtn.textContent = `👕 Uniforme: ${s.name}`; collectionText.textContent = `Coleção: ${u.length}/${skins.length} visuais · ${lifetimeReadings} leituras totais`; }
+
+  const state = {
+    running: false, paused: false, over: false, score: 0, readings: 0, speed: 6, time: 0, roadOffset: 0, bgOffset: 0,
+    spawnClock: 0, nextSpawn: 90, readingClock: 0, nextReading: 120, powerClock: 0, nextPower: 700,
+    dogThreat: 18, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
+    best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
+    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
+    
+    // KOMBI BRANCA E CONTROLE DE FASE REAL
+    faseIdx: 0, // 0 to 4
+    ruaIdx: 0,
+    ruaReadings: 0,
+    totalFaseReadings: 0,
+    kombiState: 'arrival', // 'arrival', 'running', 'departure', 'phase_complete'
+    kombiX: -220,
+    kombiDoorOpen: true,
+    phaseCompleted: false
+  };
+
+  const player = { x: 205, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: true };
+  const dog = { x: 43, y: groundY - 45, w: 70, h: 45, legPhase: 0, bark: 0 };
+  let obstacles = [], meters = [], powerups = [], particles = [], floaters = [], streetSigns = [];
+  let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal' };
+
+  function makeSave() {
+    const d = {
+      app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: new Date().toISOString(),
+      estado: { lifetimeReadings, best: Math.floor(state.best), selectedSkin, maxUnlockedFase, musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn },
+      assinatura: ''
+    };
+    d.assinatura = signSave(d); return d;
+  }
+  function persistProgress() { const raw = JSON.stringify(makeSave()); if (raw.length <= MAX_SAVE_BYTES) rawStore.set(SAVE_KEY, raw); }
+  function applySave(d) {
+    lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best; selectedSkin = d.estado.selectedSkin;
+    maxUnlockedFase = d.estado.maxUnlockedFase || 1; audioPrefs.musicOn = d.estado.musicOn; audioPrefs.sfxOn = d.estado.sfxOn;
+    normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
+  }
+
+  function renderFasesGrid() {
+    fasesGrid.innerHTML = '';
+    ROTAS_SCI.forEach((r, idx) => {
+      const num = idx + 1;
+      const card = document.createElement('div');
+      card.className = `fase-card ${num === currentSelectedFase ? 'ativa' : ''} ${num > maxUnlockedFase ? 'bloqueada' : ''}`;
+      card.innerHTML = `<div>FASE ${num}</div><div style="font-size:0.65rem; font-weight:600;">${r.total_hidrometros} h</div>`;
+      if (num <= maxUnlockedFase) {
+        card.addEventListener('click', () => {
+          currentSelectedFase = num;
+          renderFasesGrid();
+          updateMissionLineUI();
+        });
+      }
+      fasesGrid.appendChild(card);
+    });
+  }
+
+  function updateMissionLineUI() {
+    const r = ROTAS_SCI[currentSelectedFase - 1];
+    missionLine.innerHTML = `🎯 <b>${r.nome_fase}</b><br><small>${r.bairro} · Setor ${r.setor}/Rota ${r.rota} · ${r.total_hidrometros} Hidrômetros em ${r.ruas.length} ruas</small>`;
+  }
+
+  // ÁUDIO SINTETIZADO WEB AUDIO API
+  const audio = {
+    ctx: null, music: null, sfx: null, master: null, comp: null, voices: 0,
+    ensure() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+        this.ctx = new AC(); this.music = this.ctx.createGain(); this.sfx = this.ctx.createGain(); this.master = this.ctx.createGain();
+        this.comp = this.ctx.createDynamicsCompressor(); this.comp.threshold.value = -12; this.comp.knee.value = 16; this.comp.ratio.value = 8;
+        this.music.connect(this.master); this.sfx.connect(this.master); this.master.connect(this.comp).connect(this.ctx.destination);
+        this.master.gain.value = 0.72; this.sync();
+      }
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      return this.ctx;
+    },
+    sync() {
+      if (this.music) this.music.gain.value = audioPrefs.musicOn ? 0.22 : 0;
+      if (this.sfx) this.sfx.gain.value = audioPrefs.sfxOn ? 0.65 : 0;
+    },
+    suspend() { this.ctx?.suspend?.().catch(() => {}); },
+    resume() { if (!document.hidden) this.ctx?.resume?.().catch(() => {}); }
+  };
+
+  function beep(freq, duration = 0.05, volume = 0.025, type = 'sine', slide = 0, channel = 'sfx') {
+    if (channel === 'music' && !audioPrefs.musicOn || channel === 'sfx' && !audioPrefs.sfxOn) return;
+    const ac = audio.ensure(); if (!ac || audio.voices >= 20) return;
+    audio.voices++; const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime, bus = channel === 'music' ? audio.music : audio.sfx;
+    o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + duration);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(volume, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    o.connect(g).connect(bus); o.onended = () => audio.voices = Math.max(0, audio.voices - 1);
+    o.start(t); o.stop(t + duration + 0.01);
+  }
+  function bark() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; if (navigator.vibrate) navigator.vibrate(14); }
+  function successSound() { beep(720, 0.05, 0.022, 'triangle', 180); setTimeout(() => beep(1040, 0.07, 0.02, 'triangle', 140), 55); }
+  function syncAudioButtons() {
+    musicBtn.textContent = audioPrefs.musicOn ? '♫ ON' : '♫ OFF'; sfxBtn.textContent = audioPrefs.sfxOn ? 'FX ON' : 'FX OFF';
+    musicModalBtn.textContent = audioPrefs.musicOn ? '♫ Música: ligada' : '♫ Música: desligada'; sfxModalBtn.textContent = audioPrefs.sfxOn ? '🔊 Efeitos: ligados' : '🔇 Efeitos: desligados';
+    audio.sync();
+  }
+
+  function showBanner(text, sub = '', life = 120, kind = 'normal') { banner = { text, sub, life, max: life, kind }; }
+  function addFloater(text, x, y, color = '#fff', big = false) { floaters.push({ text, x, y, vy: -1.3, life: 58, max: 58, color, big }); }
+  function burst(x, y, color, count = 10, strong = false) {
+    if (reducedMotion) return;
+    for (let i = 0; i < count; i++) particles.push({ x, y, vx: (Math.random() - 0.5) * (strong ? 11 : 7), vy: (Math.random() - 1) * (strong ? 9 : 6), life: 30 + Math.random() * 28, color, size: 3 + Math.random() * (strong ? 6 : 4) });
+  }
+
+  function resizeCanvas() {
+    const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const oldW = W || 540; H = 960; W = Math.max(360, Math.round(H * (r.width / r.height))); groundY = Math.round(H * 0.79);
+    canvas.width = W; canvas.height = H; const rx = W / oldW;
+    player.x = Math.min(W * 0.5, Math.max(150, player.x * rx)); player.y = Math.min(player.y, groundY - player.h);
+    dog.x = Math.max(18, Math.min(player.x - dog.w - 10, dog.x * rx)); dog.y = groundY - dog.h;
+  }
+
+  function resetGame() {
+    state.faseIdx = currentSelectedFase - 1;
+    const rota = ROTAS_SCI[state.faseIdx];
+    
+    state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.5 + state.faseIdx * 0.5;
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 98;
+    state.readingClock = 0; state.nextReading = 100; state.powerClock = 0; state.nextPower = rand(600, 900);
+    state.dogThreat = 18; state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
+    state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
+    state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
+    state.dogDistract = 0; state.dogLeap = 0;
+    
+    // Kombi Branca e Progresso de Rota SCI
+    state.ruaIdx = 0;
+    state.ruaReadings = 0;
+    state.totalFaseReadings = 0;
+    state.kombiState = 'arrival'; // Leiturista chega de Kombi Branca
+    state.kombiX = -200;
+    state.kombiDoorOpen = true;
+    state.phaseCompleted = false;
+    
+    player.x = 100; player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false;
+    dog.x = -150; dog.y = groundY - dog.h; dog.bark = 0;
+    
+    obstacles = []; meters = []; powerups = []; particles = []; floaters = []; streetSigns = [];
+    overlay.hidden = true; pauseBtn.disabled = false; musicBtn.disabled = false; sfxBtn.disabled = false;
+    pauseBtn.textContent = 'Ⅱ'; touchHint.classList.remove('hidden'); state.lastTime = 0;
+    
+    updateHudRouteInfo();
+    showBanner(`🚐 INICIANDO ${rota.nome_fase.toUpperCase()}`, `Bairro ${rota.bairro}`, 150, 'bonus');
+    beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
+  }
+
+  function updateHudRouteInfo() {
+    const r = ROTAS_SCI[state.faseIdx];
+    const ruaAtual = r.ruas[state.ruaIdx] ? r.ruas[state.ruaIdx].nome_rua : r.ruas[r.ruas.length - 1].nome_rua;
+    hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${r.fase}</span> ${r.bairro}`;
+    hudRotaInfo.textContent = `SETOR ${r.setor} · ROTA ${r.rota}`;
+    hudRuaAtual.textContent = ruaAtual;
+    hudHidrometroCount.textContent = `💧 ${state.totalFaseReadings} / ${r.total_hidrometros}`;
+    missionHud.textContent = `${ruaAtual} (${state.ruaReadings}/${r.ruas[state.ruaIdx]?.hidrometros || 0})`;
+  }
+
+  function doJump() {
+    player.vy = -16.4; player.onGround = false; state.coyote = 0; state.jumpBuffer = 0; state.jumpHeld = true;
+    beep(650, 0.05, 0.02, 'square', 110); if (navigator.vibrate) navigator.vibrate(7);
+    burst(player.x + 22, groundY - 3, skins[selectedSkin].trail, 6);
+  }
+  function jump() {
+    if (!state.running || state.paused || state.over || state.kombiState !== 'running') return;
+    audio.ensure(); state.taps++; if (state.taps >= 2) touchHint.classList.add('hidden');
+    state.jumpHeld = true;
+    if (player.onGround || state.coyote > 0) doJump(); else state.jumpBuffer = 10;
+  }
+  function releaseJump() { state.jumpHeld = false; if (!player.onGround && player.vy < -5.5) player.vy *= 0.58; }
+
+  function spawnObstacle() {
+    if (state.kombiState !== 'running') return;
+    const r = Math.random(), hard = state.score > 3200;
+    const type = r < 0.30 ? 'cone' : r < 0.54 ? 'bin' : r < 0.76 ? 'puddle' : hard && r < 0.90 ? 'barrier' : 'hose';
+    const dims = type === 'bin' ? [52, 65] : type === 'cone' ? [42, 52] : type === 'barrier' ? [70, 74] : type === 'hose' ? [92, 15] : [76, 22];
+    obstacles.push({ type, x: W + 45, y: groundY - dims[1], w: dims[0], h: dims[1], hit: false, passed: false, nearChecked: false });
+    
+    if (Math.random() < 0.46) {
+      const lift = type === 'barrier' ? 92 : type === 'bin' ? 78 : 58;
+      spawnMeter(W + 45 + dims[0] * 0.55, groundY - dims[1] - lift);
+      state.readingClock = 0; state.nextReading = rand(110, 180);
+    }
+  }
+
+  function spawnMeter(x = W + 45, y = null, kind = null) {
+    if (state.kombiState !== 'running') return;
+    if (!kind) kind = Math.random() < 0.08 ? 'gold' : 'normal';
+    const high = Math.random() < 0.37;
+    meters.push({ x, y: y ?? (high ? groundY - 158 : groundY - 88), r: kind === 'gold' ? 20 : 18, taken: false, spin: Math.random() * 6.3, kind });
+  }
+
+  function spawnPowerup() {
+    if (state.kombiState !== 'running') return;
+    const types = ['shoe', 'shield', 'bone']; const type = types[Math.floor(Math.random() * types.length)];
+    powerups.push({ type, x: W + 50, y: groundY - rand(90, 155), r: 22, taken: false, spin: 0 });
+  }
+
+  function playerBox() { return { x: player.x + 7, y: player.y + 8, w: player.w - 12, h: player.h - 12 }; }
+  function overlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function circleOverlap(box, o) { const cx = Math.max(box.x, Math.min(o.x, box.x + box.w)), cy = Math.max(box.y, Math.min(o.y, box.y + box.h)), dx = o.x - cx, dy = o.y - cy; return dx * dx + dy * dy < o.r * o.r; }
+
+  function resetCombo() { if (state.combo >= 3) addFloater('RITMO PERDIDO', player.x + 25, player.y - 15, '#ff9a88', true); state.combo = 0; state.comboTimer = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false; }
+  function hitObstacle(ob) {
+    if (ob.hit || player.hurt > 0) return; ob.hit = true;
+    if (state.shield > 0) {
+      state.shield = 0; state.shake = reducedMotion ? 0 : 7; burst(player.x + 25, player.y + 30, '#7bd8ff', 18, true);
+      addFloater('🛡️ DEFESA SEMAE!', player.x + 25, player.y - 12, '#dff7ff', true); beep(460, 0.12, 0.035, 'triangle', 250); return;
+    }
+    player.hurt = 48; state.dogThreat = Math.min(100, state.dogThreat + 26); state.flash = 12; state.shake = reducedMotion ? 0 : 10; state.dogLeap = 48;
+    resetCombo(); burst(player.x + 25, player.y + 35, '#ffcc3d', 14, true); beep(120, 0.16, 0.05, 'sawtooth', -40); bark();
+  }
+
+  function comboUp(amount = 1) {
+    state.combo += amount; state.comboTimer = 520; state.maxCombo = Math.max(state.maxCombo, state.combo);
+    const old = state.mult; state.mult = Math.min(5, 1 + Math.floor(state.combo / 3));
+    if (state.mult > old) { showBanner(`🔥 COMBO x${state.mult}`, `${state.combo} leituras na sequência`, 75, 'combo'); beep(900 + state.mult * 90, 0.08, 0.025, 'triangle', 100); }
+    if (state.combo >= 12 && !state.flowTriggered) {
+      state.flowTriggered = true; state.flow = 390; state.dogThreat = Math.max(6, state.dogThreat - 12);
+      showBanner('💧 FLUXO DE LEITURA!', '6s de ritmo máximo SEMAE', 130, 'bonus');
+      burst(W * 0.52, H * 0.38, '#5FDCF2', 30, true); beep(520, 0.08, 0.03, 'triangle', 340);
+    }
+  }
+
+  function collectMeter(m) {
+    m.taken = true; state.readings++; lifetimeReadings++; state.ruaReadings++; state.totalFaseReadings++;
+    persistProgress(); comboUp(m.kind === 'gold' ? 2 : 1);
+    
+    const perfect = !player.onGround && Math.abs(player.vy) < 3.2; let base = m.kind === 'gold' ? 450 : 120;
+    if (perfect) { state.perfects++; base += 90; addFloater('✨ LEITURA PERFEITA!', m.x, m.y - 28, '#fff3a8', true); burst(m.x, m.y, '#fff09b', 18, true); beep(1120, 0.07, 0.024, 'triangle', 220); }
+    
+    const gain = Math.round(base * state.mult * (state.flow > 0 ? 1.5 : 1)); state.score += gain;
+    state.dogThreat = Math.max(8, state.dogThreat - (m.kind === 'gold' ? 12 : 7));
+    burst(m.x, m.y, m.kind === 'gold' ? '#ffd85d' : '#1351B4', 12, m.kind === 'gold');
+    addFloater(`+${gain}`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
+    successSound();
+
+    // CHECAGEM DE PROGRESSO NA ROTA SCI
+    const rota = ROTAS_SCI[state.faseIdx];
+    const ruaAtualData = rota.ruas[state.ruaIdx];
+    
+    if (ruaAtualData && state.ruaReadings >= ruaAtualData.hidrometros) {
+      // Avançar de rua se houver próxima
+      if (state.ruaIdx < rota.ruas.length - 1) {
+        state.ruaIdx++;
+        state.ruaReadings = 0;
+        const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
+        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 140, 'region');
+        streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 180 });
+      }
+    }
+
+    // VERIFICAR CONCLUSÃO DA ROTA/FASE
+    if (state.totalFaseReadings >= rota.total_hidrometros && !state.phaseCompleted) {
+      triggerPhaseCompletion();
+    }
+
+    updateHudRouteInfo();
+  }
+
+  function triggerPhaseCompletion() {
+    state.phaseCompleted = true;
+    state.kombiState = 'departure'; // Leiturista corre até a Kombi Branca estacionada
+    state.kombiX = W + 180;
+    showBanner('🏁 ROTA CONCLUÍDA!', 'A Kombi Branca SEMAE está esperando!', 160, 'unlock');
+    beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
+  }
+
+  function collectPower(p) {
+    p.taken = true; state.powerupsTaken++;
+    if (p.type === 'shoe') { state.shoeTimer = 420; showBanner('🥾 TURBO LEITURISTA!', 'Velocidade e pontos', 105, 'power'); beep(520, 0.09, 0.03, 'square', 400); }
+    else if (p.type === 'shield') { state.shield = 1; showBanner('🛡️ CAPACETE SEMAE!', 'Proteção contra impacto', 105, 'power'); beep(620, 0.1, 0.03, 'triangle', 300); }
+    else { state.dogThreat = Math.max(5, state.dogThreat - 38); state.dogDistract = 260; showBanner('🦴 OSSO PARA O CÃO!', 'Distância garantida', 110, 'power'); beep(360, 0.08, 0.03, 'triangle', -80); }
+    state.score += 250 * state.mult; burst(p.x, p.y, '#ffffff', 20, true);
+  }
+
+  function nearMiss(ob) {
+    if (ob.nearChecked || ob.hit) return; ob.nearChecked = true;
+    const pb = playerBox(), clearance = ob.y - (pb.y + pb.h);
+    if (!player.onGround && clearance >= -2 && clearance < 24) {
+      state.nearMisses++; const gain = 50 * state.mult; state.score += gain;
+      addFloater(`POR POUCO! +${gain}`, player.x + 35, player.y - 18, '#ffe9a8', true); beep(780, 0.045, 0.018, 'square', 120);
+    }
+  }
+
+  function gameOver() {
+    state.running = false; state.over = true; state.best = Math.max(state.best, Math.floor(state.score));
+    persistProgress(); beep(180, 0.18, 0.05, 'sawtooth', -70);
+    modalTitle.textContent = '🐶 O cachorro alcançou!';
+    modalText.textContent = `Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')} · Hidrômetros lidos: ${state.totalFaseReadings} · Rota: ${ROTAS_SCI[state.faseIdx].bairro}`;
+    startBtn.textContent = 'TENTAR ROTA NOVAMENTE'; pauseBtn.disabled = true; musicBtn.disabled = true; sfxBtn.disabled = true;
+    updateCollectionUI(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
+  }
+
+  function phaseVictoryModal() {
+    const r = ROTAS_SCI[state.faseIdx];
+    if (state.faseIdx + 1 > maxUnlockedFase && state.faseIdx + 1 < ROTAS_SCI.length) {
+      maxUnlockedFase = state.faseIdx + 2;
+      persistProgress();
+      renderFasesGrid();
+    }
+    
+    state.running = false; state.best = Math.max(state.best, Math.floor(state.score));
+    persistProgress();
+    
+    modalTitle.textContent = `🎉 ROTA ${r.fase} CONCLUÍDA COM SUCESSO!`;
+    modalText.textContent = `Você completou todas as ${r.ruas.length} ruas de ${r.bairro} (${r.total_hidrometros} hidrômetros) a bordo da Kombi Branca SEMAE! Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')}`;
+    
+    if (state.faseIdx < ROTAS_SCI.length - 1) {
+      currentSelectedFase = state.faseIdx + 2;
+      renderFasesGrid();
+      updateMissionLineUI();
+      startBtn.textContent = `IR PARA FASE ${currentSelectedFase} NA KOMBI BRANCA ▶`;
+    } else {
+      startBtn.textContent = 'JOGAR FASES NOVAMENTE 🏆';
+    }
+    
+    overlay.hidden = false; startBtn.focus({ preventScroll: true });
+  }
+
+  // UPDATE LOOP PRINCIPAL
+  function update(dt) {
+    if (!state.running || state.paused) return;
+    const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
+
+    // GERENCIAMENTO DAS CUTSCENES DA KOMBI BRANCA SEMAE
+    if (state.kombiState === 'arrival') {
+      // Kombi chega da esquerda, para, leiturista desembarca
+      state.kombiX += 4 * step;
+      if (state.kombiX >= 100) {
+        state.kombiX = 100;
+        player.visible = true;
+        player.x += 2.5 * step;
+        if (player.x >= 200) {
+          player.x = 200;
+          state.kombiDoorOpen = false;
+          state.kombiState = 'leaving_arrival';
+        }
+      }
+      return;
+    } else if (state.kombiState === 'leaving_arrival') {
+      state.kombiX -= 6 * step;
+      dog.x += 4 * step; if (dog.x >= 40) dog.x = 40;
+      if (state.kombiX <= -250) {
+        state.kombiState = 'running';
+      }
+      return;
+    } else if (state.kombiState === 'departure') {
+      // Kombi estacionada aguardando o leiturista no fim da rota
+      if (state.kombiX > W - 140) state.kombiX -= 5 * step;
+      else state.kombiX = W - 140;
+      
+      player.x += 3.5 * step;
+      if (player.x >= state.kombiX + 20) {
+        player.visible = false;
+        state.kombiDoorOpen = false;
+        state.kombiState = 'driving_away';
+      }
+      return;
+    } else if (state.kombiState === 'driving_away') {
+      state.kombiX += 7 * step;
+      if (state.kombiX >= W + 200) {
+        phaseVictoryModal();
+      }
+      return;
+    }
+
+    // ESTADO 'RUNNING' NORMAL DE GAMEPLAY
+    const turbo = state.shoeTimer > 0 ? 1.17 : 1, flowSpeed = state.flow > 0 ? 1.055 : 1;
+    const actualSpeed = state.speed * turbo * flowSpeed;
+    state.score += 0.16 * actualSpeed * step * (state.shoeTimer > 0 ? 1.25 : 1);
+    state.roadOffset = (state.roadOffset + actualSpeed * step) % 80;
+    state.bgOffset = (state.bgOffset + actualSpeed * 0.28 * step) % 300;
+
+    state.spawnClock += step; state.readingClock += step; state.powerClock += step;
+    state.flash = Math.max(0, state.flash - step); state.shake = Math.max(0, state.shake - step);
+    state.jumpBuffer = Math.max(0, state.jumpBuffer - step); state.comboTimer = Math.max(0, state.comboTimer - step);
+    state.flow = Math.max(0, state.flow - step); state.landSquash = Math.max(0, state.landSquash - step);
+    state.shoeTimer = Math.max(0, state.shoeTimer - step); state.dogDistract = Math.max(0, state.dogDistract - step);
+    state.dogLeap = Math.max(0, state.dogLeap - step); dog.bark = Math.max(0, dog.bark - step);
+    state.musicClock += step;
+
+    if (state.musicClock > clamp(49 - state.speed * 2.1, 22, 38)) {
+      state.musicClock = 0; beep(82 * (state.dogThreat > 70 ? 1.4 : 1), 0.035, 0.008, 'sine', 10, 'music');
+    }
+
+    if (state.spawnClock >= state.nextSpawn) { spawnObstacle(); state.spawnClock = 0; state.nextSpawn = Math.max(66, 108 - state.speed * 2.7) + rand(24, 64); }
+    if (state.readingClock >= state.nextReading) { spawnMeter(); state.readingClock = 0; state.nextReading = state.flow > 0 ? rand(72, 112) : rand(96, 168); }
+    if (state.powerClock >= state.nextPower) { spawnPowerup(); state.powerClock = 0; state.nextPower = rand(720, 1050); }
+
+    if (player.onGround) state.coyote = 7; else state.coyote = Math.max(0, state.coyote - step);
+    if (!player.onGround) {
+      player.vy += gravity * step; player.y += player.vy * step;
+      if (player.y >= groundY - player.h) {
+        player.y = groundY - player.h; player.vy = 0; player.onGround = true; state.landSquash = 9;
+        if (state.jumpBuffer > 0) doJump();
+      }
+    }
+
+    player.hurt = Math.max(0, player.hurt - step);
+    if (state.combo > 0 && state.comboTimer <= 0) resetCombo();
+    player.legPhase += 0.22 * actualSpeed * step; dog.legPhase += 0.27 * actualSpeed * step;
+    const pb = playerBox();
+
+    for (const o of obstacles) { o.x -= actualSpeed * step; if (!o.hit && overlap(pb, o)) hitObstacle(o); if (!o.nearChecked && o.x + o.w < player.x + player.w * 0.4) nearMiss(o); }
+    obstacles = obstacles.filter(o => o.x + o.w > -30);
+
+    for (const m of meters) { m.x -= actualSpeed * step; m.spin += 0.08 * step; if (!m.taken && circleOverlap(pb, m)) collectMeter(m); }
+    meters = meters.filter(m => !m.taken && m.x + m.r > -30);
+
+    for (const p of powerups) { p.x -= actualSpeed * step; p.spin += 0.08 * step; if (!p.taken && circleOverlap(pb, p)) collectPower(p); }
+    powerups = powerups.filter(p => !p.taken && p.x + p.r > -30);
+
+    for (const s of streetSigns) { s.x -= actualSpeed * step; }
+    streetSigns = streetSigns.filter(s => s.x > -250);
+
+    for (const p of particles) { p.x += p.vx * step; p.y += p.vy * step; p.vy += 0.18 * step; p.life -= step; }
+    particles = particles.filter(p => p.life > 0);
+
+    for (const f of floaters) { f.y += f.vy * step; f.life -= step; }
+    floaters = floaters.filter(f => f.life > 0);
+
+    if (banner.life > 0) banner.life -= step;
+
+    // Cão perseguidor
+    state.dogThreat += (state.dogDistract > 0 ? -0.055 : (0.010 + state.speed * 0.0015)) * step;
+    state.dogThreat = clamp(state.dogThreat, 0, 100);
+    const dogStart = Math.max(18, W * 0.08), dogCatch = Math.max(dogStart, player.x - dog.w + 5);
+    dog.x += ((dogStart + (dogCatch - dogStart) * (state.dogThreat / 100)) - dog.x) * 0.035 * step;
+
+    if (state.dogThreat > 76 && Math.floor(state.time) % 290 < 2 && dog.bark <= 0) bark();
+    if (state.dogThreat >= 100 || dog.x + dog.w > player.x + 3) gameOver();
+    
+    updateHudDisplay();
+  }
+
+  function updateHudDisplay() {
+    const safe = Math.round(100 - state.dogThreat);
+    dangerBar.style.width = `${safe}%`;
+    dangerBar.style.background = safe > 58 ? '#168821' : safe > 30 ? '#FF9F1C' : '#E04A5F';
+    distanceEl.textContent = safe > 68 ? 'Seguro' : safe > 40 ? 'Atenção' : safe > 18 ? 'Perto!' : 'CORRA!';
+  }
+
+  function rounded(x, y, w, h, r, fill) {
+    r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+  }
+
+  // DESENHO DOS ELEMENTOS DO JOGO (CANVAS)
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#549fe4'); g.addColorStop(0.62, '#bce3fb'); g.addColorStop(1, '#eaf5fd');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // Sol brilhante SEMAE
+    ctx.fillStyle = 'rgba(255, 233, 168, 0.25)'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 65, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 38, 0, Math.PI * 2); ctx.fill();
+
+    // Nuvens suaves
+    for (let i = 0; i < 4; i++) {
+      const span = W + 260, x = ((i * (span / 3) - state.bgOffset * 0.45 + 110) % span) - 100, y = 160 + (i % 2) * 60;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.82)'; ctx.beginPath(); ctx.arc(x, y, 24, 0, Math.PI * 2); ctx.arc(x + 28, y - 10, 30, 0, Math.PI * 2); ctx.arc(x + 62, y, 23, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Prédios / Casas de fundo
+    const span = W + 450, count = Math.ceil(W / 180) + 2;
+    for (let i = 0; i < count; i++) {
+      const bx = ((i * 210 - state.bgOffset + 40) % span) - 160, by = groundY - 145;
+      ctx.fillStyle = i % 2 === 0 ? '#b8d6f4' : '#a2c8ed';
+      rounded(bx, by + 40, 130, 110, 5, ctx.fillStyle);
+      ctx.fillStyle = i % 2 === 0 ? '#1351B4' : '#0C326F';
+      ctx.beginPath(); ctx.moveTo(bx - 8, by + 42); ctx.lineTo(bx + 65, by - 5); ctx.lineTo(bx + 138, by + 42); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(bx + 20, by + 60, 26, 26); ctx.fillRect(bx + 84, by + 60, 26, 26);
+    }
+
+    // Calçada, meio-fio e pista
+    ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
+    ctx.fillStyle = '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
+    ctx.fillStyle = '#8999a0'; for (let x = -state.roadOffset; x < W; x += 80) ctx.fillRect(x, groundY + 32, 52, 4);
+    ctx.fillStyle = '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
+    ctx.fillStyle = '#f7e27a'; for (let x = -state.roadOffset * 1.4; x < W; x += 130) ctx.fillRect(x, groundY + 82, 70, 8);
+  }
+
+  // DESENHO DA KOMBI BRANCA OFICIAL SEMAE
+  function drawKombi(x, y) {
+    ctx.save(); ctx.translate(x, y);
+    
+    // Sombra da Kombi
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)'; ctx.beginPath(); ctx.ellipse(85, 96, 85, 12, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Carroceria branca da Kombi
+    rounded(0, 10, 165, 80, 18, '#f5f7fa');
+    
+    // Teto levemente curvado
+    ctx.fillStyle = '#ffffff'; rounded(5, 0, 155, 20, 10, '#ffffff');
+
+    // Faixa Azul SEMAE nas laterais da Kombi
+    ctx.fillStyle = '#1351B4'; ctx.fillRect(0, 48, 165, 18);
+    ctx.fillStyle = '#FFCD07'; ctx.fillRect(0, 66, 165, 3); // Linha amarela
+
+    // Logotipo impresso na Kombi
+    ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('SEMAE', 82, 62);
+
+    // Janelas panorâmicas da Kombi
+    ctx.fillStyle = '#2c3e50';
+    rounded(12, 16, 42, 28, 6, '#2c3e50'); // Janela motorista
+    rounded(62, 16, 42, 28, 6, '#2c3e50'); // Janela central
+    rounded(112, 16, 42, 28, 6, '#2c3e50'); // Janela traseira
+
+    // Porta lateral (aberta ou fechada)
+    if (state.kombiDoorOpen) {
+      ctx.fillStyle = 'rgba(20, 30, 40, 0.7)'; ctx.fillRect(60, 44, 38, 48); // Abertura da porta
+    } else {
+      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.strokeRect(60, 44, 38, 48);
+    }
+
+    // Para-choque e Farol dianteiro
+    ctx.fillStyle = '#cbd5e1'; rounded(-6, 75, 14, 16, 4, '#cbd5e1'); rounded(158, 75, 14, 16, 4, '#cbd5e1');
+    ctx.fillStyle = '#fffae6'; ctx.beginPath(); ctx.arc(162, 54, 7, 0, Math.PI * 2); ctx.fill(); // Farol brilhante
+
+    // Rodas da Kombi com calotas
+    ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(36, 88, 16, 0, Math.PI * 2); ctx.arc(130, 88, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(36, 88, 8, 0, Math.PI * 2); ctx.arc(130, 88, 8, 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
+  }
+
+  // DESENHO DO LEITURISTA DE UNIFORME AZUL SEMAE
+  function drawPlayer() {
+    if (!player.visible) return;
+    const skin = skins[selectedSkin], air = !player.onGround, x = player.x;
+    const runBob = air ? 0 : Math.sin(player.legPhase) * 1.8;
+    const y = player.y + runBob + (state.landSquash > 0 ? Math.sin((state.landSquash / 9) * Math.PI) * 4 : 0);
+    
+    if (player.hurt > 0 && Math.floor(player.hurt / 4) % 2 === 0) ctx.globalAlpha = 0.38;
+
+    // Sombra do leiturista
+    ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x + 23, groundY + 4, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Pernas / Calça Escura SEMAE
+    const hipL = { x: x + 17, y: y + 57 }, hipR = { x: x + 31, y: y + 57 };
+    let kneeL, kneeR, footL, footR;
+    if (air) {
+      kneeL = { x: x + 10, y: y + 64 }; kneeR = { x: x + 37, y: y + 66 };
+      footL = { x: x + 4, y: y + 72 }; footR = { x: x + 42, y: y + 70 };
+    } else {
+      const stride = Math.sin(player.legPhase) * 11;
+      kneeL = { x: x + 16 - stride * 0.34, y: y + 68 }; kneeR = { x: x + 31 + stride * 0.34, y: y + 68 };
+      footL = { x: x + 12 - stride, y: y + 79 }; footR = { x: x + 35 + stride, y: y + 79 };
+    }
+    ctx.strokeStyle = skin.pants; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(kneeL.x, kneeL.y); ctx.lineTo(footL.x, footL.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(kneeR.x, kneeR.y); ctx.lineTo(footR.x, footR.y); ctx.stroke();
+
+    // Botas de Segurança
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 6; ctx.beginPath();
+    ctx.moveTo(footL.x - 2, footL.y); ctx.lineTo(footL.x + 7, footL.y + 1);
+    ctx.moveTo(footR.x - 2, footR.y); ctx.lineTo(footR.x + 8, footR.y + 1); ctx.stroke();
+
+    // Camisa Azul SEMAE Principal e Faixa Refletiva Amarela
+    rounded(x + 6, y + 20, 37, 42, 9, skin.body);
+    ctx.fillStyle = skin.stripe; ctx.fillRect(x + 8, y + 38, 33, 5); // Faixa refletiva
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', x + 12, y + 32);
+
+    // Braço + Coletor de Leitura SCI Portátil
+    ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(x + 39, y + 30); ctx.lineTo(x + 53, y + 42); ctx.stroke();
+    ctx.save(); ctx.translate(x + 51, y + 36); rounded(0, 0, 24, 30, 4, '#334155');
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(4, 5, 16, 18); // Tela do coletor
+    ctx.fillStyle = '#1351B4'; ctx.fillRect(6, 8, 12, 4); ctx.restore();
+
+    // Rosto, Cabelo e Boné Azul SEMAE
+    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = skin.cap; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + 20, y + 4, 24, 5); // Aba do boné
+    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(x + 31, y + 9, 2, 0, Math.PI * 2); ctx.fill();
+
+    if (state.flow > 0) { ctx.strokeStyle = 'rgba(95, 220, 242, 0.75)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + 24, y + 37, 42, 0, Math.PI * 2); ctx.stroke(); }
+    if (state.shield > 0) { ctx.strokeStyle = 'rgba(255, 205, 7, 0.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 36, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawDog() {
+    if (dog.x < -100) return;
+    const skin = skins[selectedSkin], x = dog.x, y = dog.y + Math.sin(dog.legPhase) * 1.5;
+    ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.ellipse(x + 34, groundY + 4, 38, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9a6035'; ctx.beginPath(); ctx.ellipse(x + 34, y + 25, 31, 20, -0.04, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 61, y + 17, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#714322'; ctx.beginPath(); ctx.moveTo(x + 51, y + 6); ctx.lineTo(x + 55, y - 12); ctx.lineTo(x + 68, y + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#202020'; ctx.beginPath(); ctx.arc(x + 67, y + 14, 2.6, 0, Math.PI * 2); ctx.fill();
+    
+    ctx.strokeStyle = '#714322'; ctx.lineWidth = 7; ctx.lineCap = 'round'; const l = Math.sin(dog.legPhase) * 8;
+    ctx.beginPath(); ctx.moveTo(x + 20, y + 36); ctx.lineTo(x + 14 - l, groundY - 1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 47, y + 36); ctx.lineTo(x + 53 + l, groundY - 1); ctx.stroke();
+    
+    if (dog.bark > 0) { rounded(x + 38, y - 48, 48, 26, 10, 'rgba(255,255,255,0.95)'); ctx.fillStyle = '#714322'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center'; ctx.fillText('AU!', x + 62, y - 30); }
+  }
+
+  function drawObstacle(o) {
+    ctx.fillStyle = 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.ellipse(o.x + o.w / 2, groundY + 3, Math.max(18, o.w * 0.46), 6, 0, 0, Math.PI * 2); ctx.fill();
+    if (o.type === 'bin') {
+      rounded(o.x, o.y + 8, o.w, o.h - 8, 7, o.hit ? '#7d8588' : '#4f8f5b'); ctx.fillStyle = '#32633b'; ctx.fillRect(o.x - 3, o.y + 4, o.w + 6, 11);
+    } else if (o.type === 'cone') {
+      ctx.fillStyle = o.hit ? '#b27948' : '#ef7b2d'; ctx.beginPath(); ctx.moveTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h - 8); ctx.lineTo(o.x, o.y + o.h - 8); ctx.closePath(); ctx.fill();
+    } else if (o.type === 'barrier') {
+      rounded(o.x, o.y + 10, o.w, o.h - 10, 6, o.hit ? '#a47b54' : '#FF9F1C');
+    } else {
+      ctx.strokeStyle = o.hit ? '#6c7b83' : '#1351B4'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(o.x, o.y + 9); ctx.lineTo(o.x + o.w, o.y + 6); ctx.stroke();
+    }
+  }
+
+  function drawMeter(m) {
+    ctx.save(); ctx.translate(m.x, m.y); const gold = m.kind === 'gold';
+    ctx.fillStyle = gold ? '#d79b00' : '#0C326F'; ctx.beginPath(); ctx.arc(0, 0, m.r + 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = gold ? '#fff0a8' : '#c7f4fb'; ctx.beginPath(); ctx.arc(0, 0, m.r - 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = gold ? '#9b6900' : '#1351B4'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r - 7, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke();
+    ctx.fillStyle = gold ? '#805900' : '#0C326F'; ctx.font = '900 8px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('m³', 0, 4); ctx.restore();
+  }
+
+  function drawPower(p) {
+    ctx.save(); ctx.translate(p.x, p.y); ctx.fillStyle = p.type === 'shoe' ? '#FFCD07' : p.type === 'shield' ? '#1351B4' : '#f3e2c0';
+    ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '22px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.type === 'shoe' ? '🥾' : p.type === 'shield' ? '🛡️' : '🦴', 0, 1); ctx.restore();
+  }
+
+  function drawStreetSigns() {
+    for (const s of streetSigns) {
+      ctx.save(); ctx.translate(s.x, s.y);
+      rounded(0, 0, 220, 44, 8, '#1351B4'); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.strokeRect(4, 4, 212, 36);
+      ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('📍 ' + s.text.toUpperCase(), 110, 24);
+      ctx.restore();
+    }
+  }
+
+  function drawParticles() { for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life / 45); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); } ctx.globalAlpha = 1; }
+  function drawFloaters() { ctx.textAlign = 'center'; for (const f of floaters) { ctx.globalAlpha = Math.min(1, f.life / 12); ctx.font = `900 ${f.big ? 20 : 16}px system-ui`; ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); } ctx.globalAlpha = 1; }
+  
+  function drawBanner() {
+    if (banner.life <= 0) return; const alpha = Math.min(1, (banner.life / banner.max) * 4);
+    ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.font = '1000 26px system-ui';
+    ctx.strokeStyle = 'rgba(12,50,111,0.6)'; ctx.lineWidth = 6; ctx.strokeText(banner.text, W / 2, H * 0.32);
+    ctx.fillStyle = '#FFCD07'; ctx.fillText(banner.text, W / 2, H * 0.32);
+    if (banner.sub) { ctx.font = '800 15px system-ui'; ctx.fillText(banner.sub, W / 2, H * 0.32 + 28); }
+    ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H); ctx.save();
+    if (state.shake > 0) ctx.translate(rand(-state.shake, state.shake), rand(-state.shake * 0.6, state.shake * 0.6));
+    drawBackground();
+    drawStreetSigns();
+    
+    // Desenho da Kombi Branca no início ou no fim da fase
+    if (state.kombiState === 'arrival' || state.kombiState === 'leaving_arrival' || state.kombiState === 'departure' || state.kombiState === 'driving_away') {
+      drawKombi(state.kombiX, groundY - 82);
+    }
+    
+    for (const m of meters) drawMeter(m);
+    for (const p of powerups) drawPower(p);
+    for (const o of obstacles) drawObstacle(o);
+    
+    drawDog();
+    drawPlayer();
+    drawParticles(); drawFloaters(); drawBanner();
+    
+    if (state.paused) {
+      ctx.fillStyle = 'rgba(9, 32, 64, 0.65)'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#fff'; ctx.font = '900 38px system-ui'; ctx.textAlign = 'center'; ctx.fillText('PAUSADO', W / 2, H / 2);
+    }
+    ctx.restore();
+  }
+
+  let rafId = 0;
+  function loop(ts) {
+    rafId = 0; if (document.hidden || !state.running || state.paused) { render(); return; }
+    const dt = state.lastTime ? Math.min(50, ts - state.lastTime) : 16.67; state.lastTime = ts;
+    update(dt); render(); if (state.running && !state.paused) rafId = requestAnimationFrame(loop);
+  }
+  function startLoop() { if (!rafId && !document.hidden && state.running && !state.paused) rafId = requestAnimationFrame(loop); }
+  function setPaused(v) {
+    if (!state.running || state.over) return; state.paused = v; state.lastTime = 0;
+    pauseBtn.textContent = v ? '▶' : 'Ⅱ'; if (v) audio.suspend(); else { audio.resume(); startLoop(); }
+    render();
+  }
+
+  // EVENT LISTENERS E CONTROLES
+  skinBtn.addEventListener('click', () => {
+    const u = unlockedSkins(); let pos = u.findIndex(x => x.i === selectedSkin); pos = (pos + 1) % u.length;
+    selectedSkin = u[pos].i; updateCollectionUI(); persistProgress(); beep(560, 0.05, 0.02, 'triangle', 100);
+  });
+
+  startBtn.addEventListener('click', () => { audio.ensure(); resetGame(); startLoop(); });
+  canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); audio.ensure(); if (state.paused) setPaused(false); else jump(); }, { passive: false });
+  canvas.addEventListener('pointerup', releaseJump, { passive: true }); canvas.addEventListener('pointercancel', releaseJump, { passive: true });
+
+  pauseBtn.addEventListener('click', () => { audio.ensure(); setPaused(!state.paused); });
+  function toggleMusic() { audio.ensure(); audioPrefs.musicOn = !audioPrefs.musicOn; syncAudioButtons(); persistProgress(); }
+  function toggleSfx() { audio.ensure(); audioPrefs.sfxOn = !audioPrefs.sfxOn; syncAudioButtons(); persistProgress(); }
+  musicBtn.addEventListener('click', toggleMusic); musicModalBtn.addEventListener('click', toggleMusic);
+  sfxBtn.addEventListener('click', toggleSfx); sfxModalBtn.addEventListener('click', toggleSfx);
+
+  exportBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(makeSave(), null, 2)], { type: 'application/json' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `leiturista-semae-progresso-v${APP_VERSION}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 500);
+  });
+  importBtn.addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', async () => {
+    const file = importFile.files?.[0]; if (!file) return;
+    try { const d = JSON.parse(await file.text()); if (!validateSave(d)) throw new Error('save inválido'); applySave(d); showBanner('✅ BACKUP RESTAURADO', 'Progresso carregado', 120); } catch { alert('Arquivo de salvamento inválido.'); }
+    importFile.value = '';
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.repeat || e.target.closest?.('button,input,select,textarea')) return;
+    const k = e.key.toLowerCase(); if (!overlay.hidden) return;
+    if (k === ' ' || k === 'arrowup' || k === 'w') { e.preventDefault(); if (state.paused) setPaused(false); else jump(); }
+    else if (k === 'p' || k === 'escape') { e.preventDefault(); setPaused(!state.paused); }
+    else if (k === 'm') toggleMusic(); else if (k === 's') toggleSfx();
+  });
+  document.addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (k === ' ' || k === 'arrowup' || k === 'w') releaseJump(); });
+
+  window.addEventListener('resize', resizeCanvas, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 120), { passive: true });
+
+  // INICIALIZAÇÃO
+  syncAudioButtons(); normalizeSkin(); renderFasesGrid(); updateMissionLineUI(); resizeCanvas(); updateHudDisplay(); render();
+  startBtn.focus({ preventScroll: true });
+})();
+</script>
+</body>
+</html>

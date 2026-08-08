@@ -1,0 +1,9 @@
+version: 1
+traceability_file: ".sdd/traceability.yml"
+protected_paths:
+  - "index.html"
+  - "README.md"
+  - "scripts/*.py"
+ignored_paths:
+  - ".git/*"
+  - "docs/*"

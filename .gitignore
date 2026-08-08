@@ -1,0 +1,17 @@
+# System & Temporary Files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Environment & Local Overrides
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+
+# IDEs
+.vscode/
+.idea/

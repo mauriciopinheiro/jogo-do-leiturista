@@ -1,0 +1,35 @@
+version: 1
+change_sets:
+  - id: "CS-2026-001"
+    title: "Jogo do Leiturista 3.0 SEMAE — 5 Fases SCI, Kombi Branca e Design System"
+    spec: "docs/sdd/especificacao-fonte-v1.1.md"
+    requirements:
+      - "REQ-01: 5 Fases progressivas com dados reais de rotas do SCI SEMAE Piracicaba"
+      - "REQ-02: Cutscenes da Kombi Branca SEMAE desembarcando e embarcando o leiturista no início e fim das fases"
+      - "REQ-03: Exibição de nomes de ruas reais e hidrômetros da rota na HUD com transição dinâmica de ruas"
+      - "REQ-04: Manutenção estrita da roupa do leiturista em Azul SEMAE com tokens do Sou SEMAE Portal"
+      - "REQ-05: Arquitetura de arquivo único HTML5 offline, responsivo e com salvamento assinado via FNV-1a"
+    acceptance_criteria:
+      - "O jogo executa perfeitamente offline em um único arquivo HTML (index.html)"
+      - "Todas as 5 fases possuem nomes de ruas, setores, rotas e hidrômetros reais extraídos do banco SCI"
+      - "A Kombi Branca SEMAE realiza animação no início e no final de cada fase"
+      - "O leiturista usa o uniforme azul SEMAE padrão"
+      - "Validação SDD é 100% aprovada"
+    tasks:
+      - "TASK-01: Estruturar repositório e governança de agentes/skills"
+      - "TASK-02: Desenvolver engine HTML5 canvas com suporte a fases reais SCI"
+      - "TASK-03: Implementar rendering e animação da Kombi Branca SEMAE"
+      - "TASK-04: Integrar Design System SEMAE e HUD dinâmico de rotas/ruas"
+      - "TASK-05: Testar, validar SDD e publicar no GitHub"
+    files:
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 800
+      - path: "README.md"
+        ranges:
+          - start: 1
+            end: 150
+    evidence:
+      - "Validação automatizada scripts/validate_sdd.py"
+      - "Repositório GitHub publicamente acessível"
