@@ -227,7 +227,7 @@
     { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },  // Chegada ao SEMAE (4.0s)
     { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 }, // Reencontro do Cão (4.5s)
     { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },  // Carinho & Ração (5.5s)
-    { id: 4, name: 'epilogue', duration: 5000, cameraScale: 1.08 }     // Epílogo Pôr do Sol (5.0s)
+    { id: 4, name: 'epilogue', duration: 6000, cameraScale: 1.08 }     // Epílogo Pôr do Sol (6.0s)
   ];
 
   const ROTAS_DEFAULT = ['SÃO DIMAS', 'VILA REZENDE', 'BAIRRO DOS ALEMÃES', 'JARAGUÁ', 'RECANTO DO PIRACICAMIRIM'];
@@ -301,12 +301,12 @@
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
       dog.visible = true; dog.x = W * 0.24; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 3500);
+      state.bannerText = ''; state.bannerSub = ''; state.bannerTimer = 0;
     } else if (state.sceneIdx === 4) {
       bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
-      showBanner('JORNADA CONCLUÍDA', 'Missão cumprida no SEMAE Piracicaba', 800);
+      showBanner('JORNADA CONCLUÍDA', 'Missão cumprida no SEMAE Piracicaba', 4200);
       playFanfare();
     }
   }
