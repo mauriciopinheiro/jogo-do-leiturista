@@ -194,8 +194,6 @@
     
     <div class="quick-controls" aria-label="Controles rápidos">
       <button class="mini-btn" id="pauseBtn" type="button" disabled aria-label="Pausar jogo">Ⅱ</button>
-      <button class="mini-btn" id="musicBtn" type="button" disabled aria-label="Alternar música">♫ ON</button>
-      <button class="mini-btn" id="sfxBtn" type="button" disabled aria-label="Alternar efeitos sonoros">FX ON</button>
     </div>
 
     <div class="overlay" id="overlay">
@@ -219,9 +217,9 @@
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">💧 <b>Pontuação por Média:</b> A pontuação obtida é a própria média dos últimos 3 meses do hidrômetro! Os 10% de maiores médias são <b>Dourados</b> (pontuação dupla).</div>
+          <div class="controle-item">💧 <b>Diretor de Percurso:</b> Padrões harmônicos de salto! Hidrômetro perdido entra na <b>Fila de Pendências</b> da rota.</div>
+          <div class="controle-item">⚡ <b>Barra de Fluxo (0-100%):</b> Sequências perfeitas carregam o Fluxo de Leitura com velocidade, trilha luminosa e super bônus!</div>
           <div class="controle-item">🚐 <b>Kombi SEMAE:</b> Ao pegar o último registro, a pista limpa, o cachorro para e você corre para entrar na Kombi!</div>
-          <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure para pular alto. Solte cedo para salto curto. <b>P:</b> Pausar.</div>
         </div>
 
         <button class="skin-btn" id="skinBtn" type="button">👕 Uniforme: Azul SEMAE Clássico</button>
@@ -341,7 +339,7 @@
   const hudRuaAtual = document.getElementById('hudRuaAtual'), hudHidrometroCount = document.getElementById('hudHidrometroCount');
   const distanceEl = document.getElementById('distance'), dangerBar = document.getElementById('dangerBar'), missionHud = document.getElementById('missionHud');
   const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText'), missionLine = document.getElementById('missionLine'), startBtn = document.getElementById('startBtn'), skinBtn = document.getElementById('skinBtn'), collectionText = document.getElementById('collectionText'), live = document.getElementById('live'), touchHint = document.getElementById('touchHint');
-  const pauseBtn = document.getElementById('pauseBtn'), musicBtn = document.getElementById('musicBtn'), sfxBtn = document.getElementById('sfxBtn'), musicModalBtn = document.getElementById('musicModalBtn'), sfxModalBtn = document.getElementById('sfxModalBtn'), exportBtn = document.getElementById('exportBtn'), importBtn = document.getElementById('importBtn'), importFile = document.getElementById('importFile'), versionText = document.getElementById('versionText');
+  const pauseBtn = document.getElementById('pauseBtn'), musicModalBtn = document.getElementById('musicModalBtn'), sfxModalBtn = document.getElementById('sfxModalBtn'), exportBtn = document.getElementById('exportBtn'), importBtn = document.getElementById('importBtn'), importFile = document.getElementById('importFile'), versionText = document.getElementById('versionText');
   const fasesGrid = document.getElementById('fasesGrid'), medalhasBox = document.getElementById('medalhasBox'), quaseBox = document.getElementById('quaseBox'), quaseMsg = document.getElementById('quaseMsg');
 
   let W = 540, H = 960, groundY = Math.round(H * 0.79); const gravity = 0.82;
@@ -376,6 +374,8 @@
   let selectedSkin = clamp(saved ? saved.estado.selectedSkin : 0, 0, skins.length - 1);
   let maxUnlockedFase = saved ? saved.estado.maxUnlockedFase : 1;
   let currentSelectedFase = 1;
+  let bestByPhase = saved && saved.estado.bestByPhase ? saved.estado.bestByPhase : [0, 0, 0, 0, 0];
+  let retryCount = 0;
   const audioPrefs = { musicOn: saved ? saved.estado.musicOn : true, sfxOn: saved ? saved.estado.sfxOn : true };
 
   function unlockedSkins() { return skins.map((s, i) => ({ s, i })).filter(x => lifetimeReadings >= x.s.need); }
@@ -384,19 +384,30 @@
 
   // ESTADO GLOBAL DO JOGO
   const state = {
-    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
-    spawnClock: 0, nextSpawn: 200, readingClock: 0, nextReading: 20, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
+    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, baseSpeed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
+    spawnClock: 0, nextSpawn: 180, readingClock: 0, nextReading: 20, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
     dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
-    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
+    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0,
     
-    // SEQUÊNCIA DE FASE & MÉDIAS DOS HIDRÔMETROS
+    // BARRA DE FLUXO RECARREGÁVEL (0 - 100%)
+    flowEnergy: 0,
+    flowActiveTime: 0,
+    
+    // FILA DE PENDÊNCIAS DA ROTA (P0 - NUNCA PERDER UM HIDRÔMETRO DEFINITIVAMENTE)
+    pendingMeters: [],
+    phaseMeterList: [],
+    nextMeterIndex: 0,
+
+    // DIRETOR DE PERCURSO & DIREÇÃO ADAPTATIVA
+    recentHits: 0,
+    respiroTimer: 0,
+    patternQueue: [],
+
     faseIdx: 0,
     ruaIdx: 0,
     ruaReadings: 0,
     totalFaseReadings: 0,
-    phaseMeterList: [],
-    nextMeterIndex: 0,
     
     kombiState: 'arrival', // 'arrival', 'disembark', 'leaving_arrival', 'dog_entry', 'running', 'arrival_finish', 'cross_screen', 'driving_away', 'completed_modal'
     kombiX: -220,
@@ -406,11 +417,7 @@
     // MICRO-MISSÕES EM PARTIDA
     microMission: null,
     microProgress: 0,
-    microTarget: 3,
-
-    // DIREÇÃO DE DIFICULDADE & RESPIRO
-    recentHits: 0,
-    minSpawnDistance: 240
+    microTarget: 3
   };
 
   const player = { x: 100, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: false, state: 'idle' };
@@ -421,15 +428,17 @@
   function makeSave() {
     const d = {
       app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: new Date().toISOString(),
-      estado: { lifetimeReadings, best: Math.floor(state.best), selectedSkin, maxUnlockedFase, musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn },
+      estado: { lifetimeReadings, best: Math.floor(state.best), bestByPhase, selectedSkin, maxUnlockedFase, musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn },
       assinatura: ''
     };
     d.assinatura = signSave(d); return d;
   }
   function persistProgress() { const raw = JSON.stringify(makeSave()); if (raw.length <= MAX_SAVE_BYTES) rawStore.set(SAVE_KEY, raw); }
   function applySave(d) {
-    lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best; selectedSkin = d.estado.selectedSkin;
-    maxUnlockedFase = d.estado.maxUnlockedFase || 1; audioPrefs.musicOn = d.estado.musicOn; audioPrefs.sfxOn = d.estado.sfxOn;
+    lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best;
+    if (d.estado.bestByPhase) bestByPhase = d.estado.bestByPhase;
+    selectedSkin = d.estado.selectedSkin; maxUnlockedFase = d.estado.maxUnlockedFase || 1;
+    audioPrefs.musicOn = d.estado.musicOn; audioPrefs.sfxOn = d.estado.sfxOn;
     normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
   }
 
@@ -447,7 +456,6 @@
       list.push({ index: i + 1, avg3Months: avg, isGold: false });
     }
 
-    // Exatamente os 10% de maiores médias viram Especiais Dourados!
     const numGold = Math.max(1, Math.ceil(total * 0.10));
     const sorted = [...list].map((item, origIdx) => ({ origIdx, avg: item.avg3Months }));
     sorted.sort((a, b) => b.avg - a.avg);
@@ -480,7 +488,8 @@
 
   function updateMissionLineUI() {
     const r = ROTAS_SEMAE[currentSelectedFase - 1];
-    missionLine.innerHTML = `🎯 <b>${r.nome_fase}</b><br><small>${r.bairro} · Setor ${r.setor}/Rota ${r.rota} · ${r.total_hidrometros} Hidrômetros em ${r.ruas.length} ruas</small>`;
+    const recordeFase = bestByPhase[currentSelectedFase - 1] || 0;
+    missionLine.innerHTML = `🎯 <b>${r.nome_fase}</b><br><small>${r.bairro} · Setor ${r.setor}/Rota ${r.rota} · ${r.total_hidrometros} Hidrômetros<br>🏆 Recorde da Fase: ${recordeFase.toLocaleString('pt-BR')} pts</small>`;
   }
 
   // ÁUDIO SINTETIZADO WEB AUDIO API COM TIMBRES EXCLUSIVOS
@@ -525,10 +534,9 @@
     setTimeout(() => beep(900, 0.06, 0.03, 'square', 200), 40);
     setTimeout(() => beep(1200, 0.08, 0.03, 'triangle', 150), 80);
   }
-  function bark() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; if (navigator.vibrate) navigator.vibrate(14); }
+  function bark() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; }
   function successSound() { beep(720, 0.05, 0.022, 'triangle', 180); setTimeout(() => beep(1040, 0.07, 0.02, 'triangle', 140), 55); }
   function syncAudioButtons() {
-    musicBtn.textContent = audioPrefs.musicOn ? '♫ ON' : '♫ OFF'; sfxBtn.textContent = audioPrefs.sfxOn ? 'FX ON' : 'FX OFF';
     musicModalBtn.textContent = audioPrefs.musicOn ? '♫ Música: ligada' : '♫ Música: desligada'; sfxModalBtn.textContent = audioPrefs.sfxOn ? '🔊 Efeitos: ligados' : '🔇 Efeitos: desligados';
     audio.sync();
   }
@@ -547,21 +555,23 @@
     player.x = Math.min(W * 0.5, Math.max(150, player.x * rx)); player.y = Math.min(player.y, groundY - player.h);
   }
 
-  // GERADOR DE MICRO-MISSÕES EM PARTIDA
+  // GERADOR DE MICRO-MISSÕES EM PARTIDA (CONTEXTUAL E PROGRESSIVO)
   function generateMicroMission() {
     const pool = [
-      { id: 'combo', label: '🎯 Faça 3 leituras no ritmo', target: 3 },
-      { id: 'perfect', label: '✨ Realize 1 Leitura Perfeita', target: 1 },
-      { id: 'dodge', label: '⚡ Desvie de 2 obstáculos', target: 2 }
+      { id: 'combo', label: '🎯 Ritmo', target: 3 },
+      { id: 'perfect', label: '✨ Perfeita', target: 1 },
+      { id: 'dodge', label: '⚡ Desvio', target: 2 }
     ];
     state.microMission = pool[Math.floor(Math.random() * pool.length)];
     state.microProgress = 0;
+    updateHudRouteInfo();
   }
 
   function checkMicroMission(type) {
     if (!state.microMission) return;
     if (state.microMission.id === type) {
       state.microProgress++;
+      updateHudRouteInfo();
       if (state.microProgress >= state.microMission.target) {
         state.score += 400;
         showBanner('✅ MICRO-OBJETIVO CUMPRIDO!', '+400 PONTOS BÔNUS', 110, 'bonus');
@@ -577,44 +587,57 @@
     state.faseIdx = currentSelectedFase - 1;
     const rota = ROTAS_SEMAE[state.faseIdx];
     
-    state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.2 + state.faseIdx * 0.4;
-    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 220;
+    state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0;
+    state.baseSpeed = 5.2 + state.faseIdx * 0.35; state.speed = state.baseSpeed;
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 180;
     state.readingClock = 0; state.nextReading = 20; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
     state.dogThreat = 0;
     state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
-    state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
+    state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1;
+    state.flowEnergy = 0; state.flowActiveTime = 0;
     state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
     state.dogDistract = 0; state.dogLeap = 0;
+    state.recentHits = 0; state.respiroTimer = 0; state.patternQueue = [];
+    state.pendingMeters = [];
     
-    // CONSTRUIR LISTA ÚNICA DE HIDRÔMETROS DA ROTA COM MÉDIAS E 10% DE ESPECIAIS
     state.phaseMeterList = buildPhaseMeters(state.faseIdx);
     state.nextMeterIndex = 0;
 
-    // Kombi Branca e Sequência Inicial de Segurança
     state.ruaIdx = 0;
     state.ruaReadings = 0;
     state.totalFaseReadings = 0;
-    state.kombiState = 'arrival';
-    state.kombiX = -200;
-    state.kombiDoorOpen = true;
-    state.phaseCompleted = false;
     
-    player.x = 80; player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false;
-    dog.x = -250; dog.y = groundY - dog.h; dog.bark = 0; dog.visible = false;
+    // P1: RETRY RÁPIDO - SE FOR RETRY (retryCount > 0), INTRO É DE APENAS 0.6s
+    if (retryCount > 0) {
+      state.kombiState = 'running';
+      state.kombiX = -250;
+      state.kombiDoorOpen = false;
+      player.visible = true; player.x = 205;
+      dog.visible = true; dog.x = 35;
+    } else {
+      state.kombiState = 'arrival';
+      state.kombiX = -200;
+      state.kombiDoorOpen = true;
+      player.visible = false; player.x = 80;
+      dog.visible = false; dog.x = -250;
+    }
+    
+    state.phaseCompleted = false;
+    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0;
     
     obstacles = []; meters = []; powerups = []; particles = []; floaters = []; streetSigns = []; events = [];
-    overlay.hidden = true; pauseBtn.disabled = false; musicBtn.disabled = false; sfxBtn.disabled = false;
+    overlay.hidden = true; pauseBtn.disabled = false;
     pauseBtn.textContent = 'Ⅱ'; touchHint.classList.remove('hidden'); state.lastTime = 0;
     medalhasBox.style.display = 'none'; quaseBox.style.display = 'none';
     
+    retryCount++;
     generateMicroMission();
     updateHudRouteInfo();
     
-    // Adicionar a Placa da primeira rua
     const primeiraRua = rota.ruas[0].nome_rua;
     streetSigns.push({ text: primeiraRua, x: W + 50, y: groundY - 210 });
 
-    showBanner(`VAN DA SEMAE CHEGANDO`, `Bairro ${rota.bairro}`, 150, 'bonus');
+    if (retryCount === 1) showBanner(`VAN DA SEMAE CHEGANDO`, `Bairro ${rota.bairro}`, 150, 'bonus');
     beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
   }
 
@@ -625,48 +648,101 @@
     hudRotaInfo.textContent = `SETOR ${r.setor} · ROTA ${r.rota}`;
     hudRuaAtual.textContent = `📍 ${ruaAtual}`;
     hudHidrometroCount.textContent = `💧 ${state.totalFaseReadings} / ${r.total_hidrometros}`;
-    missionHud.textContent = state.microMission ? state.microMission.label : `${ruaAtual}`;
+    
+    if (state.microMission) {
+      missionHud.textContent = `🎯 ${state.microMission.label}: ${state.microProgress}/${state.microMission.target}`;
+    } else {
+      missionHud.textContent = `${ruaAtual}`;
+    }
   }
 
   function doJump() {
     player.vy = -16.4; player.onGround = false; state.coyote = 0; state.jumpBuffer = 0; state.jumpHeld = true;
-    beep(650, 0.05, 0.02, 'square', 110); if (navigator.vibrate) navigator.vibrate(7);
+    beep(650, 0.04, 0.015, 'square', 100);
     burst(player.x + 22, groundY - 3, skins[selectedSkin].trail, 6);
   }
-  function jump() {
-    if (!state.running || state.paused || state.over || state.kombiState !== 'running') return;
+  function jump(e) {
+    if (!state.running || state.paused || state.over) {
+      // P1: TOQUE EM QUALQUER LUGAR NA TELA DE GAME OVER REINICIA A ROTA!
+      if (state.over && !overlay.hidden) {
+        audio.ensure(); resetGame(); startLoop(); return;
+      }
+      return;
+    }
+    if (state.kombiState !== 'running') {
+      // Pulamento de intro ao tocar na tela
+      if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'dog_entry') {
+        state.kombiState = 'running';
+        player.visible = true; player.x = 205;
+        dog.visible = true; dog.x = 35;
+      }
+      return;
+    }
     audio.ensure(); state.taps++; if (state.taps >= 2) touchHint.classList.add('hidden');
     state.jumpHeld = true;
     if (player.onGround || state.coyote > 0) doJump(); else state.jumpBuffer = 10;
   }
   function releaseJump() { state.jumpHeld = false; if (!player.onGround && player.vy < -5.5) player.vy *= 0.58; }
 
-  // GERADOR DE FRASES DE GAMEPLAY PRÉ-BALANCEADAS
+  // [P0] DIRETOR DE PERCURSO — GERADOR DE PADRÕES HARMÔNICOS DE GAMEPLAY (FRASES DE LEITURA)
   function spawnObstaclePattern() {
     if (state.kombiState !== 'running') return;
     
     const lastOb = obstacles[obstacles.length - 1];
     if (lastOb && (W + 45 - lastOb.x) < state.minSpawnDistance) return;
 
-    const r = Math.random();
-    if (r < 0.28) {
+    // Se estiver em respiro pós-batida, gerar obstáculo bem simples
+    if (state.respiroTimer > 0) {
       obstacles.push({ type: 'cone', x: W + 50, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
-    } else if (r < 0.55) {
+      spawnMeter(W + 110, groundY - 88);
+      return;
+    }
+
+    const patterns = [
+      'cone_apex',     // Cone + hidrômetro no ápice do salto
+      'barrier_gold',  // Barreira + hidrômetro ouro no alto
+      'hose_tap',      // Mangueira + hidrômetro baixo
+      'bin_combo',     // Lixeira + hidrômetro duplo
+      'wave'           // Sequência em onda (baixo -> alto -> baixo)
+    ];
+
+    const chosen = patterns[Math.floor(Math.random() * patterns.length)];
+
+    if (chosen === 'cone_apex') {
+      obstacles.push({ type: 'cone', x: W + 50, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
+      spawnMeter(W + 50, groundY - 165); // Hidrômetro exato no ápice!
+    } else if (chosen === 'barrier_gold') {
       obstacles.push({ type: 'barrier', x: W + 50, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
-    } else if (r < 0.78) {
-      obstacles.push({ type: 'bin', x: W + 50, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
-    } else {
+      spawnMeter(W + 70, groundY - 170); // Hidrômetro alto
+    } else if (chosen === 'hose_tap') {
       obstacles.push({ type: 'hose', x: W + 50, y: groundY - 22, w: 92, h: 22, hit: false, passed: false, nearChecked: false });
+      spawnMeter(W + 130, groundY - 88); // Hidrômetro baixo após pulo curto
+    } else if (chosen === 'bin_combo') {
+      obstacles.push({ type: 'bin', x: W + 50, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
+      spawnMeter(W + 65, groundY - 145);
+      spawnMeter(W + 210, groundY - 88);
+    } else {
+      // Wave
+      spawnMeter(W + 50, groundY - 88);
+      spawnMeter(W + 180, groundY - 160);
     }
   }
 
-  // GERAR HIDRÔMETRO SEGUINDO A ORDEM, SEM ACAVALAR E COM FLUXO CONTÍNUO
+  // [P0] GERAR HIDRÔMETRO REUTILIZANDO FILA DE PENDÊNCIAS (`pendingMeters`)
   function spawnMeter(x = W + 50, y = null) {
     if (state.kombiState !== 'running') return;
-    if (state.nextMeterIndex >= state.phaseMeterList.length) return; // Todos os hidrômetros da fase já foram gerados
+    
+    let meterData = null;
+    if (state.pendingMeters.length > 0) {
+      meterData = state.pendingMeters.shift(); // Pega da fila de pendências!
+    } else if (state.nextMeterIndex < state.phaseMeterList.length) {
+      meterData = state.phaseMeterList[state.nextMeterIndex];
+      state.nextMeterIndex++;
+    } else {
+      return; // Todos os hidrômetros já foram lidos ou estão em tela!
+    }
 
-    // GARANTIR QUE NÃO HAJA HIDRÔMETROS ACAVALADOS (SOBREPOSTOS): MIN_DISTANÇA = 140px
-    const MIN_DIST = 140;
+    const MIN_DIST = 130;
     let targetX = x;
 
     for (const m of meters) {
@@ -680,9 +756,6 @@
       }
     }
 
-    const meterData = state.phaseMeterList[state.nextMeterIndex];
-    state.nextMeterIndex++;
-
     const high = meterData.isGold || Math.random() < 0.35;
     meters.push({
       x: targetX,
@@ -692,48 +765,63 @@
       spin: Math.random() * 6.3,
       kind: meterData.isGold ? 'gold' : 'normal',
       avg3M: meterData.avg3Months,
-      meterIndex: meterData.index
+      meterIndex: meterData.index,
+      data: meterData
     });
   }
 
+  // POWER-UPS CONTEXTUAIS (P1 - NÃO SORTEAR SE JÁ POSSUI OU NÃO PRECISA)
   function spawnPowerup() {
     if (state.kombiState !== 'running') return;
-    const types = ['shoe', 'shield', 'bone']; const type = types[Math.floor(Math.random() * types.length)];
+    const candidates = [];
+    if (state.shoeTimer <= 0) candidates.push('shoe');
+    if (state.shield <= 0) candidates.push('shield');
+    if (state.dogThreat > 35) candidates.push('bone');
+    if (!candidates.length) return;
+    
+    const type = candidates[Math.floor(Math.random() * candidates.length)];
     powerups.push({ type, x: W + 50, y: groundY - rand(90, 155), r: 22, taken: false, spin: 0 });
   }
 
   function spawnEvent() {
     if (state.kombiState !== 'running') return;
-    const pool = ['maintenance', 'resident', 'cat'];
+    const pool = ['maintenance', 'resident'];
     const type = pool[Math.floor(Math.random() * pool.length)];
     events.push({ type, x: W + 90, y: 0, life: 500, triggered: false });
   }
 
-  function playerBox() { return { x: player.x + 7, y: player.y + 8, w: player.w - 12, h: player.h - 12 }; }
-  function dogBox() { return { x: dog.x + 8, y: dog.y + 8, w: dog.w - 12, h: dog.h - 12 }; }
+  // HITBOXES MAIS GENEROSAS QUE A ARTE (P1)
+  function playerBox() { return { x: player.x + 10, y: player.y + 10, w: player.w - 18, h: player.h - 14 }; }
+  function dogBox() { return { x: dog.x + 10, y: dog.y + 10, w: dog.w - 16, h: dog.h - 14 }; }
   function overlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
   function circleOverlap(box, o) { const cx = Math.max(box.x, Math.min(o.x, box.x + box.w)), cy = Math.max(box.y, Math.min(o.y, box.y + box.h)), dx = o.x - cx, dy = o.y - cy; return dx * dx + dy * dy < o.r * o.r; }
 
-  function resetCombo() { if (state.combo >= 3) addFloater('RITMO PERDIDO', player.x + 25, player.y - 15, '#ff9a88', true); state.combo = 0; state.comboTimer = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false; }
+  function resetCombo() {
+    if (state.combo >= 2) addFloater('RITMO PERDIDO', player.x + 25, player.y - 15, '#ff9a88', true);
+    state.combo = 0; state.comboTimer = 0; state.mult = 1;
+  }
+
   function hitObstacle(ob) {
     if (ob.hit || player.hurt > 0) return; ob.hit = true;
     if (state.shield > 0) {
       state.shield = 0; state.shake = reducedMotion ? 0 : 7; burst(player.x + 25, player.y + 30, '#7bd8ff', 18, true);
       addFloater('🛡️ DEFESA SEMAE!', player.x + 25, player.y - 12, '#dff7ff', true); beep(460, 0.12, 0.035, 'triangle', 250); return;
     }
-    player.hurt = 48; state.dogThreat = Math.min(100, state.dogThreat + 26); state.flash = 12; state.shake = reducedMotion ? 0 : 10; state.dogLeap = 48;
-    resetCombo(); burst(player.x + 25, player.y + 35, '#ffcc3d', 14, true); beep(120, 0.16, 0.05, 'sawtooth', -40); bark();
+    
+    // [P0] ADAPTATIVO & IMPACTO REAL
+    player.hurt = 48; state.recentHits++; state.respiroTimer = 90; // 1.5s de respiro
+    state.dogThreat = Math.min(100, state.dogThreat + 22); state.flash = 12; state.shake = reducedMotion ? 0 : 10; state.dogLeap = 48;
+    resetCombo(); burst(player.x + 25, player.y + 35, '#ffcc3d', 14, true);
+    beep(120, 0.16, 0.05, 'sawtooth', -40); bark();
+    if (navigator.vibrate) navigator.vibrate(50);
   }
 
   function comboUp(amount = 1) {
-    state.combo += amount; state.comboTimer = 520; state.maxCombo = Math.max(state.maxCombo, state.combo);
+    state.combo += amount;
+    state.comboTimer = 170; // ENCURTADO PARA 2.8 SECONDS (P1)
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
     const old = state.mult; state.mult = Math.min(5, 1 + Math.floor(state.combo / 3));
     if (state.mult > old) { showBanner(`🔥 COMBO x${state.mult}`, `${state.combo} leituras na sequência`, 75, 'combo'); beep(900 + state.mult * 90, 0.08, 0.025, 'triangle', 100); }
-    if (state.combo >= 12 && !state.flowTriggered) {
-      state.flowTriggered = true; state.flow = 390; state.dogThreat = Math.max(6, state.dogThreat - 12);
-      showBanner('💧 FLUXO DE LEITURA!', '6s de ritmo máximo SEMAE', 130, 'bonus');
-      burst(W * 0.52, H * 0.38, '#5FDCF2', 30, true); beep(520, 0.08, 0.03, 'triangle', 340);
-    }
     checkMicroMission('combo');
   }
 
@@ -741,30 +829,49 @@
     m.taken = true; state.readings++; lifetimeReadings++; state.ruaReadings++; state.totalFaseReadings++;
     persistProgress(); comboUp(m.kind === 'gold' ? 2 : 1);
     
-    // A PONTUAÇÃO DE CADA HIDRÔMETRO É A SUA MÉDIA DE LEITURA DOS ÚLTIMOS 3 MESES!
+    // PONTUAÇÃO = MÉDIA DE LEITURA DOS ÚLTIMOS 3 MESES
     let base = (m.avg3M || 20) * (m.kind === 'gold' ? 2 : 1);
     
-    // Leitura Perfeita: Ápice do Salto
+    // BARRA DE FLUXO DE LEITURA RECARREGÁVEL (P1)
     const perfect = !player.onGround && Math.abs(player.vy) < 3.8;
     if (perfect) {
-      state.perfects++; base += 50;
+      state.perfects++; base += 50; state.flowEnergy = Math.min(100, state.flowEnergy + 22);
       addFloater('✨ LEITURA PERFEITA!', m.x, m.y - 28, '#fff3a8', true);
       burst(m.x, m.y, '#fff09b', 20, true);
       playPerfectReadingSound();
+      if (navigator.vibrate) navigator.vibrate(20);
       checkMicroMission('perfect');
     } else if (m.kind === 'gold') {
+      state.flowEnergy = Math.min(100, state.flowEnergy + 18);
       playGoldMeterSound();
       addFloater('🌟 MAIOR MÉDIA!', m.x, m.y - 32, '#FFCD07', true);
+      if (navigator.vibrate) navigator.vibrate(30);
     } else {
+      state.flowEnergy = Math.min(100, state.flowEnergy + 10);
       successSound();
     }
 
-    const gain = Math.round(base * state.mult * (state.flow > 0 ? 1.5 : 1)); state.score += gain;
-    state.dogThreat = Math.max(0, state.dogThreat - (m.kind === 'gold' ? 12 : 7));
+    // ATIVAÇÃO DO FLUXO RECARREGÁVEL
+    if (state.flowEnergy >= 100 && state.flowActiveTime <= 0) {
+      state.flowActiveTime = 360; // 6 segundos
+      state.flowEnergy = 15; // Volta para 15% para poder recarregar de novo!
+      state.dogThreat = Math.max(0, state.dogThreat - 20);
+      showBanner('⚡ FLUXO DE LEITURA ATIVADO!', '6s de Velocidade & Super Bônus SEMAE!', 140, 'bonus');
+      burst(W * 0.5, H * 0.35, '#5FDCF2', 32, true);
+      beep(520, 0.1, 0.04, 'triangle', 300);
+      if (navigator.vibrate) navigator.vibrate(40);
+    }
+
+    const gain = Math.round(base * state.mult * (state.flowActiveTime > 0 ? 1.5 : 1)); state.score += gain;
+    
+    // REBALANCEAMENTO DO CACHORRO (P0)
+    const threatRed = perfect ? 6 : (m.kind === 'gold' ? 10 : 3);
+    state.dogThreat = Math.max(0, state.dogThreat - threatRed);
+    
     burst(m.x, m.y, m.kind === 'gold' ? '#ffd85d' : '#1351B4', 12, m.kind === 'gold');
     addFloater(`+${gain} pts`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
 
-    // VERIFICAR MUDANÇA DE RUA
+    // MUDANÇA DE RUA
     const rota = ROTAS_SEMAE[state.faseIdx];
     const ruaAtualData = rota.ruas[state.ruaIdx];
     
@@ -773,12 +880,12 @@
         state.ruaIdx++;
         state.ruaReadings = 0;
         const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
-        showBanner(proximaRua, '', 240, 'region');
+        showBanner(proximaRua, '📍 Nova Rua na Rota SEMAE', 240, 'region');
         streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 210 });
       }
     }
 
-    // VERIFICAR CONCLUSÃO DA ROTA (ÚLTIMO REGISTRO PEGO)
+    // CONCLUSÃO DA ROTA (ÚLTIMO REGISTRO PEGO)
     if (state.totalFaseReadings >= rota.total_hidrometros && !state.phaseCompleted) {
       triggerPhaseCompletion();
     }
@@ -786,18 +893,24 @@
     updateHudRouteInfo();
   }
 
-  // ANIMAÇÃO DE FIM DE FASE: KOMBI ESTACIONA NA DIREITA COM PORTA ABERTA, LEITURISTA ATRAVESSA A TELA E ENTRA!
+  // [P0] LEITURA PERDIDA VOLTA PARA A FILA DE PENDÊNCIAS
+  function missMeter(m) {
+    if (m.taken) return;
+    m.taken = true;
+    state.pendingMeters.push(m.data); // Volta para a fila de pendências!
+    resetCombo();
+    state.dogThreat = Math.min(100, state.dogThreat + 6);
+    addFloater('LEITURA PERDIDA!', W - 140, groundY - 140, '#ff7b7b', false);
+    beep(140, 0.08, 0.02, 'sawtooth', -30);
+  }
+
   function triggerPhaseCompletion() {
     state.phaseCompleted = true;
     state.kombiState = 'arrival_finish';
     state.kombiX = W + 220;
-    state.kombiDoorOpen = true; // Porta da Kombi aberta aguardando!
+    state.kombiDoorOpen = true;
     
-    // LIMPEZA IMEDIATA: ZERAR ABSOLUTAMENTE TODOS OS HIDRÔMETROS E OBSTÁCULOS DA TELA!
-    meters = [];
-    obstacles = [];
-    powerups = [];
-    events = [];
+    meters = []; obstacles = []; powerups = []; events = [];
 
     showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE está aguardando!', 160, 'unlock');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
@@ -805,7 +918,7 @@
 
   function collectPower(p) {
     p.taken = true; state.powerupsTaken++;
-    if (p.type === 'shoe') { state.shoeTimer = 420; showBanner('🥾 TURBO LEITURISTA!', 'Velocidade e pontos', 105, 'power'); beep(520, 0.09, 0.03, 'square', 400); }
+    if (p.type === 'shoe') { state.shoeTimer = 420; showBanner('🥾 TURBO LEITURISTA!', '+Score e Bônus SEMAE!', 105, 'power'); beep(520, 0.09, 0.03, 'square', 400); }
     else if (p.type === 'shield') { state.shield = 1; showBanner('🛡️ CAPACETE SEMAE!', 'Proteção contra impacto', 105, 'power'); beep(620, 0.1, 0.03, 'triangle', 300); }
     else { state.dogThreat = Math.max(0, state.dogThreat - 38); state.dogDistract = 260; showBanner('🦴 OSSO PARA O CÃO!', 'Distância garantida', 110, 'power'); beep(360, 0.08, 0.03, 'triangle', -80); }
     state.score += 250 * state.mult; burst(p.x, p.y, '#ffffff', 20, true);
@@ -816,6 +929,7 @@
     const pb = playerBox(), clearance = ob.y - (pb.y + pb.h);
     if (!player.onGround && clearance >= -2 && clearance < 24) {
       state.nearMisses++; const gain = 50 * state.mult; state.score += gain;
+      state.flowEnergy = Math.min(100, state.flowEnergy + 12);
       addFloater(`POR POUCO! +${gain}`, player.x + 35, player.y - 18, '#ffe9a8', true); beep(780, 0.045, 0.018, 'square', 120);
       checkMicroMission('dodge');
     }
@@ -840,26 +954,31 @@
   }
 
   function gameOver() {
-    state.running = false; state.over = true; state.best = Math.max(state.best, Math.floor(state.score));
+    state.running = false; state.over = true;
+    const currentScore = Math.floor(state.score);
+    bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
+    state.best = Math.max(state.best, currentScore);
     persistProgress(); beep(180, 0.18, 0.05, 'sawtooth', -70);
+    
     modalTitle.textContent = '🐶 O cão se aproximou!';
-    modalText.textContent = `Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')} · Hidrômetros lidos: ${state.totalFaseReadings} · Leituras Perfeitas: ${state.perfects}`;
-    startBtn.textContent = 'TENTAR ROTA NOVAMENTE'; pauseBtn.disabled = true; musicBtn.disabled = true; sfxBtn.disabled = true;
+    modalText.textContent = `Pontuação: ${currentScore.toLocaleString('pt-BR')} · Hidrômetros lidos: ${state.totalFaseReadings} · Leituras Perfeitas: ${state.perfects}`;
+    startBtn.textContent = 'TOQUE EM QUALQUER LUGAR PARA TENTAR NOVAMENTE'; pauseBtn.disabled = true;
     renderMedalhasEPlacar(); updateCollectionUI(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
   }
 
   function phaseVictoryModal() {
     const r = ROTAS_SEMAE[state.faseIdx];
-    if (state.faseIdx + 1 > maxUnlockedFase && state.faseIdx + 1 < ROTAS_SEMAE.length) {
-      maxUnlockedFase = state.faseIdx + 2;
-      persistProgress(); renderFasesGrid();
-    }
+    const currentScore = Math.floor(state.score);
+    bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
+    state.best = Math.max(state.best, currentScore);
     
-    state.running = false; state.best = Math.max(state.best, Math.floor(state.score));
-    persistProgress();
+    // [P0] CORREÇÃO DO DESBLOQUEIO DA PRÓXIMA FASE
+    maxUnlockedFase = Math.max(maxUnlockedFase, Math.min(ROTAS_SEMAE.length, state.faseIdx + 2));
+    persistProgress(); renderFasesGrid();
     
+    state.running = false;
     modalTitle.textContent = `🎉 ROTA ${r.fase} CONCLUÍDA!`;
-    modalText.textContent = `Você completou a rota de ${r.bairro} (${r.total_hidrometros} hidrômetros) e embarcou na Kombi Branca SEMAE! Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')}`;
+    modalText.textContent = `Você completou a rota de ${r.bairro} (${r.total_hidrometros} hidrômetros) e embarcou na Kombi Branca SEMAE! Pontuação: ${currentScore.toLocaleString('pt-BR')}`;
     
     if (state.faseIdx < ROTAS_SEMAE.length - 1) {
       currentSelectedFase = state.faseIdx + 2;
@@ -872,100 +991,60 @@
     renderMedalhasEPlacar(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
   }
 
-  // UPDATE LOOP COM SEQUÊNCIA COMPLETA DE DESEMBARQUE E EMBARQUE DA KOMBI
+  // UPDATE LOOP COM TODAS AS CORREÇÕES E EVOLUÇÕES DE DIFICULDADE P0/P1
   function update(dt) {
     if (!state.running || state.paused) return;
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
 
-    // 1. CHEGADA INICIAL DA KOMBI BRANCA
+    // INTRO DA KOMBI
     if (state.kombiState === 'arrival') {
       state.kombiX += 4 * step;
-      if (state.kombiX >= 80) {
-        state.kombiX = 80;
-        player.visible = true;
-        player.x = 90;
-        state.kombiState = 'disembark';
-      }
+      if (state.kombiX >= 80) { state.kombiX = 80; player.visible = true; player.x = 90; state.kombiState = 'disembark'; }
       return;
-    }
-    // 2. DESEMBARQUE E CAMINHADA DO LEITURISTA ATÉ O MEIO DA TELA
-    else if (state.kombiState === 'disembark') {
+    } else if (state.kombiState === 'disembark') {
       player.x += 2.5 * step;
-      if (player.x >= 205) {
-        player.x = 205;
-        state.kombiDoorOpen = false;
-        state.kombiState = 'leaving_arrival';
-      }
+      if (player.x >= 205) { player.x = 205; state.kombiDoorOpen = false; state.kombiState = 'leaving_arrival'; }
       return;
-    }
-    // 3. KOMBI PARTE PELA ESQUERDA
-    else if (state.kombiState === 'leaving_arrival') {
+    } else if (state.kombiState === 'leaving_arrival') {
       state.kombiX -= 6 * step;
-      if (state.kombiX <= -250) {
-        state.kombiState = 'dog_entry';
-        dog.visible = true;
-        dog.x = -160;
-      }
+      if (state.kombiX <= -250) { state.kombiState = 'dog_entry'; dog.visible = true; dog.x = -160; }
       return;
-    }
-    // 4. CÃO ENTRA EM CENA ATÉ A DISTÂNCIA DE SEGURANÇA
-    else if (state.kombiState === 'dog_entry') {
+    } else if (state.kombiState === 'dog_entry') {
       dog.x += 4.5 * step;
       if (dog.x >= 35) {
-        dog.x = 35;
-        state.dogThreat = 0;
-        state.spawnClock = 0;
-        state.nextSpawn = 200;
-        state.readingClock = 0;
-        state.nextReading = 20;
-        state.kombiState = 'running';
+        dog.x = 35; state.dogThreat = 0; state.spawnClock = 0; state.nextSpawn = 180;
+        state.readingClock = 0; state.nextReading = 20; state.kombiState = 'running';
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
       return;
-    }
-    // 5. KOMBI CHEGA E ESTACIONA NO LADO DIREITO DA TELA (RESGATE)
-    else if (state.kombiState === 'arrival_finish') {
-      dog.bark = 0; state.dogThreat = 0;
-      dog.x = Math.max(20, dog.x - 2 * step); // Cachorro para e recua
-      
+    } else if (state.kombiState === 'arrival_finish') {
+      dog.bark = 0; state.dogThreat = 0; dog.x = Math.max(20, dog.x - 2 * step);
       meters = []; obstacles = []; powerups = [];
-      
       state.kombiX -= 4.5 * step;
-      if (state.kombiX <= W - 160) {
-        state.kombiX = W - 160; // Kombi estaciona na direita
-        state.kombiDoorOpen = true; // Porta fica aberta aguardando leiturista
-        state.kombiState = 'cross_screen';
-      }
+      if (state.kombiX <= W - 160) { state.kombiX = W - 160; state.kombiDoorOpen = true; state.kombiState = 'cross_screen'; }
       return;
-    }
-    // 6. LEITURISTA ATRAVESSA A TELA CORRENDO E ENTRA NA KOMBI ESTACIONADA
-    else if (state.kombiState === 'cross_screen') {
-      dog.bark = 0; state.dogThreat = 0;
-      meters = []; obstacles = []; powerups = [];
-      
-      player.x += 3.8 * step; // Leiturista corre pela tela em direção à van
-      if (player.x >= state.kombiX + 25) {
-        player.visible = false; // Leiturista entra na Kombi
-        state.kombiDoorOpen = false; // Porta se fecha
-        state.kombiState = 'driving_away';
-      }
+    } else if (state.kombiState === 'cross_screen') {
+      dog.bark = 0; state.dogThreat = 0; meters = []; obstacles = []; powerups = [];
+      player.x += 3.8 * step;
+      if (player.x >= state.kombiX + 25) { player.visible = false; state.kombiDoorOpen = false; state.kombiState = 'driving_away'; }
       return;
-    }
-    // 7. KOMBI ACELERA E VAI EMBORA PELA DIREITA
-    else if (state.kombiState === 'driving_away') {
+    } else if (state.kombiState === 'driving_away') {
       meters = []; obstacles = []; powerups = [];
-      
-      state.kombiX += 7.5 * step; // Kombi vai embora
-      if (state.kombiX >= W + 220) {
-        state.kombiState = 'completed_modal';
-        phaseVictoryModal();
-      }
+      state.kombiX += 7.5 * step;
+      if (state.kombiX >= W + 220) { state.kombiState = 'completed_modal'; phaseVictoryModal(); }
       return;
     }
 
     // GAMEPLAY ATIVO 'RUNNING'
-    const turbo = state.shoeTimer > 0 ? 1.17 : 1, flowSpeed = state.flow > 0 ? 1.055 : 1;
+    const rota = ROTAS_SEMAE[state.faseIdx];
+    
+    // [P0] CURVA PROGRESSIVA DE INTENSIDADE DA VELOCIDADE (0 a 100% DO PROGRESSO DA FASE)
+    const progressPct = clamp(state.totalFaseReadings / (rota.total_hidrometros || 1), 0, 1);
+    state.speed = state.baseSpeed + (progressPct * 1.3);
+
+    const turbo = state.shoeTimer > 0 ? 1.08 : 1, flowSpeed = state.flowActiveTime > 0 ? 1.06 : 1;
     const actualSpeed = state.speed * turbo * flowSpeed;
+    
     state.score += 0.16 * actualSpeed * step * (state.shoeTimer > 0 ? 1.25 : 1);
     state.roadOffset = (state.roadOffset + actualSpeed * step) % 80;
     state.bgOffset = (state.bgOffset + actualSpeed * 0.28 * step) % 300;
@@ -973,20 +1052,14 @@
     state.spawnClock += step; state.readingClock += step; state.powerClock += step; state.eventClock += step;
     state.flash = Math.max(0, state.flash - step); state.shake = Math.max(0, state.shake - step);
     state.jumpBuffer = Math.max(0, state.jumpBuffer - step); state.comboTimer = Math.max(0, state.comboTimer - step);
-    state.flow = Math.max(0, state.flow - step); state.landSquash = Math.max(0, state.landSquash - step);
+    state.flowActiveTime = Math.max(0, state.flowActiveTime - step); state.landSquash = Math.max(0, state.landSquash - step);
     state.shoeTimer = Math.max(0, state.shoeTimer - step); state.dogDistract = Math.max(0, state.dogDistract - step);
     state.dogLeap = Math.max(0, state.dogLeap - step); dog.bark = Math.max(0, dog.bark - step);
+    state.respiroTimer = Math.max(0, state.respiroTimer - step);
     state.musicClock += step;
 
-    if (state.spawnClock >= state.nextSpawn) { spawnObstaclePattern(); state.spawnClock = 0; state.nextSpawn = Math.max(70, 115 - state.speed * 2.5) + rand(20, 50); }
-    
-    // GERAR HIDRÔMETROS EM FLUXO CONTÍNUO (SEMPRE HÁ UM HIDRÔMETRO NA TELA)
-    if (state.readingClock >= state.nextReading) {
-      spawnMeter();
-      state.readingClock = 0;
-      state.nextReading = rand(45, 65); // Intervalo curto e constante para nunca ficar sem hidrômetro!
-    }
-    
+    if (state.spawnClock >= state.nextSpawn) { spawnObstaclePattern(); state.spawnClock = 0; state.nextSpawn = Math.max(65, 110 - state.speed * 2.5) + rand(15, 45); }
+    if (state.readingClock >= state.nextReading) { spawnMeter(); state.readingClock = 0; state.nextReading = rand(45, 65); }
     if (state.powerClock >= state.nextPower) { spawnPowerup(); state.powerClock = 0; state.nextPower = rand(700, 1000); }
     if (state.eventClock >= state.nextEvent) { spawnEvent(); state.eventClock = 0; state.nextEvent = rand(450, 750); }
 
@@ -1004,14 +1077,36 @@
     player.legPhase += 0.22 * actualSpeed * step; dog.legPhase += 0.27 * actualSpeed * step;
     const pb = playerBox();
 
-    for (const o of obstacles) { o.x -= actualSpeed * step; if (!o.hit && overlap(pb, o)) hitObstacle(o); if (!o.nearChecked && o.x + o.w < player.x + player.w * 0.4) nearMiss(o); }
+    // PROCESSAR OBSTÁCULOS E CONTABILIZAR DESVIOS PARA MICRO-MISSÕES (P1)
+    for (const o of obstacles) {
+      o.x -= actualSpeed * step;
+      if (!o.hit && overlap(pb, o)) hitObstacle(o);
+      if (!o.passed && o.x + o.w < player.x) {
+        o.passed = true;
+        if (!o.hit) checkMicroMission('dodge');
+      }
+      if (!o.nearChecked && o.x + o.w < player.x + player.w * 0.4) nearMiss(o);
+    }
     obstacles = obstacles.filter(o => o.x + o.w > -30);
 
-    for (const m of meters) { m.x -= actualSpeed * step; m.spin += 0.08 * step; if (!m.taken && circleOverlap(pb, m)) collectMeter(m); }
+    // PROCESSAR HIDRÔMETROS E APLICAÇÃO DE TOLERÂNCIA MAGNÉTICA (P1)
+    for (const m of meters) {
+      m.x -= actualSpeed * step; m.spin += 0.08 * step;
+      if (!m.taken) {
+        // Atração magnética suave quando perto (28px)
+        const dist = Math.hypot(player.x + 22 - m.x, player.y + 36 - m.y);
+        if (dist < 42) {
+          m.y += (player.y + 36 - m.y) * 0.15 * step;
+        }
+        if (circleOverlap(pb, m)) collectMeter(m);
+        else if (m.x < player.x - 30) missMeter(m); // Se passou sem ser lido, entra na fila de pendências!
+      }
+    }
     meters = meters.filter(m => !m.taken && m.x + m.r > -30);
 
+    // [P0] CORREÇÃO DO VAZAMENTO DO ARRAY DE POWERUPS
     for (const p of powerups) { p.x -= actualSpeed * step; p.spin += 0.08 * step; if (!p.taken && circleOverlap(pb, p)) collectPower(p); }
-    powerups.filter(p => !p.taken && p.x + p.r > -30);
+    powerups = powerups.filter(p => !p.taken && p.x + p.r > -30);
 
     for (const e of events) {
       e.x -= actualSpeed * 0.75 * step;
@@ -1027,7 +1122,6 @@
     }
     events = events.filter(e => e.x > -250);
 
-    // MOVIMENTO LENTO DA PLACA DE RUA (35% DA VELOCIDADE DO JOGO)
     for (const s of streetSigns) { s.x -= actualSpeed * 0.35 * step; }
     streetSigns = streetSigns.filter(s => s.x > -350);
 
@@ -1049,7 +1143,6 @@
 
     if (state.dogThreat > 76 && Math.floor(state.time) % 290 < 2 && dog.bark <= 0) bark();
     
-    // TESTE DE COLISÃO REAL E SEGURA APENAS QUANDO A PARTIDA ESTÁ EM 'RUNNING'
     if (state.kombiState === 'running') {
       if (state.dogThreat >= 100 || (dog.visible && overlap(playerBox(), dogBox()))) {
         gameOver();
@@ -1073,28 +1166,11 @@
     ctx.fillStyle = fill; ctx.fill();
   }
 
-  // CASAS GENÉRICAS E CHARMOSAS DO BAIRRO (CANVAS)
   function drawGenericHouse(x, y, w, h, wallColor, roofColor, doorColor) {
-    // Parede
     rounded(x, y - h, w, h, 4, wallColor);
-    // Telhado
-    ctx.fillStyle = roofColor;
-    ctx.beginPath();
-    ctx.moveTo(x - 8, y - h);
-    ctx.lineTo(x + w / 2, y - h - 35);
-    ctx.lineTo(x + w + 8, y - h);
-    ctx.closePath(); ctx.fill();
-    // Porta
-    rounded(x + 14, y - 44, 22, 44, 4, doorColor);
-    ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(x + 31, y - 22, 2.5, 0, Math.PI * 2); ctx.fill();
-    // Janelas
-    rounded(x + w - 42, y - h + 22, 28, 28, 4, '#e0f2fe');
-    ctx.strokeStyle = wallColor; ctx.lineWidth = 2;
-    ctx.strokeRect(x + w - 42, y - h + 22, 28, 28);
-    ctx.beginPath();
-    ctx.moveTo(x + w - 28, y - h + 22); ctx.lineTo(x + w - 28, y - h + 50);
-    ctx.moveTo(x + w - 42, y - h + 36); ctx.lineTo(x + w - 14, y - h + 36);
-    ctx.stroke();
+    ctx.fillStyle = roofColor; ctx.beginPath(); ctx.moveTo(x - 8, y - h); ctx.lineTo(x + w / 2, y - h - 35); ctx.lineTo(x + w + 8, y - h); ctx.closePath(); ctx.fill();
+    rounded(x + 14, y - 44, 22, 44, 4, doorColor); ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(x + 31, y - 22, 2.5, 0, Math.PI * 2); ctx.fill();
+    rounded(x + w - 42, y - h + 22, 28, 28, 4, '#e0f2fe'); ctx.strokeStyle = wallColor; ctx.lineWidth = 2; ctx.strokeRect(x + w - 42, y - h + 22, 28, 28);
   }
 
   function drawBackground() {
@@ -1105,119 +1181,75 @@
     ctx.fillStyle = 'rgba(255, 233, 168, 0.25)'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 65, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 38, 0, Math.PI * 2); ctx.fill();
 
-    // Nuvens
     ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     const cloudX = (state.bgOffset * 0.2) % (W + 200) - 100;
     ctx.beginPath(); ctx.arc(cloudX, 90, 25, 0, Math.PI * 2); ctx.arc(cloudX + 25, 80, 32, 0, Math.PI * 2); ctx.arc(cloudX + 55, 90, 22, 0, Math.PI * 2); ctx.fill();
 
-    // CASAS GENÉRICAS EM PARALAXE
     const houseConfigs = [
       { w: 120, h: 100, wall: '#fca5a5', roof: '#b91c1c', door: '#7f1d1d' },
       { w: 140, h: 115, wall: '#fde047', roof: '#a16207', door: '#713f12' },
       { w: 110, h: 95, wall: '#86efac', roof: '#15803d', door: '#14532d' },
-      { w: 135, h: 110, wall: '#93c5fd', roof: '#1d4ed8', door: '#1e3a8a' },
-      { w: 125, h: 105, wall: '#fdba74', roof: '#c2410c', door: '#7c2d12' }
+      { w: 135, h: 110, wall: '#93c5fd', roof: '#1d4ed8', door: '#1e3a8a' }
     ];
 
-    const totalWidth = 650;
-    const scrollX = (state.bgOffset * 0.45) % totalWidth;
-
-    let posX = -scrollX - 50;
-    let idx = 0;
+    const totalWidth = 650; const scrollX = (state.bgOffset * 0.45) % totalWidth;
+    let posX = -scrollX - 50; let idx = 0;
     while (posX < W + 150) {
       const cfg = houseConfigs[idx % houseConfigs.length];
-      
-      // Árvores entre casas
-      ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(posX - 15, groundY - 80, 22, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#78350f'; ctx.fillRect(posX - 18, groundY - 60, 6, 48);
-
       drawGenericHouse(posX, groundY - 12, cfg.w, cfg.h, cfg.wall, cfg.roof, cfg.door);
-      
-      // Muro / Portão
-      ctx.fillStyle = '#cbd5e1'; ctx.fillRect(posX + cfg.w, groundY - 35, 25, 23);
-      
-      posX += cfg.w + 40;
-      idx++;
+      posX += cfg.w + 40; idx++;
     }
 
-    // Calçada, meio-fio e pista
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     ctx.fillStyle = '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
     ctx.fillStyle = '#8999a0'; for (let x = -state.roadOffset; x < W; x += 80) ctx.fillRect(x, groundY + 32, 52, 4);
     ctx.fillStyle = '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
     ctx.fillStyle = '#f7e27a'; for (let x = -state.roadOffset * 1.4; x < W; x += 130) ctx.fillRect(x, groundY + 82, 70, 8);
+
+    // [P0] VIGNETTE DE PERIGO DO CACHORRO NAS BORDAS DA TELA
+    if (state.dogThreat > 60) {
+      const alpha = ((state.dogThreat - 60) / 40) * 0.35;
+      ctx.fillStyle = `rgba(220, 38, 38, ${alpha})`;
+      ctx.fillRect(0, 0, W, H);
+    }
   }
 
-  // DESENHO DA KOMBI BRANCA OFICIAL SEMAE
   function drawKombi(x, y) {
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.28)'; ctx.beginPath(); ctx.ellipse(85, 96, 85, 12, 0, 0, Math.PI * 2); ctx.fill();
-
     rounded(0, 10, 165, 80, 18, '#f5f7fa');
     ctx.fillStyle = '#ffffff'; rounded(5, 0, 155, 20, 10, '#ffffff');
-
     ctx.fillStyle = '#1351B4'; ctx.fillRect(0, 48, 165, 18);
     ctx.fillStyle = '#FFCD07'; ctx.fillRect(0, 66, 165, 3);
-
-    ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('SEMAE', 82, 62);
-
-    ctx.fillStyle = '#2c3e50';
-    rounded(12, 16, 42, 28, 6, '#2c3e50');
-    rounded(62, 16, 42, 28, 6, '#2c3e50');
-    rounded(112, 16, 42, 28, 6, '#2c3e50');
-
+    ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE', 82, 62);
+    ctx.fillStyle = '#2c3e50'; rounded(12, 16, 42, 28, 6, '#2c3e50'); rounded(62, 16, 42, 28, 6, '#2c3e50'); rounded(112, 16, 42, 28, 6, '#2c3e50');
     if (state.kombiDoorOpen) { ctx.fillStyle = 'rgba(20, 30, 40, 0.7)'; ctx.fillRect(60, 44, 38, 48); }
     else { ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.strokeRect(60, 44, 38, 48); }
-
-    ctx.fillStyle = '#cbd5e1'; rounded(-6, 75, 14, 16, 4, '#cbd5e1'); rounded(158, 75, 14, 16, 4, '#cbd5e1');
-    ctx.fillStyle = '#fffae6'; ctx.beginPath(); ctx.arc(162, 54, 7, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(36, 88, 16, 0, Math.PI * 2); ctx.arc(130, 88, 16, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(36, 88, 8, 0, Math.PI * 2); ctx.arc(130, 88, 8, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  // 🐶 DESENHO PROCEDURAL DO CACHORRO VIRA-LATA CARAMELO EXPRESSIVO
   function drawDog() {
     if (!dog.visible || dog.x < -100) return;
     const x = dog.x, y = dog.y + Math.sin(dog.legPhase) * 2 - (state.dogLeap > 0 ? Math.sin((48 - state.dogLeap) / 48 * Math.PI) * 18 : 0);
     
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; ctx.beginPath(); ctx.ellipse(36, 46, 36, 7, 0, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(60, 16, 16, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(65, 12, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(66, 11, 1, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
-
-    ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 7; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + Math.sin(dog.legPhase * 1.5) * 6, -4, -6); ctx.stroke();
-
+    ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + Math.sin(dog.legPhase * 1.5) * 6, -4, -6); ctx.stroke();
     const leg1 = Math.sin(dog.legPhase) * 10;
     ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(18, 34); ctx.lineTo(14 - leg1, 45); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(46, 34); ctx.lineTo(52 + leg1, 45); ctx.stroke();
-
-    if (dog.bark > 0) {
-      ctx.fillStyle = '#ef4444'; rounded(72, 23, 7, 8, 3, '#ef4444');
-      rounded(38, -45, 46, 24, 10, 'rgba(255,255,255,0.95)');
-      ctx.fillStyle = '#714322'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('AU!', 61, -29);
-    }
-
     ctx.restore();
   }
 
-  // DESENHO DO LEITURISTA DE UNIFORME AZUL SEMAE
   function drawPlayer() {
     if (!player.visible) return;
     const skin = skins[selectedSkin], air = !player.onGround, x = player.x;
@@ -1258,11 +1290,27 @@
     ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = skin.cap; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
     ctx.fillRect(x + 20, y + 4, 24, 5);
-    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(x + 31, y + 9, 2, 0, Math.PI * 2); ctx.fill();
 
-    if (state.flow > 0) { ctx.strokeStyle = 'rgba(95, 220, 242, 0.75)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + 24, y + 37, 42, 0, Math.PI * 2); ctx.stroke(); }
+    // [P1] MICROBRILHO NO ÁPICE DO SALTO PARA APRENDER A LEITURA PERFEITA
+    if (!player.onGround && Math.abs(player.vy) < 3.8) {
+      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + 24, y + 36, 38, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    if (state.flowActiveTime > 0) { ctx.strokeStyle = 'rgba(95, 220, 242, 0.95)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 37, 44, 0, Math.PI * 2); ctx.stroke(); }
     if (state.shield > 0) { ctx.strokeStyle = 'rgba(255, 205, 7, 0.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 36, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
+
+    // [P1] CÁPSULA DO COMBO E FLUXO PRÓXIMA AO LEITURISTA
+    if (state.kombiState === 'running') {
+      ctx.save(); ctx.translate(x - 5, y - 28);
+      rounded(0, 0, 68, 22, 6, 'rgba(12, 50, 111, 0.92)');
+      ctx.fillStyle = '#FFCD07'; ctx.font = '900 11px system-ui'; ctx.fillText(`🔥 ${state.combo} · x${state.mult}`, 6, 15);
+      
+      // Mini barrinha do Fluxo
+      ctx.fillStyle = '#08202f'; ctx.fillRect(6, 18, 56, 3);
+      ctx.fillStyle = '#5FDCF2'; ctx.fillRect(6, 18, (state.flowEnergy / 100) * 56, 3);
+      ctx.restore();
+    }
   }
 
   function drawObstacle(o) {
@@ -1278,32 +1326,24 @@
     }
   }
 
-  // DESENHO DO HIDRÔMETRO COM EMBLEMA DA MÉDIA DOS ÚLTIMOS 3 MESES E 10% ESPECIAIS (DOURADOS)
   function drawMeter(m) {
     ctx.save(); ctx.translate(m.x, m.y); const gold = m.kind === 'gold';
     
-    // Anel externo pulsante
     ctx.strokeStyle = gold ? 'rgba(255, 205, 7, 0.75)' : 'rgba(19, 81, 180, 0.5)';
     ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r + 6 + Math.sin(m.spin * 2) * 2, 0, Math.PI * 2); ctx.stroke();
 
-    // Corpo do hidrômetro
     ctx.fillStyle = gold ? '#d79b00' : '#0C326F'; ctx.beginPath(); ctx.arc(0, 0, m.r + 2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = gold ? '#fff0a8' : '#c7f4fb'; ctx.beginPath(); ctx.arc(0, 0, m.r - 4, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = gold ? '#9b6900' : '#1351B4'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r - 7, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke();
     ctx.fillStyle = gold ? '#805900' : '#0C326F'; ctx.font = '900 8px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('m³', 0, 4);
     
-    // EMBLEMA DA MÉDIA DOS ÚLTIMOS 3 MESES
     if (m.avg3M) {
       rounded(-28, -m.r - 22, 56, 17, 5, gold ? '#FFCD07' : '#0C326F');
       ctx.fillStyle = gold ? '#0c326f' : '#ffffff';
-      ctx.font = '900 10px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${m.avg3M} m³/mês`, 0, -m.r - 10);
+      ctx.font = '900 10px system-ui'; ctx.textAlign = 'center'; ctx.fillText(`${m.avg3M} m³/mês`, 0, -m.r - 10);
 
       if (gold) {
-        ctx.fillStyle = '#FFCD07';
-        ctx.font = '900 9px system-ui';
-        ctx.fillText('🌟 10% MAIOR MÉDIA', 0, -m.r - 26);
+        ctx.fillStyle = '#FFCD07'; ctx.font = '900 9px system-ui'; ctx.fillText('🌟 10% MAIOR MÉDIA', 0, -m.r - 26);
       }
     }
 
@@ -1328,13 +1368,11 @@
     }
   }
 
-  // DESENHO DAS PLACAS DAS RUAS COM ALTA VISIBILIDADE E MOVIMENTO MAIS LENTO
   function drawStreetSigns() {
     for (const s of streetSigns) {
       ctx.save(); ctx.translate(s.x, s.y);
       rounded(0, 0, 320, 56, 12, '#0C326F');
-      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 4;
-      ctx.strokeRect(4, 4, 312, 48);
+      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 4; ctx.strokeRect(4, 4, 312, 48);
       ctx.fillStyle = '#ffffff'; ctx.font = '900 15px system-ui'; ctx.textAlign = 'center';
       ctx.fillText('📍 RUA: ' + s.text.toUpperCase(), 160, 33);
       ctx.restore();
@@ -1395,21 +1433,37 @@
     render();
   }
 
-  // CONTROLES E EVENT LISTENERS
+  // CONTROLES E EVENT LISTENERS COM CAPTURA DE PONTEIRO (`setPointerCapture`)
   skinBtn.addEventListener('click', () => {
     const u = unlockedSkins(); let pos = u.findIndex(x => x.i === selectedSkin); pos = (pos + 1) % u.length;
     selectedSkin = u[pos].i; updateCollectionUI(); persistProgress(); beep(560, 0.05, 0.02, 'triangle', 100);
   });
 
   startBtn.addEventListener('click', () => { audio.ensure(); resetGame(); startLoop(); });
-  canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); audio.ensure(); if (state.paused) setPaused(false); else jump(); }, { passive: false });
-  canvas.addEventListener('pointerup', releaseJump, { passive: true }); canvas.addEventListener('pointercancel', releaseJump, { passive: true });
+  
+  canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    audio.ensure();
+    if (state.paused) setPaused(false);
+    else jump(e);
+  }, { passive: false });
+  
+  canvas.addEventListener('pointerup', e => {
+    try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    releaseJump();
+  }, { passive: true });
+  canvas.addEventListener('pointercancel', e => {
+    try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    releaseJump();
+  }, { passive: true });
 
   pauseBtn.addEventListener('click', () => { audio.ensure(); setPaused(!state.paused); });
   function toggleMusic() { audio.ensure(); audioPrefs.musicOn = !audioPrefs.musicOn; syncAudioButtons(); persistProgress(); }
   function toggleSfx() { audio.ensure(); audioPrefs.sfxOn = !audioPrefs.sfxOn; syncAudioButtons(); persistProgress(); }
-  musicBtn.addEventListener('click', toggleMusic); musicModalBtn.addEventListener('click', toggleMusic);
-  sfxBtn.addEventListener('click', toggleSfx); sfxModalBtn.addEventListener('click', toggleSfx);
+  musicModalBtn.addEventListener('click', toggleMusic);
+  sfxModalBtn.addEventListener('click', toggleSfx);
 
   exportBtn.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(makeSave(), null, 2)], { type: 'application/json' }), a = document.createElement('a');
@@ -1425,7 +1479,11 @@
 
   document.addEventListener('keydown', e => {
     if (e.repeat || e.target.closest?.('button,input,select,textarea')) return;
-    const k = e.key.toLowerCase(); if (!overlay.hidden) return;
+    const k = e.key.toLowerCase();
+    if (!overlay.hidden) {
+      if (k === ' ' || k === 'enter') { e.preventDefault(); startBtn.click(); }
+      return;
+    }
     if (k === ' ' || k === 'arrowup' || k === 'w') { e.preventDefault(); if (state.paused) setPaused(false); else jump(); }
     else if (k === 'p' || k === 'escape') { e.preventDefault(); setPaused(!state.paused); }
     else if (k === 'm') toggleMusic(); else if (k === 's') toggleSfx();
