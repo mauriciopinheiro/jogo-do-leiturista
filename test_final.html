@@ -472,7 +472,7 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // SOL NATURAL AMARELO SOLAR ILUMINADO (#FFCD07 E #FDBA74 NO PÔR DO SOL)
+    // SOL NATURAL AMARELO SOLAR (#FFCD07 E #FDBA74 NO PÔR DO SOL)
     const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 3000) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
@@ -539,7 +539,6 @@
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(51, 18, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(58, 16, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(34, 2); ctx.lineTo(38, -10); ctx.lineTo(48, 2); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#1351B4'; ctx.fillRect(32, 22, 8, 12);
     } else {
       ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
@@ -547,7 +546,6 @@
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#1351B4'; ctx.fillRect(32, 22, 8, 12);
 
       const leg1 = Math.sin(dog.legPhase) * 9;
       ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
