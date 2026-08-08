@@ -48,19 +48,19 @@
     }
     .card {
       min-width: 0; padding: 6px 10px; border: 1.5px solid rgba(255, 255, 255, 0.4);
-      border-radius: 12px; background: rgba(12, 50, 111, 0.92); color: #fff;
+      border-radius: 12px; background: rgba(12, 50, 111, 0.94); color: #fff;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       font-weight: 800;
     }
     .card:nth-child(3) { grid-column: 1 / -1; padding-block: 6px; }
     .card small {
-      display: block; overflow: hidden; font-size: clamp(0.55rem, 2.4vw, 0.68rem);
+      display: block; overflow: hidden; font-size: clamp(0.58rem, 2.5vw, 0.70rem);
       line-height: 1.1; text-overflow: ellipsis; text-transform: uppercase;
-      letter-spacing: 0.05em; white-space: nowrap; color: #a5d8ff; opacity: 0.92;
+      letter-spacing: 0.05em; white-space: nowrap; color: #a5d8ff; opacity: 0.95;
     }
     .card strong {
       display: block; overflow: hidden; margin-top: 1px;
-      font-family: Consolas, "SF Mono", monospace; font-size: clamp(0.80rem, 3.8vw, 1.05rem);
+      font-family: Consolas, "SF Mono", monospace; font-size: clamp(0.82rem, 3.9vw, 1.08rem);
       line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; color: #ffffff;
     }
     .badge-fase {
@@ -178,8 +178,9 @@
         <strong id="hudRotaInfo">SETOR 36 · ROTA 129</strong>
       </div>
       <div class="card">
-        <small id="hudRuaAtual">Rua Ajudante Albano</small>
-        <strong id="hudHidrometroCount">💧 0 / 15</strong>
+        <small>Rua Atual (SEMAE)</small>
+        <strong id="hudRuaAtual">📍 Rua Ajudante Albano</strong>
+        <strong id="hudHidrometroCount" style="margin-top:2px; color:#FFCD07;">💧 0 / 15</strong>
       </div>
       <div class="card">
         <small>Segurança / Cão</small>
@@ -218,7 +219,7 @@
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca e caminha com total segurança até o centro da tela. O cão só surge depois!</div>
+          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca e caminha com total segurança. No fim da rota, a Kombi resgata o leiturista e parte!</div>
           <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure na tela ou use Espaço/↑/W. Soltar cedo = salto curto. <b>P:</b> Pausar.</div>
           <div class="controle-item">✨ <b>Leitura Perfeita:</b> Pegue o hidrômetro no ápice do salto dentro do anel dourado!</div>
         </div>
@@ -394,7 +395,7 @@
     ruaIdx: 0,
     ruaReadings: 0,
     totalFaseReadings: 0,
-    kombiState: 'arrival', // 'arrival', 'disembark', 'leaving_arrival', 'dog_entry', 'running', 'departure', 'driving_away'
+    kombiState: 'arrival', // 'arrival', 'disembark', 'leaving_arrival', 'dog_entry', 'running', 'arrival_finish', 'enter_van', 'driving_away', 'completed_modal'
     kombiX: -220,
     kombiDoorOpen: true,
     phaseCompleted: false,
@@ -410,7 +411,7 @@
   };
 
   const player = { x: 100, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: false, state: 'idle' };
-  const dog = { x: -200, y: groundY - 48, w: 75, h: 48, legPhase: 0, bark: 0, visible: false };
+  const dog = { x: -250, y: groundY - 48, w: 75, h: 48, legPhase: 0, bark: 0, visible: false };
   let obstacles = [], meters = [], powerups = [], particles = [], floaters = [], streetSigns = [], events = [];
   let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal' };
 
@@ -547,9 +548,9 @@
     const rota = ROTAS_SEMAE[state.faseIdx];
     
     state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.2 + state.faseIdx * 0.4;
-    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 220; // 3.5s de respiro para obstáculos!
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 220;
     state.readingClock = 0; state.nextReading = 30; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
-    state.dogThreat = 0; // AMEAÇA INICIAL RIGOROSAMENTE ZERO!
+    state.dogThreat = 0;
     state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
     state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
     state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
@@ -559,7 +560,7 @@
     state.ruaIdx = 0;
     state.ruaReadings = 0;
     state.totalFaseReadings = 0;
-    state.kombiState = 'arrival'; // Kombi entra -> leiturista desce -> Kombi sai -> cão entra
+    state.kombiState = 'arrival';
     state.kombiX = -200;
     state.kombiDoorOpen = true;
     state.phaseCompleted = false;
@@ -574,6 +575,11 @@
     
     generateMicroMission();
     updateHudRouteInfo();
+    
+    // Adicionar a Placa da primeira rua
+    const primeiraRua = rota.ruas[0].nome_rua;
+    streetSigns.push({ text: primeiraRua, x: W + 50, y: groundY - 180 });
+
     showBanner(`🚐 DESEMBARQUE DA KOMBI`, `Bairro ${rota.bairro}`, 150, 'bonus');
     beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
   }
@@ -583,7 +589,7 @@
     const ruaAtual = r.ruas[state.ruaIdx] ? r.ruas[state.ruaIdx].nome_rua : r.ruas[r.ruas.length - 1].nome_rua;
     hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${r.fase}</span> ${r.bairro}`;
     hudRotaInfo.textContent = `SETOR ${r.setor} · ROTA ${r.rota}`;
-    hudRuaAtual.textContent = ruaAtual;
+    hudRuaAtual.innerHTML = `📍 ${ruaAtual}`;
     hudHidrometroCount.textContent = `💧 ${state.totalFaseReadings} / ${r.total_hidrometros}`;
     missionHud.textContent = state.microMission ? state.microMission.label : `${ruaAtual}`;
   }
@@ -601,11 +607,10 @@
   }
   function releaseJump() { state.jumpHeld = false; if (!player.onGround && player.vy < -5.5) player.vy *= 0.58; }
 
-  // GERADOR DE FRASES DE GAMEPLAY PRÉ-BALANCEADAS E PROTEÇÃO ANTI-IMPOSSÍVEL
+  // GERADOR DE FRASES DE GAMEPLAY PRÉ-BALANCEADAS
   function spawnObstaclePattern() {
     if (state.kombiState !== 'running') return;
     
-    // Trava de distância mínima
     const lastOb = obstacles[obstacles.length - 1];
     if (lastOb && (W + 45 - lastOb.x) < state.minSpawnDistance) return;
 
@@ -705,12 +710,12 @@
         state.ruaIdx++;
         state.ruaReadings = 0;
         const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
-        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 140, 'region');
+        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 160, 'region');
         streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 180 });
       }
     }
 
-    // VERIFICAR CONCLUSÃO DA ROTA
+    // VERIFICAR CONCLUSÃO DA ROTA (ÚLTIMO REGISTRO PEGO)
     if (state.totalFaseReadings >= rota.total_hidrometros && !state.phaseCompleted) {
       triggerPhaseCompletion();
     }
@@ -718,11 +723,13 @@
     updateHudRouteInfo();
   }
 
+  // ANIMAÇÃO DE FIM DE FASE: KOMBI RESGATA LEITURISTA E CACHORRO PARA
   function triggerPhaseCompletion() {
     state.phaseCompleted = true;
-    state.kombiState = 'departure';
-    state.kombiX = W + 180;
-    showBanner('🏁 ROTA CONCLUÍDA!', 'A Kombi Branca SEMAE está esperando!', 160, 'unlock');
+    state.kombiState = 'arrival_finish';
+    state.kombiX = W + 220;
+    state.kombiDoorOpen = false;
+    showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE chegou para o resgate!', 160, 'unlock');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
   }
 
@@ -782,7 +789,7 @@
     persistProgress();
     
     modalTitle.textContent = `🎉 ROTA ${r.fase} CONCLUÍDA!`;
-    modalText.textContent = `Você completou a rota de ${r.bairro} (${r.total_hidrometros} hidrômetros) na Kombi Branca SEMAE! Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')}`;
+    modalText.textContent = `Você completou a rota de ${r.bairro} (${r.total_hidrometros} hidrômetros) e embarcou na Kombi Branca SEMAE! Pontuação: ${Math.floor(state.score).toLocaleString('pt-BR')}`;
     
     if (state.faseIdx < ROTAS_SEMAE.length - 1) {
       currentSelectedFase = state.faseIdx + 2;
@@ -795,12 +802,12 @@
     renderMedalhasEPlacar(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
   }
 
-  // UPDATE LOOP COM SEQUÊNCIA DE DESEMBARQUE 100% CORRIGIDA
+  // UPDATE LOOP COM SEQUÊNCIA COMPLETA DE DESEMBARQUE E EMBARQUE DA KOMBI
   function update(dt) {
     if (!state.running || state.paused) return;
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
 
-    // 1. CHEGADA DA KOMBI BRANCA
+    // 1. CHEGADA INICIAL DA KOMBI BRANCA
     if (state.kombiState === 'arrival') {
       state.kombiX += 4 * step;
       if (state.kombiX >= 80) {
@@ -814,7 +821,7 @@
     // 2. DESEMBARQUE E CAMINHADA DO LEITURISTA ATÉ O MEIO DA TELA
     else if (state.kombiState === 'disembark') {
       player.x += 2.5 * step;
-      if (player.x >= 205) { // Posição padrão do centro da corrida
+      if (player.x >= 205) {
         player.x = 205;
         state.kombiDoorOpen = false;
         state.kombiState = 'leaving_arrival';
@@ -827,7 +834,7 @@
       if (state.kombiX <= -250) {
         state.kombiState = 'dog_entry';
         dog.visible = true;
-        dog.x = -160; // Cão entra pelo canto extremo esquerdo
+        dog.x = -160;
       }
       return;
     }
@@ -836,29 +843,47 @@
       dog.x += 4.5 * step;
       if (dog.x >= 35) {
         dog.x = 35;
-        state.dogThreat = 0; // AMEAÇA RIGOROSAMENTE EM 0%
+        state.dogThreat = 0;
         state.spawnClock = 0;
-        state.nextSpawn = 200; // 3.5 SEGUNDOS DE RESPIRO ANTES DO PRIMEIRO OBSTÁCULO!
+        state.nextSpawn = 200;
         state.readingClock = 0;
-        state.nextReading = 30; // PRIMEIRO HIDRÔMETRO SURGE QUASE DE IMEDIATO!
-        state.kombiState = 'running'; // FASE INICIA DE FATO!
+        state.nextReading = 30;
+        state.kombiState = 'running';
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
       return;
     }
-    // 5. EMBARQUE NA KOMBI NA CHEGADA
-    else if (state.kombiState === 'departure') {
-      if (state.kombiX > W - 140) state.kombiX -= 5 * step; else state.kombiX = W - 140;
-      player.x += 3.5 * step;
-      if (player.x >= state.kombiX + 20) {
-        player.visible = false; state.kombiDoorOpen = false; state.kombiState = 'driving_away';
+    // 5. KOMBI CHEGA DO LADO DIREITO NA VITÓRIA DE FASE (RESGATE)
+    else if (state.kombiState === 'arrival_finish') {
+      dog.bark = 0; state.dogThreat = 0;
+      dog.x = Math.max(20, dog.x - 1.5 * step); // Cachorro para e recua
+      
+      state.kombiX -= 5 * step;
+      if (state.kombiX <= player.x + 35) {
+        state.kombiX = player.x + 35;
+        state.kombiDoorOpen = true; // Porta se abre
+        state.kombiState = 'enter_van';
       }
       return;
     }
-    // 6. KOMBI PARTINDO PARA PRÓXIMA FASE
+    // 6. LEITURISTA ENTRA NA KOMBI BRANCA
+    else if (state.kombiState === 'enter_van') {
+      dog.bark = 0; state.dogThreat = 0;
+      player.x += 2.5 * step;
+      if (player.x >= state.kombiX + 25) {
+        player.visible = false; // Entra na van
+        state.kombiDoorOpen = false; // Porta fecha
+        state.kombiState = 'driving_away';
+      }
+      return;
+    }
+    // 7. KOMBI PARTE PARA A PRÓXIMA FASE
     else if (state.kombiState === 'driving_away') {
       state.kombiX += 7 * step;
-      if (state.kombiX >= W + 200) phaseVictoryModal();
+      if (state.kombiX >= W + 220) {
+        state.kombiState = 'completed_modal';
+        phaseVictoryModal();
+      }
       return;
     }
 
@@ -930,7 +955,7 @@
 
     if (banner.life > 0) banner.life -= step;
 
-    // CÃO PERSEGUIDOR - CÁLCULO DE AMEAÇA
+    // CÃO PERSEGUIDOR
     state.dogThreat += (state.dogDistract > 0 ? -0.055 : (0.010 + state.speed * 0.0015)) * step;
     state.dogThreat = clamp(state.dogThreat, 0, 100);
     
@@ -964,34 +989,72 @@
     ctx.fillStyle = fill; ctx.fill();
   }
 
-  // CENÁRIOS AUTORAIS DE PIRACICABA & SEMAE (CANVAS)
+  // CASAS GENÉRICAS E CHARMOSAS DO BAIRRO (CANVAS)
+  function drawGenericHouse(x, y, w, h, wallColor, roofColor, doorColor) {
+    // Parede
+    rounded(x, y - h, w, h, 4, wallColor);
+    // Telhado
+    ctx.fillStyle = roofColor;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y - h);
+    ctx.lineTo(x + w / 2, y - h - 35);
+    ctx.lineTo(x + w + 8, y - h);
+    ctx.closePath(); ctx.fill();
+    // Porta
+    rounded(x + 14, y - 44, 22, 44, 4, doorColor);
+    ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(x + 31, y - 22, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Janelas
+    rounded(x + w - 42, y - h + 22, 28, 28, 4, '#e0f2fe');
+    ctx.strokeStyle = wallColor; ctx.lineWidth = 2;
+    ctx.strokeRect(x + w - 42, y - h + 22, 28, 28);
+    ctx.beginPath();
+    ctx.moveTo(x + w - 28, y - h + 22); ctx.lineTo(x + w - 28, y - h + 50);
+    ctx.moveTo(x + w - 42, y - h + 36); ctx.lineTo(x + w - 14, y - h + 36);
+    ctx.stroke();
+  }
+
   function drawBackground() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#549fe4'); g.addColorStop(0.62, '#bce3fb'); g.addColorStop(1, '#eaf5fd');
+    g.addColorStop(0, '#4a90e2'); g.addColorStop(0.55, '#b0e0e6'); g.addColorStop(1, '#eaf5fd');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
     ctx.fillStyle = 'rgba(255, 233, 168, 0.25)'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 65, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 38, 0, Math.PI * 2); ctx.fill();
 
-    // 🌉 PONTE PÊNSIL DE PIRACICABA SOBRE O RIO
-    const bridgeX = ((state.bgOffset * 0.3) % (W + 500)) - 250;
-    ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(bridgeX, groundY - 170); ctx.lineTo(bridgeX + 180, groundY - 170); ctx.stroke();
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath();
-    for (let i = 0; i <= 180; i += 20) { ctx.moveTo(bridgeX + i, groundY - 170); ctx.lineTo(bridgeX + i, groundY - 100); }
-    ctx.stroke();
+    // Nuvens
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    const cloudX = (state.bgOffset * 0.2) % (W + 200) - 100;
+    ctx.beginPath(); ctx.arc(cloudX, 90, 25, 0, Math.PI * 2); ctx.arc(cloudX + 25, 80, 32, 0, Math.PI * 2); ctx.arc(cloudX + 55, 90, 22, 0, Math.PI * 2); ctx.fill();
 
-    // 🏭 ENGENHO CENTRAL DE PIRACICABA (TIJOLOS HISTÓRICOS E CHAMINÉ)
-    const engenhoX = (((state.bgOffset * 0.5) + 150) % (W + 600)) - 200;
-    rounded(engenhoX, groundY - 160, 140, 120, 4, '#a04828');
-    ctx.fillStyle = '#7a3118'; ctx.fillRect(engenhoX + 105, groundY - 240, 24, 200);
-    ctx.fillStyle = '#f59e0b'; ctx.fillRect(engenhoX + 20, groundY - 120, 28, 35); ctx.fillRect(engenhoX + 65, groundY - 120, 28, 35);
+    // CASAS GENÉRICAS EM PARALAXE
+    const houseConfigs = [
+      { w: 120, h: 100, wall: '#fca5a5', roof: '#b91c1c', door: '#7f1d1d' },
+      { w: 140, h: 115, wall: '#fde047', roof: '#a16207', door: '#713f12' },
+      { w: 110, h: 95, wall: '#86efac', roof: '#15803d', door: '#14532d' },
+      { w: 135, h: 110, wall: '#93c5fd', roof: '#1d4ed8', door: '#1e3a8a' },
+      { w: 125, h: 105, wall: '#fdba74', roof: '#c2410c', door: '#7c2d12' }
+    ];
 
-    // 💧 ESTAÇÃO DE TRATAMENTO DE ÁGUA SEMAE (ETA CAPIM FINO)
-    const etaX = (((state.bgOffset * 0.7) + 320) % (W + 700)) - 180;
-    rounded(etaX, groundY - 140, 110, 100, 12, '#0C326F');
-    ctx.fillStyle = '#1351B4'; ctx.fillRect(etaX + 15, groundY - 120, 80, 20);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px system-ui'; ctx.fillText('ETA SEMAE', etaX + 26, groundY - 106);
+    const totalWidth = 650;
+    const scrollX = (state.bgOffset * 0.45) % totalWidth;
+
+    let posX = -scrollX - 50;
+    let idx = 0;
+    while (posX < W + 150) {
+      const cfg = houseConfigs[idx % houseConfigs.length];
+      
+      // Árvores entre casas
+      ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(posX - 15, groundY - 80, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#78350f'; ctx.fillRect(posX - 18, groundY - 60, 6, 48);
+
+      drawGenericHouse(posX, groundY - 12, cfg.w, cfg.h, cfg.wall, cfg.roof, cfg.door);
+      
+      // Muro / Portão
+      ctx.fillStyle = '#cbd5e1'; ctx.fillRect(posX + cfg.w, groundY - 35, 25, 23);
+      
+      posX += cfg.w + 40;
+      idx++;
+    }
 
     // Calçada, meio-fio e pista
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
@@ -1161,12 +1224,15 @@
     }
   }
 
+  // DESENHO DAS PLACAS DAS RUAS COM ALTA VISIBILIDADE
   function drawStreetSigns() {
     for (const s of streetSigns) {
       ctx.save(); ctx.translate(s.x, s.y);
-      rounded(0, 0, 220, 44, 8, '#1351B4'); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.strokeRect(4, 4, 212, 36);
-      ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('📍 ' + s.text.toUpperCase(), 110, 24);
+      rounded(0, 0, 250, 48, 10, '#0C326F');
+      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 3.5;
+      ctx.strokeRect(3, 3, 244, 42);
+      ctx.fillStyle = '#ffffff'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('📍 RUA: ' + s.text.toUpperCase(), 125, 28);
       ctx.restore();
     }
   }
@@ -1190,7 +1256,7 @@
     drawEvents();
     drawStreetSigns();
     
-    if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'departure' || state.kombiState === 'driving_away') {
+    if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'arrival_finish' || state.kombiState === 'enter_van' || state.kombiState === 'driving_away') {
       drawKombi(state.kombiX, groundY - 82);
     }
     
