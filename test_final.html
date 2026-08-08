@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>Encerramento Narrativo SEMAE — Protótipo V5</title>
+  <title>Encerramento Narrativo SEMAE — Protótipo V5 (Cão Visível & Corrigido)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -167,7 +167,7 @@
     notes.forEach((n, i) => audioTimeouts.push(setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80)));
   }
 
-  // ESTRUTURA REFINADA DAS 5 CENAS NARRATIVAS (DURAÇÕES PRECISAS ~13.5s)
+  // ESTRUTURA REFINADA DAS 5 CENAS NARRATIVAS
   const CUTSCENE_SCENES = [
     { id: 0, name: 'montage', duration: 2000 },    // 0s - 2.0s: Montagem 5/5 Fases
     { id: 1, name: 'conclusion', duration: 2500 }, // 2.0s - 4.5s: Plano 1 (Chegada ao SEMAE)
@@ -183,7 +183,7 @@
   };
 
   const player = { x: W * 0.35, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'idle', facing: 1 };
-  const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, sitting: false, happy: false, facing: 1 };
+  const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, visible: true, sitting: false, happy: false, facing: 1 };
   let bowlPos = null;
   let heartAlpha = 0;
   let bgScroll = 0;
@@ -224,26 +224,27 @@
     state.sceneTimer = 0;
     
     if (state.sceneIdx === 0) {
+      dog.visible = false;
       playFanfare();
     } else if (state.sceneIdx === 1) {
       player.x = -80; player.state = 'walking'; player.facing = 1; player.legPhase = 0;
-      dog.x = -200; dog.sitting = false; dog.happy = false;
+      dog.visible = false; dog.x = -200; dog.sitting = false; dog.happy = false;
       showBanner('535 LEITURAS CONCLUÍDAS', 'Fim do turno nas 5 rotas SEMAE desta jornada', 1500);
       playCalmSound();
     } else if (state.sceneIdx === 2) {
       player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
-      dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
+      dog.visible = true; dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
       showBanner('Depois de tantas ruas, ele finalmente se acalmou.', 'O cão da rota já não parece ameaçador', 1500);
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
-      dog.x = W * 0.28; dog.sitting = true; dog.happy = false; dog.facing = 1;
+      dog.visible = true; dog.x = W * 0.28; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
       showBanner('UM NOVO AMIGO DA ROTA', 'Gesto de carinho e acolhimento', 1500);
     } else if (state.sceneIdx === 4) {
-      bowlPos = null; heartAlpha = 0; // Limpeza estrita de estado visual!
+      bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
-      dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
+      dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
       showBanner('AMIGOS DE JORNADA PARA SEMPRE', 'Missão cumprida nas rotas desta jornada', 1500);
       playFanfare();
     }
@@ -267,7 +268,7 @@
     modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você percorreu com dedicação as 5 rotas desta jornada, concluiu a leitura dos 535 hidrômetros e ganhou a amizade do leal companheiro de percurso!`;
     
     statsBox.style.display = 'grid'; unlockBox.style.display = 'block';
-    startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶'; replayBtn.style.display = 'block';
+    startBtn.textContent = '▶ REPRISAR ENCERRAMENTO NARRATIVO 🔁'; replayBtn.style.display = 'block';
     
     render();
     startBtn.focus({ preventScroll: true });
@@ -383,7 +384,7 @@
     const isDusk = (state.sceneIdx === 4);
     const g = ctx.createLinearGradient(0, 0, 0, H);
     if (isDusk) {
-      g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#431407');
+      g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#7c2d12');
     } else {
       g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#fde047');
     }
@@ -602,7 +603,6 @@
     rafId = requestAnimationFrame(loop);
   }
 
-  // CONTROLE DE UM DEDO: TOCAR NO CANVAS AVANÇA O ATO MANUALMENTE
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault();
     if (state.running && !state.paused) {
