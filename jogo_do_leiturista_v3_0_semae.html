@@ -1156,7 +1156,7 @@
       if (state.kombiX >= 80) { state.kombiX = 80; player.visible = true; player.x = 90; state.kombiState = 'disembark'; }
       return;
     } else if (state.kombiState === 'disembark') {
-      player.x += 2.5 * step;
+      player.x += 2.5 * step; player.legPhase += 0.22 * step;
       if (player.x >= W * 0.32) { player.x = W * 0.32; state.kombiDoorOpen = false; state.kombiState = 'leaving_arrival'; }
       return;
     } else if (state.kombiState === 'leaving_arrival') {
@@ -1173,13 +1173,16 @@
       return;
     } else if (state.kombiState === 'arrival_finish') {
       dog.bark = 0; state.dogThreat = 0; dog.x = Math.max(20, dog.x - 2 * step);
+      player.legPhase += 0.24 * step;
       meters = []; obstacles = []; powerups = [];
       state.kombiX -= 4.5 * step;
       if (state.kombiX <= W - 160) { state.kombiX = W - 160; state.kombiDoorOpen = true; state.kombiState = 'cross_screen'; }
       return;
     } else if (state.kombiState === 'cross_screen') {
       dog.bark = 0; state.dogThreat = 0; meters = []; obstacles = []; powerups = [];
-      if (player.onGround || player.y >= groundY - player.h - 2) player.x += 3.8 * step;
+      if (player.onGround || player.y >= groundY - player.h - 2) {
+        player.x += 3.8 * step; player.legPhase += 0.28 * step;
+      }
       if (player.x >= state.kombiX + 25 && player.onGround) {
         player.visible = false; state.kombiDoorOpen = false; state.kombiState = 'driving_away';
       }
