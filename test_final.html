@@ -10,7 +10,7 @@
       --semae-azul: #1351B4;
       --semae-azul-escuro: #0C326F;
       --semae-verde: #168821;
-      --semae-destaque: #FFCD07;
+      --semae-destaque: #168821;
       --semae-fundo: #092040;
       --painel: rgba(255, 255, 255, 0.98);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -32,7 +32,6 @@
       overflow: hidden; background: radial-gradient(circle at center, #0c326f 0%, #081c38 100%);
     }
     
-    /* PALCO 9:16 PRESERVADO RIGOROSAMENTE SEM DISTORÇÃO VERTICAL EM TELAS ALTAS */
     .stage {
       position: relative;
       width: min(100vw, calc(100dvh * 9 / 16));
@@ -71,7 +70,7 @@
       background: var(--painel); text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .modal-badge {
-      display: inline-block; padding: 4px 12px; border-radius: 999px; background: #e0f2fe; color: #0369a1;
+      display: inline-block; padding: 4px 12px; border-radius: 999px; background: #dcfce7; color: #15803d;
       font-size: 0.76rem; font-weight: 900; margin-bottom: 8px; letter-spacing: 0.5px;
     }
     .modal h2 { margin: 0 0 6px; color: var(--semae-azul-escuro); font-size: clamp(1.25rem, 5.8vw, 1.7rem); line-height: 1.15; }
@@ -87,8 +86,8 @@
     .stat-card strong { display: block; font-size: 1.02rem; color: #1351B4; font-family: Consolas, monospace; margin-top: 2px; }
 
     .unlock-banner {
-      margin: 10px 0; padding: 10px; border-radius: 14px; background: #fff3c4; border: 1.5px solid #ffd85d;
-      color: #5c4300; font-size: 0.84rem; font-weight: 900; text-align: center; line-height: 1.4;
+      margin: 10px 0; padding: 10px; border-radius: 14px; background: #dcfce7; border: 1.5px solid #86efac;
+      color: #14532d; font-size: 0.84rem; font-weight: 900; text-align: center; line-height: 1.4;
     }
 
     .modal-footer {
@@ -97,10 +96,10 @@
     }
     .botao {
       width: 100%; min-height: 52px; border: 0; border-radius: 16px; padding: 12px 18px;
-      background: var(--semae-destaque); color: #3b2b00; font-size: 1.02rem; font-weight: 1000;
-      cursor: pointer; box-shadow: 0 4px 0 #d9a800; touch-action: manipulation;
+      background: var(--semae-verde); color: #ffffff; font-size: 1.02rem; font-weight: 1000;
+      cursor: pointer; box-shadow: 0 4px 0 #0f6717; touch-action: manipulation;
     }
-    .botao:active { box-shadow: 0 2px 0 #d9a800; transform: translateY(2px); }
+    .botao:active { box-shadow: 0 2px 0 #0f6717; transform: translateY(2px); }
     .botao:focus-visible, .botao-secundario:focus-visible {
       outline: 3px solid #1351B4; outline-offset: 2px;
     }
@@ -228,7 +227,6 @@
   let lastTs = 0;
   let rafId = 0;
 
-  // SUPORTE HIGH-DPI COM PIXEL RATIO LIMITADO A 2 (SEM ALTERAR FÍSICA LOGICA 540x960)
   function resizeCanvas() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(W * dpr);
@@ -251,7 +249,6 @@
 
     if (!state.running || state.paused) return;
     
-    // CORREÇÃO CRÍTICA P0: NUNCA EXCEDER O ÚLTIMO ÍNDICE DE CUTSCENE_SCENES!
     if (state.sceneIdx >= CUTSCENE_SCENES.length - 1) {
       endCutscene();
       return;
@@ -320,7 +317,6 @@
     requestAnimationFrame(() => startBtn.focus({ preventScroll: true }));
   }
 
-  // VALIDAÇÃO DE ENTRADA DE DADOS COM NULLISH COALESCING (??) PARA PRESERVAR 0 REAIS
   window.startGrandFinale = function(playerStats = {}) {
     const meters = Number.isFinite(playerStats.meters) ? Math.max(0, playerStats.meters) : 535;
     const totalMeters = Number.isFinite(playerStats.totalMeters) ? Math.max(1, playerStats.totalMeters) : 535;
@@ -345,7 +341,6 @@
     state.sceneTimer += dt;
     if (state.bannerTimer > 0) state.bannerTimer -= dt;
 
-    // CONTROLE DINÂMICO DO HINT DE TOQUE APÓS 600ms
     if (state.running && state.sceneTimer >= 600) {
       tapHint.classList.add('visible');
     } else {
@@ -367,7 +362,7 @@
     } else if (state.sceneIdx === 3) {
       const t = state.sceneTimer;
       const targetBowlX = dog.x + dog.w + 10;
-      const targetPlayerX = targetBowlX + 28 + 10; // Espaçamento físico confortável!
+      const targetPlayerX = targetBowlX + 28 + 10;
       
       if (t < 1000) {
         if (player.x > targetPlayerX) { player.x -= 1.0 * step; player.legPhase += 0.18 * step; }
@@ -400,7 +395,6 @@
     if (!text || state.bannerTimer <= 0) return;
     ctx.save();
     
-    // PREVENÇÃO DE ARTEFATOS EM BICOS DE LETRAS
     ctx.lineJoin = 'round';
     ctx.miterLimit = 2;
 
@@ -425,7 +419,7 @@
 
     const titleLines = wrapString(text);
     let lineY = y;
-    ctx.strokeStyle = 'rgba(12, 50, 111, 0.92)'; ctx.lineWidth = 6; ctx.fillStyle = '#FFCD07';
+    ctx.strokeStyle = 'rgba(12, 50, 111, 0.92)'; ctx.lineWidth = 6; ctx.fillStyle = '#22c55e';
     for (const line of titleLines) {
       ctx.strokeText(line, W / 2, lineY); ctx.fillText(line, W / 2, lineY);
       lineY += fontSize + 4;
@@ -457,13 +451,13 @@
       if (elapsed > i * 240) {
         ctx.font = '900 15px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
         ctx.fillText(`${i + 1} · ${phases[i]}`, W * 0.14, y);
-        ctx.fillStyle = '#FFCD07'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.86, y);
+        ctx.fillStyle = '#22c55e'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.86, y);
       }
       y += 44;
     }
 
     if (elapsed > 1300) {
-      ctx.font = '900 22px system-ui'; ctx.fillStyle = '#FFCD07'; ctx.textAlign = 'center';
+      ctx.font = '900 22px system-ui'; ctx.fillStyle = '#22c55e'; ctx.textAlign = 'center';
       ctx.fillText('5/5 ROTAS CONCLUÍDAS! 🏆', W / 2, H * 0.76);
     }
   }
@@ -478,19 +472,18 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // SOL DESCENDO SUAVEMENTE NO PÔR DO SOL NO EPÍLOGO
     const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 3000) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.25)' : 'rgba(255, 233, 168, 0.35)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = isDusk ? '#fdba74' : '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = isDusk ? '#fdba74' : '#22c55e'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
 
     const kombiX = Math.min(W - 175, W * 0.62) - (isDusk ? (bgScroll * 0.3) % 400 : 0);
     drawKombi(kombiX, groundY - 82);
 
     const buildingX = W * 0.06 - (isDusk ? (bgScroll * 0.4) % 400 : 0);
     rounded(buildingX, groundY - 160, 240, 160, 8, '#0C326F');
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(buildingX + 10, groundY - 145, 220, 26);
-    ctx.fillStyle = '#0C326F'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE PIRACICABA', buildingX + 120, groundY - 128);
+    ctx.fillStyle = '#168821'; ctx.fillRect(buildingX + 10, groundY - 145, 220, 26);
+    ctx.fillStyle = '#ffffff'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE PIRACICABA', buildingX + 120, groundY - 128);
     rounded(buildingX + 95, groundY - 80, 50, 80, 4, '#1e293b');
 
     ctx.fillStyle = isDusk ? '#64748b' : '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
@@ -520,7 +513,7 @@
     rounded(0, 10, 165, 80, 18, '#f5f7fa');
     ctx.fillStyle = '#ffffff'; rounded(5, 0, 155, 20, 10, '#ffffff');
     ctx.fillStyle = '#1351B4'; ctx.fillRect(0, 48, 165, 18);
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(0, 66, 165, 3);
+    ctx.fillStyle = '#168821'; ctx.fillRect(0, 66, 165, 3);
     ctx.fillStyle = '#ffffff'; ctx.font = '900 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE', 82, 62);
     ctx.fillStyle = '#2c3e50'; rounded(12, 16, 42, 28, 6, '#2c3e50'); rounded(62, 16, 42, 28, 6, '#2c3e50'); rounded(112, 16, 42, 28, 6, '#2c3e50');
     ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(36, 88, 16, 0, Math.PI * 2); ctx.arc(130, 88, 16, 0, Math.PI * 2); ctx.fill();
@@ -553,7 +546,7 @@
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
+      ctx.fillStyle = '#1351B4'; ctx.fillRect(32, 22, 8, 12);
 
       const leg1 = Math.sin(dog.legPhase) * 9;
       ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
@@ -616,20 +609,9 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
 
-    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 6; ctx.beginPath();
-    ctx.moveTo(legL.foot.x - 2, legL.foot.y); ctx.lineTo(legL.foot.x + 7, legL.foot.y + 1);
-    ctx.moveTo(legR.foot.x - 2, legR.foot.y); ctx.lineTo(legR.foot.x + 7, legR.foot.y + 1); ctx.stroke();
-
+    // Uniforme azul do SEMAE com faixa verde institucional (SEM a palavra SEMAE)
     rounded(6, 20, 37, 42, 9, '#1351B4');
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(8, 38, 33, 5);
-    
-    if (player.facing === -1) {
-      ctx.save(); ctx.translate(28, 32); ctx.scale(-1, 1);
-      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', 0, 0);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', 12, 32);
-    }
+    ctx.fillStyle = '#168821'; ctx.fillRect(8, 38, 33, 5);
 
     if (player.state === 'petting') {
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7.5; ctx.lineCap = 'round';
@@ -677,7 +659,6 @@
       return;
     }
 
-    // FALLBACK DE SEGURANÇA EM RENDER P0
     const currentScene = CUTSCENE_SCENES[state.sceneIdx] ?? CUTSCENE_SCENES[CUTSCENE_SCENES.length - 1];
     const scale = currentScene.cameraScale || 1.0;
     
@@ -730,7 +711,7 @@
 
   replayBtn.addEventListener('click', e => {
     e.stopPropagation();
-    startCutscene(0); // REPRODUZ O ENCERRAMENTO COMPLETO COM TODAS AS CENAS!
+    startCutscene(0);
   });
 
   document.addEventListener('visibilitychange', () => {
