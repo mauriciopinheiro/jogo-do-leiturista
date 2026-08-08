@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Jogo do Leiturista — SEMAE Piracicaba (v3.2.0 Engine)</title>
+  <title>Jogo do Leiturista — SEMAE Piracicaba (v3.3.0 Engine Restaurada)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -81,10 +81,10 @@
       border-radius: 999px; background: rgba(19, 81, 180, 0.90); color: #fff;
       font-size: clamp(0.72rem, 3.2vw, 0.88rem); font-weight: 900; letter-spacing: 0.03em;
       white-space: nowrap; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis;
-      pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
       box-shadow: 0 6px 18px rgba(0,0,0,0.22);
     }
-    .touch-hint.hidden { opacity: 0; transform: translate(-50%, 8px); }
+    .touch-hint.hidden { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
 
     .tap-hint-cutscene {
       position: absolute; bottom: calc(22px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); z-index: 5;
@@ -194,8 +194,8 @@
     <div class="hud" aria-hidden="true">
       <div class="card" style="grid-column: 1 / -1; background: rgba(12, 50, 111, 0.96); border: 2px solid #FFCD07; padding: 8px 14px; border-radius: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong id="hudRuaAtual" style="font-size: clamp(1.15rem, 5vw, 1.45rem); color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-family: 'Segoe UI', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Rua Ajudante Albano</strong>
-          <span id="hudHidrometroCount" style="color: #FFCD07; font-size: 1.05rem; font-weight: 900; margin-left: 10px; flex-shrink: 0;">💧 0 / 15</span>
+          <strong id="hudRuaAtual" style="font-size: clamp(1.05rem, 4.5vw, 1.35rem); color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-family: 'Segoe UI', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Rua Ajudante Albano</strong>
+          <span id="hudHidrometroCount" style="color: #FFCD07; font-size: 0.95rem; font-weight: 900; margin-left: 10px; flex-shrink: 0;">💧 Rua 0/8 · Rota 0/15</span>
         </div>
       </div>
       <div class="card">
@@ -243,6 +243,10 @@
 
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
+        <div class="utility-row">
+          <button class="utility-btn" id="skinBtn" type="button" style="grid-column: 1 / -1; background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">👕 Uniforme: Azul SEMAE Clássico (0 leituras)</button>
+        </div>
+
         <div class="utility-row" id="replayCutsceneRow" style="display:none;">
           <button class="utility-btn" id="replayCutsceneBtn" type="button" style="grid-column: 1 / -1; background:#dcfce7; color:#14532d; border-color:#86efac;">🔁 Rever Encerramento da Jornada</button>
         </div>
@@ -256,7 +260,7 @@
           <button class="utility-btn" id="importBtn" type="button">⬆ Importar progresso</button>
         </div>
         <input id="importFile" type="file" accept="application/json,.json" hidden />
-        <p class="version" id="versionText">v3.2.0 · SEMAE Piracicaba Engine</p>
+        <p class="version" id="versionText">v3.3.0 · SEMAE Piracicaba Engine</p>
         
         <button class="botao" id="startBtn" type="button">TOQUE PARA INICIAR A ROTA</button>
       </div>
@@ -273,14 +277,14 @@
   // DADOS REAIS EXTRAÍDOS DO SEMAE PIRACICABA (5 FASES PRINCIPAIS)
   const ROTAS_SEMAE = [
     {
-      fase: 1, nome_fase: "Fase 1 - São Dimas (Inicial)", setor: 36, rota: 129, bairro: "SAO DIMAS", total_hidrometros: 15,
+      fase: 1, nome_fase: "Fase 1 - São Dimas (Inicial)", setor: 36, rota: 129, bairro: "SAO DIMAS", total_hidrometros: 15, baseSpeed: 5.0,
       ruas: [
         { cd_lograd: 5424, nome_rua: "Rua Ajudante Albano", hidrometros: 8 },
         { cd_lograd: 1487, nome_rua: "Avenida Holanda", hidrometros: 7 }
       ]
     },
     {
-      fase: 2, nome_fase: "Fase 2 - Vila Rezende (Aprendiz)", setor: 13, rota: 157, bairro: "CENTRO / VILA REZENDE", total_hidrometros: 45,
+      fase: 2, nome_fase: "Fase 2 - Vila Rezende (Aprendiz)", setor: 13, rota: 157, bairro: "CENTRO / VILA REZENDE", total_hidrometros: 45, baseSpeed: 5.35,
       ruas: [
         { cd_lograd: 5422, nome_rua: "Rua Saldanha Marinho", hidrometros: 22 },
         { cd_lograd: 2307, nome_rua: "Travessa Orestes Miglioranza", hidrometros: 16 },
@@ -288,7 +292,7 @@
       ]
     },
     {
-      fase: 3, nome_fase: "Fase 3 - Bairro dos Alemães (Intermediário)", setor: 44, rota: 207, bairro: "BAIRRO DOS ALEMAES", total_hidrometros: 95,
+      fase: 3, nome_fase: "Fase 3 - Bairro dos Alemães (Intermediário)", setor: 44, rota: 207, bairro: "BAIRRO DOS ALEMAES", total_hidrometros: 95, baseSpeed: 5.7,
       ruas: [
         { cd_lograd: 5580, nome_rua: "Rua Rio Branco", hidrometros: 46 },
         { cd_lograd: 5582, nome_rua: "Rua Silva Jardim", hidrometros: 29 },
@@ -297,7 +301,7 @@
       ]
     },
     {
-      fase: 4, nome_fase: "Fase 4 - Jaraguá (Avançado)", setor: 19, rota: 147, bairro: "JARAGUA", total_hidrometros: 150,
+      fase: 4, nome_fase: "Fase 4 - Jaraguá (Avançado)", setor: 19, rota: 147, bairro: "JARAGUA", total_hidrometros: 150, baseSpeed: 6.05,
       ruas: [
         { cd_lograd: 2013, nome_rua: "Avenida Maria Teodora", hidrometros: 103 },
         { cd_lograd: 2087, nome_rua: "Rua Maria Nazareth", hidrometros: 26 },
@@ -308,7 +312,7 @@
       ]
     },
     {
-      fase: 5, nome_fase: "Fase 5 - Recanto do Piracicamirim (Mestre)", setor: 31, rota: 57, bairro: "RECANTO DO PIRACICAMIRIM", total_hidrometros: 230,
+      fase: 5, nome_fase: "Fase 5 - Recanto do Piracicamirim (Mestre)", setor: 31, rota: 57, bairro: "RECANTO DO PIRACICAMIRIM", total_hidrometros: 230, baseSpeed: 6.4,
       ruas: [
         { cd_lograd: 981, nome_rua: "Avenida Aniger Francisco Maria Melillo", hidrometros: 59 },
         { cd_lograd: 2780, nome_rua: "Avenida Sidney Luiz Brajão", hidrometros: 41 },
@@ -332,7 +336,7 @@
     }
   ];
 
-  // BANCO DE DADOS DECLARATIVO DE PADRÕES
+  // BANCO DE DADOS DECLARATIVO DE PADRÕES REATIVOS
   const PATTERNS_DB = [
     { id: 't0_single_low', tier: 0, minSpeed: 4.0, maxSpeed: 10.0, endDx: 120, skillType: 'short', items: [{ type: 'meter', dx: 50, dy: -88 }] },
     { id: 't0_single_high', tier: 0, minSpeed: 4.0, maxSpeed: 10.0, endDx: 120, skillType: 'hold', items: [{ type: 'meter', dx: 50, dy: -160 }] },
@@ -369,7 +373,7 @@
   const replayCutsceneRow = document.getElementById('replayCutsceneRow');
 
   let W = 540, H = 960, groundY = Math.round(H * 0.79); const gravity = 0.82;
-  const APP_ID = 'jogo-do-leiturista-3', APP_VERSION = '3.2.0', SAVE_SCHEMA = 1, SAVE_KEY = `semae.${APP_ID}.v${SAVE_SCHEMA}`, MAX_SAVE_BYTES = 256 * 1024;
+  const APP_ID = 'jogo-do-leiturista-3', APP_VERSION = '3.3.0', SAVE_SCHEMA = 2, SAVE_KEY = `semae.${APP_ID}.v${SAVE_SCHEMA}`, MAX_SAVE_BYTES = 256 * 1024;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n)), rand = (a, b) => a + Math.random() * (b - a), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // SYSTEM LOGGING & ANNOUNCER
@@ -377,7 +381,7 @@
     if (live) live.textContent = msg;
   }
 
-  // 1. SAVE MANAGER MODULE (COM FNV1A CHECKSUM E VALIDAÇÃO PROFUNDA)
+  // 1. SAVE MANAGER MODULE (COM FNV1A CHECKSUM, MIGRAÇÃO DE SCHEMA V1 -> V2 E VALIDAÇÃO COMPLETA)
   const rawStore = {
     get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
     set(k, v) {
@@ -404,10 +408,45 @@
     if (!Array.isArray(e.bestByPhase) || e.bestByPhase.length !== 5 || !e.bestByPhase.every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0)) return false;
     if (typeof e.campaignCompleted !== 'boolean') return false;
     if (typeof e.grandFinaleSeen !== 'boolean') return false;
+    if (typeof e.musicOn !== 'boolean' || typeof e.sfxOn !== 'boolean') return false;
     return checksumSave(d) === d.checksum;
   }
 
-  function loadSaved() { try { const raw = rawStore.get(SAVE_KEY); if (!raw || raw.length > MAX_SAVE_BYTES) return null; const d = JSON.parse(raw); return validateSave(d) ? d : null; } catch { return null; } }
+  function migrateSave(d) {
+    if (!d || typeof d !== 'object' || !d.estado) return null;
+    const e = d.estado;
+    const migrated = {
+      app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: d.criadoEm || new Date().toISOString(),
+      estado: {
+        lifetimeReadings: Number.isFinite(e.lifetimeReadings) ? e.lifetimeReadings : (Number.isFinite(e.totalReadings) ? e.totalReadings : 0),
+        best: Number.isFinite(e.best) ? e.best : 0,
+        bestByPhase: Array.isArray(e.bestByPhase) && e.bestByPhase.length === 5 ? e.bestByPhase : [0, 0, 0, 0, 0],
+        campaignCompleted: Boolean(e.campaignCompleted),
+        grandFinaleSeen: Boolean(e.grandFinaleSeen),
+        lastCampaignStats: e.lastCampaignStats || null,
+        phaseResults: Array.isArray(e.phaseResults) && e.phaseResults.length === 5 ? e.phaseResults : [null, null, null, null, null],
+        selectedSkin: Number.isInteger(e.selectedSkin) ? clamp(e.selectedSkin, 0, 4) : 0,
+        maxUnlockedFase: Number.isInteger(e.maxUnlockedFase) ? clamp(e.maxUnlockedFase, 1, 5) : 1,
+        musicOn: e.musicOn !== undefined ? Boolean(e.musicOn) : true,
+        sfxOn: e.sfxOn !== undefined ? Boolean(e.sfxOn) : true
+      },
+      checksum: ''
+    };
+    migrated.checksum = checksumSave(migrated);
+    return migrated;
+  }
+
+  function loadSaved() {
+    try {
+      const raw = rawStore.get(SAVE_KEY) || rawStore.get(`semae.${APP_ID}.v1`);
+      if (!raw || raw.length > MAX_SAVE_BYTES) return null;
+      const d = JSON.parse(raw);
+      if (validateSave(d)) return d;
+      return migrateSave(d);
+    } catch {
+      return null;
+    }
+  }
 
   const saved = loadSaved();
   const skins = [
@@ -426,19 +465,23 @@
   let lastCampaignStats = saved && saved.estado.lastCampaignStats ? saved.estado.lastCampaignStats : null;
   let currentSelectedFase = 1;
   let bestByPhase = saved && saved.estado.bestByPhase ? saved.estado.bestByPhase : [0, 0, 0, 0, 0];
-  let phaseResults = [null, null, null, null, null];
+  let phaseResults = saved && saved.estado.phaseResults ? saved.estado.phaseResults : [null, null, null, null, null];
   const audioPrefs = { musicOn: saved ? saved.estado.musicOn : true, sfxOn: saved ? saved.estado.sfxOn : true };
 
   function unlockedSkins() { return skins.map((s, i) => ({ s, i })).filter(x => lifetimeReadings >= x.s.need); }
   function normalizeSkin() { const u = unlockedSkins(); if (!u.some(x => x.i === selectedSkin)) selectedSkin = u[u.length - 1]?.i || 0; updateCollectionUI(); }
-  function updateCollectionUI() { const u = unlockedSkins(); if (skinBtn) skinBtn.textContent = `👕 Uniforme (${u.length}/${skins.length})`; }
+  function updateCollectionUI() {
+    const s = skins[selectedSkin];
+    if (skinBtn) skinBtn.textContent = `👕 Uniforme: ${s.name} (${lifetimeReadings} leituras vitalícias)`;
+  }
 
   function makeSave() {
     const d = {
       app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: new Date().toISOString(),
       estado: {
         lifetimeReadings, best: Math.floor(state.best), bestByPhase, campaignCompleted, grandFinaleSeen,
-        lastCampaignStats, selectedSkin, maxUnlockedFase: clamp(maxUnlockedFase, 1, 5), musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn
+        lastCampaignStats, phaseResults, selectedSkin, maxUnlockedFase: clamp(maxUnlockedFase, 1, 5),
+        musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn
       },
       checksum: ''
     };
@@ -450,6 +493,7 @@
   function applySave(d) {
     lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best;
     if (d.estado.bestByPhase) bestByPhase = d.estado.bestByPhase;
+    if (d.estado.phaseResults) phaseResults = d.estado.phaseResults;
     campaignCompleted = d.estado.campaignCompleted || false;
     grandFinaleSeen = d.estado.grandFinaleSeen || false;
     if (d.estado.lastCampaignStats) lastCampaignStats = d.estado.lastCampaignStats;
@@ -458,19 +502,19 @@
     normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
   }
 
-  // 2. STATE MANAGER & GAME ENGINE V3.2.0
+  // 2. STATE MANAGER & GAME ENGINE V3.3.0
   const state = {
-    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, baseSpeed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
-    minSpawnDistance: 230,
-    spawnClock: 0, nextSpawn: 120, readingClock: 0, nextReading: 20, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
-    dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
+    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.0, baseSpeed: 5.0, time: 0, roadOffset: 0, bgOffset: 0,
+    minSpawnDistance: 210,
+    spawnClock: 0, nextSpawn: 45, readingClock: 0, nextReading: 45, powerClock: 0, nextPower: 600, eventClock: 0, nextEvent: 450,
+    dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpCount: 0,
     best: saved ? saved.estado.best : 0, musicAccumulator: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
-    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0,
+    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0,
     previousBest: 0,
     
     flowEnergy: 0, flowState: 'idle', flowActiveTime: 0, flowReadyFlash: 0,
-    skillHeat: 0, recentHits: 0, recentHitDecayTimer: 0, respiroTimer: 0,
-    recentPatternIds: [], pendingMeters: [], phaseMeterList: [], nextMeterIndex: 0, goldShimmer: 0, forceNextGold: false,
+    skillHeat: 0, recentHits: 0,
+    recentPatternIds: [], pendingMeters: [], phaseMeterList: [], nextMeterIndex: 0,
 
     faseIdx: 0,
     ruaIdx: 0,
@@ -478,8 +522,7 @@
     totalFaseReadings: 0,
     isEndless: false,
 
-    kombiState: 'arrival', kombiX: -220, kombiDoorOpen: true, phaseCompleted: false,
-    microMission: null, microProgress: 0
+    kombiState: 'arrival', kombiX: -220, kombiDoorOpen: true, phaseCompleted: false
   };
 
   const player = { x: 140, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: false, state: 'idle', landSquash: 0 };
@@ -491,7 +534,6 @@
   function gameRandRange(a, b) { return a + gameRand() * (b - a); }
   function getRouteContext() { return ROTAS_SEMAE[state.faseIdx]; }
 
-  // BUILD PHASE METERS COM VÍNCULO REAL DE RUA (ruaIdx)
   function buildPhaseMeters(faseIdx) {
     const ctxRoute = ROTAS_SEMAE[faseIdx];
     const total = ctxRoute.total_hidrometros;
@@ -612,7 +654,9 @@
     setTimeout(() => beep(900, 0.06, 0.03, 'square', 200), 40);
     setTimeout(() => beep(1200, 0.08, 0.03, 'triangle', 150), 80);
   }
-  function bark() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; }
+  function playHitSound() { beep(120, 0.15, 0.045, 'sawtooth', -60); }
+  function playPowerupSound() { beep(520, 0.08, 0.03, 'sine', 200); setTimeout(() => beep(840, 0.12, 0.035, 'sine', 220), 70); }
+  function barkSound() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; }
   function successSound() { beep(720, 0.05, 0.022, 'triangle', 180); setTimeout(() => beep(1040, 0.07, 0.02, 'triangle', 140), 55); }
   function syncAudioButtons() {
     musicModalBtn.textContent = audioPrefs.musicOn ? '♫ Música: ligada' : '♫ Música: desligada'; sfxModalBtn.textContent = audioPrefs.sfxOn ? '🔊 Efeitos: ligados' : '🔇 Efeitos: desligados';
@@ -658,7 +702,7 @@
     hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${state.faseIdx + 1}</span> ${ctxRoute.bairro}`;
     hudRotaInfo.textContent = `Setor ${ctxRoute.setor} · Rota ${ctxRoute.rota}`;
     
-    // Atualização dinâmica da Rua com base em readingsByRua
+    // Atualização de Rua e Contadores Duplos (Rua / Rota)
     let activeRuaIdx = 0;
     for (let i = 0; i < ctxRoute.ruas.length; i++) {
       if ((state.readingsByRua[i] || 0) < ctxRoute.ruas[i].hidrometros) {
@@ -667,13 +711,33 @@
       }
       if (i === ctxRoute.ruas.length - 1) activeRuaIdx = i;
     }
+    
+    // Detecção de Checkpoint de Rua concluída
+    if (state.running && activeRuaIdx > state.ruaIdx) {
+      const prevRua = ctxRoute.ruas[state.ruaIdx];
+      streetSigns.push({ text: prevRua ? prevRua.nome_rua : 'Rua Concluída', x: W + 40, y: groundY - 140 });
+      showBanner('📍 RUA CONCLUÍDA!', prevRua ? prevRua.nome_rua : '', 140, 'checkpoint');
+      state.score += 500; state.dogThreat = Math.max(0, state.dogThreat - 12);
+      beep(620, 0.08, 0.03, 'triangle', 180);
+      announce(`Rua ${prevRua ? prevRua.nome_rua : ''} concluída.`);
+    }
+
     state.ruaIdx = activeRuaIdx;
     
     const ruaData = ctxRoute.ruas[state.ruaIdx];
     const ruaLidos = state.readingsByRua[state.ruaIdx] || 0;
     const ruaTotal = ruaData ? ruaData.hidrometros : 1;
+    
     hudRuaAtual.textContent = `📍 ${ruaData ? ruaData.nome_rua : 'Concluído'}`;
-    hudHidrometroCount.textContent = `💧 ${ruaLidos} / ${ruaTotal}`;
+    hudHidrometroCount.textContent = `💧 Rua ${ruaLidos}/${ruaTotal} · Rota ${state.totalFaseReadings}/${ctxRoute.total_hidrometros}`;
+
+    // Ameaça do Cão no HUD
+    if (state.dogThreat < 25) distanceEl.textContent = 'Seguro (Distante)';
+    else if (state.dogThreat < 50) distanceEl.textContent = 'Alerta (Aproximando)';
+    else if (state.dogThreat < 75) distanceEl.textContent = 'Perigo (Perto!)';
+    else distanceEl.textContent = '🚨 INVESTIDA!';
+
+    missionHud.textContent = `Rua ${state.ruaIdx + 1}/${ctxRoute.ruas.length} · ${ruaData ? ruaData.nome_rua : ''}`;
   }
 
   function renderMedalhasEPlacar() {
@@ -725,7 +789,7 @@
     const currentScore = Math.floor(state.score);
     bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
     state.best = Math.max(state.best, currentScore);
-    persistProgress(); beep(180, 0.18, 0.05, 'sawtooth', -70);
+    persistProgress(); playHitSound();
     
     modalTitle.textContent = '🐶 O cão se aproximou!';
     modalText.textContent = `Pontuação: ${currentScore.toLocaleString('pt-BR')} · Hidrômetros lidos: ${state.totalFaseReadings} · Leituras Perfeitas: ${state.perfects}`;
@@ -739,7 +803,7 @@
     const currentScore = Math.floor(state.score);
     bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
     
-    // Salva o resultado desta fase específica para o somatório acumulado de 5 rotas
+    // Salva e persiste os resultados da fase no vetor de histórico da campanha
     phaseResults[state.faseIdx] = {
       meters: state.totalFaseReadings,
       perfects: state.perfects,
@@ -753,7 +817,6 @@
       campaignCompleted = true;
       maxUnlockedFase = 5;
       
-      // Calcular estatísticas acumuladas reais de todas as 5 rotas da campanha
       const campaignTotalMeters = ROTAS_SEMAE.reduce((sum, r) => sum + r.total_hidrometros, 0);
       const campaignMeters = phaseResults.reduce((sum, r) => sum + (r ? r.meters : 0), 0);
       const campaignPerfects = phaseResults.reduce((sum, r) => sum + (r ? r.perfects : 0), 0);
@@ -805,13 +868,13 @@
     announce(`Rota ${ctxRoute.fase} concluída.`);
   }
 
-  // 5. CUTSCENE GRAND FINALE ENGINE V7 (INTEGRAÇÃO STANDALONE)
+  // 5. CUTSCENE GRAND FINALE ENGINE V7 (STANDALONE & INTEGRADA)
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },     // Retrospectiva (4.0s)
-    { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },  // Chegada ao SEMAE (4.0s)
-    { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 }, // Reencontro do Cão (4.5s)
-    { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },  // Carinho & Ração (5.5s)
-    { id: 4, name: 'epilogue', duration: 6000, cameraScale: 1.08 }     // Epílogo Pôr do Sol (6.0s)
+    { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },
+    { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },
+    { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 },
+    { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },
+    { id: 4, name: 'epilogue', duration: 6000, cameraScale: 1.08 }
   ];
 
   const cutsceneState = {
@@ -824,11 +887,7 @@
 
   const csPlayer = { x: 540 * 0.35, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'idle', facing: 1, noticeTimer: 0 };
   const csDog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, visible: true, sitting: false, happy: false, facing: 1 };
-  let csBowlPos = null;
-  let csHeartAlpha = 0;
-  let csBgScroll = 0;
-  let csLastTs = 0;
-  let csRafId = 0;
+  let csBowlPos = null, csHeartAlpha = 0, csBgScroll = 0, csLastTs = 0, csRafId = 0;
 
   function layoutCutsceneScene() {
     csPlayer.y = groundY - csPlayer.h;
@@ -1122,17 +1181,6 @@
     ctx.fillStyle = isDusk ? '#64748b' : '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     ctx.fillStyle = isDusk ? '#475569' : '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
     ctx.fillStyle = isDusk ? '#1e293b' : '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
-
-    if (isDusk) {
-      ctx.fillStyle = '#1e293b';
-      const stride = 140;
-      for (let x = - (csBgScroll % stride); x < W + stride; x += stride) {
-        ctx.fillRect(x, groundY - 110, 6, 110);
-        ctx.beginPath(); ctx.arc(x + 3, groundY - 110, 26, 0, Math.PI * 2); ctx.fill();
-        ctx.fillRect(x + 70, groundY - 95, 4, 95);
-        ctx.fillRect(x + 64, groundY - 95, 16, 4);
-      }
-    }
   }
 
   function drawCutsceneDog() {
@@ -1205,7 +1253,7 @@
 
     const isKneeling = csPlayer.state === 'kneeling' || csPlayer.state === 'petting' || csPlayer.state === 'placingBowl';
     const isWalking = csPlayer.state === 'walking' || csPlayer.state === 'walkingWithDog';
-    const torsoBob = isWalking ? Math.sin(csPlayer.legPhase * 2) * 2.0 : 0;
+    const torsoBob = isWalking ? Math.sin(csPlayer.legPhase * 2) * 2.2 : 0;
     const y = csPlayer.y + (isKneeling ? 18 : torsoBob);
 
     ctx.translate(x + w / 2, y);
@@ -1337,7 +1385,111 @@
     });
   }
 
-  // 6. GAMEPLAY RENDERING & ANIMATION
+  // 6. DIREÇÃO DE PERCURSO, SPAWNING DE PADRÕES E POWER-UPS
+  function spawnDirectorPattern() {
+    if (state.nextMeterIndex >= state.phaseMeterList.length && state.pendingMeters.length === 0) return;
+    
+    const speed = state.speed;
+    const tier = state.faseIdx >= 4 ? (speed > 7.0 ? 3 : 2) : (state.faseIdx >= 2 ? (speed > 6.0 ? 2 : 1) : (speed > 5.2 ? 1 : 0));
+    
+    const candidates = PATTERNS_DB.filter(p => p.tier <= tier && speed >= p.minSpeed && speed <= p.maxSpeed && !state.recentPatternIds.includes(p.id));
+    const chosen = candidates[Math.floor(gameRand() * candidates.length)] || PATTERNS_DB[0];
+    
+    state.recentPatternIds.push(chosen.id);
+    if (state.recentPatternIds.length > 5) state.recentPatternIds.shift();
+
+    let startX = W + 40;
+    
+    // Prioridade total para hidrômetros pendentes na fila
+    for (const item of chosen.items) {
+      const spawnX = startX + item.dx;
+      
+      if (item.type === 'obstacle') {
+        obstacles.push({
+          type: item.kind, x: spawnX, y: groundY + item.dy, w: item.w, h: item.h, hit: false
+        });
+      } else if (item.type === 'meter') {
+        let mData = null;
+        let isPending = false;
+        
+        const readyPendingIdx = state.pendingMeters.findIndex(p => p.retryAfterBeats <= 0);
+        if (readyPendingIdx !== -1) {
+          mData = state.pendingMeters.splice(readyPendingIdx, 1)[0].data;
+          isPending = true;
+        } else if (state.nextMeterIndex < state.phaseMeterList.length) {
+          mData = state.phaseMeterList[state.nextMeterIndex++];
+        }
+
+        if (mData) {
+          meters.push({
+            data: mData,
+            x: spawnX, y: groundY + item.dy, r: 18, taken: false,
+            kind: (item.isGold || mData.isGold) ? 'gold' : 'normal',
+            avg3M: mData.avg3Months, ruaIdx: mData.ruaIdx, spin: 0,
+            isReturnedPending: isPending
+          });
+        }
+      }
+    }
+
+    state.nextSpawn = chosen.endDx + gameRandRange(30, 70);
+  }
+
+  function spawnPowerup() {
+    if (powerups.length > 0) return;
+    const types = ['shoe', 'shield', 'bone'];
+    const t = types[Math.floor(gameRand() * types.length)];
+    powerups.push({ type: t, x: W + 60, y: groundY - gameRandRange(120, 180), r: 16, taken: false });
+  }
+
+  function hitObstacle(o) {
+    if (o.hit) return;
+    o.hit = true;
+    
+    if (state.flowState === 'active') {
+      state.score += 250;
+      burst(o.x + o.w / 2, o.y + o.h / 2, '#5FDCF2', 15, true);
+      addFloater('⚡ IMPACTO FLOW +250', o.x, o.y - 20, '#5FDCF2', true);
+      beep(600, 0.08, 0.03, 'triangle', 200);
+      return;
+    }
+
+    if (state.shield > 0) {
+      state.shield = 0;
+      burst(player.x + 22, player.y + 36, '#1351B4', 18, true);
+      addFloater('🛡️ ESCUDO BLOQUEOU!', player.x, player.y - 20, '#FFCD07', true);
+      beep(400, 0.1, 0.04, 'square', -150);
+      return;
+    }
+
+    player.hurt = 35; state.shake = 12; state.recentHits++;
+    state.dogThreat = Math.min(100, state.dogThreat + 18);
+    resetCombo(); playHitSound();
+    if (navigator.vibrate) navigator.vibrate(80);
+    
+    burst(player.x + 22, player.y + 36, '#e04a5f', 16, true);
+    addFloater('💥 TROPEÇO! +AMEAÇA', player.x, player.y - 20, '#e04a5f', true);
+  }
+
+  function collectPower(p) {
+    if (p.taken) return; p.taken = true; state.powerupsTaken++;
+    playPowerupSound();
+    
+    if (p.type === 'shoe') {
+      state.shoeTimer = 300;
+      addFloater('🥾 TURBO OPERACIONAL!', p.x, p.y, '#FFCD07', true);
+    } else if (p.type === 'shield') {
+      state.shield = 1;
+      addFloater('🛡️ ESCUDO SEMAE!', p.x, p.y, '#1351B4', true);
+    } else if (p.type === 'bone') {
+      state.dogThreat = Math.max(0, state.dogThreat - 30);
+      addFloater('🦴 CÃO DISTRAÍDO!', p.x, p.y, '#22c55e', true);
+    }
+    
+    burst(p.x, p.y, '#FFCD07', 15, true);
+  }
+
+  // 7. GAMEPLAY RENDERING & ANIMATION
   function drawPlayer() {
     if (!player.visible) return;
     const skin = skins[selectedSkin], air = !player.onGround, x = player.x;
@@ -1395,7 +1547,6 @@
     rounded(x + 6, y + 20, 37, 42, 9, skin.body);
     ctx.fillStyle = skin.stripe; ctx.fillRect(x + 8, y + 38, 33, 5);
 
-    // TELEFONE CELULAR SMARTPHONE NA MÃO DO LEITURISTA
     const phoneSway = !air ? Math.sin(player.legPhase) * 1.5 : 0;
     const phoneX = x + 40, phoneY = y + 28 + phoneSway;
     rounded(phoneX, phoneY, 13, 24, 4, '#0f172a');
@@ -1408,22 +1559,22 @@
     ctx.fillStyle = skin.cap; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
     ctx.fillRect(x + 20, y + 4, 24, 5);
 
-    if (!player.onGround && Math.abs(player.vy) < 3.8) {
-      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + 24, y + 36, 38, 0, Math.PI * 2); ctx.stroke();
+    if (state.flowState === 'ready') {
+      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 42 + Math.sin(state.time * 0.3) * 4, 0, Math.PI * 2); ctx.stroke();
+    } else if (state.flowState === 'active') {
+      ctx.strokeStyle = 'rgba(95, 220, 242, 0.95)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x + 24, y + 37, 46, 0, Math.PI * 2); ctx.stroke();
     }
-
-    if (state.flowState === 'active') { ctx.strokeStyle = 'rgba(95, 220, 242, 0.95)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x + 24, y + 37, 46, 0, Math.PI * 2); ctx.stroke(); }
-    if (state.shield > 0) { ctx.strokeStyle = 'rgba(255, 205, 7, 0.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 36, 0, Math.PI * 2); ctx.stroke(); }
+    if (state.shield > 0) { ctx.strokeStyle = 'rgba(19, 81, 180, 0.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 36, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
 
     if (state.kombiState === 'running') {
       ctx.save(); ctx.translate(x - 5, y - 32);
       rounded(0, 0, 72, 26, 7, 'rgba(12, 50, 111, 0.94)');
-      ctx.fillStyle = '#FFCD07'; ctx.font = '900 11px system-ui'; ctx.fillText(`🔥 ${state.combo} · x${state.mult}`, 6, 14);
+      ctx.fillStyle = '#FFCD07'; ctx.font = '900 11px system-ui'; ctx.fillText(`🔥 ${state.combo} · x${state.mult.toFixed(2)}`, 6, 14);
       
-      const flowPulse = state.flowEnergy >= 70 ? Math.sin(state.time * 0.2) * 1.5 : 0;
+      const flowPulse = state.flowEnergy >= 100 ? Math.sin(state.time * 0.3) * 2 : 0;
       ctx.fillStyle = '#08202f'; ctx.fillRect(6, 17, 60, 6 + flowPulse);
-      ctx.fillStyle = state.flowEnergy >= 90 ? '#ffffff' : '#5FDCF2';
+      ctx.fillStyle = state.flowState === 'ready' ? '#FFCD07' : (state.flowState === 'active' ? '#5FDCF2' : '#168821');
       ctx.fillRect(6, 17, (state.flowEnergy / 100) * 60, 6 + flowPulse);
       ctx.restore();
     }
@@ -1473,7 +1624,7 @@
     for (const e of events) {
       if (e.type === 'maintenance') {
         ctx.fillStyle = 'rgba(95, 220, 242, 0.25)'; ctx.beginPath(); ctx.arc(e.x, groundY - 30, 40, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#1351B4'; rounded(e.x - 15, groundY - 45, 30, 45, 4, '#1351B4');
+        rounded(e.x - 15, groundY - 45, 30, 45, 4, '#1351B4');
       } else if (e.type === 'resident') {
         ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(e.x, groundY - 95, 12, 0, Math.PI * 2); ctx.fill();
         rounded(e.x - 12, groundY - 82, 24, 48, 6, '#475569');
@@ -1538,7 +1689,23 @@
     ctx.fillStyle = 'rgba(255, 233, 168, 0.45)'; ctx.beginPath(); ctx.arc(W * 0.78, 140, 80, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, 140, 48, 0, Math.PI * 2); ctx.fill();
 
+    // CENÁRIO EM MOVIMENTO (PARALLAX E CASAS)
+    ctx.fillStyle = 'rgba(12, 50, 111, 0.15)';
+    const bgX = -(state.bgOffset % 240);
+    for (let x = bgX - 240; x < W + 240; x += 160) {
+      ctx.fillRect(x, groundY - 140, 100, 140);
+      ctx.fillRect(x + 110, groundY - 110, 40, 110);
+    }
+
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
+    
+    // FAIXAS DA RUA EM MOVIMENTO
+    ctx.fillStyle = '#ffffff';
+    const roadX = -(state.roadOffset % 80);
+    for (let x = roadX - 80; x < W + 80; x += 80) {
+      ctx.fillRect(x, groundY + 12, 40, 6);
+    }
+
     ctx.fillStyle = '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
     ctx.fillStyle = '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
   }
@@ -1550,8 +1717,8 @@
     ctx.fillStyle = fill; ctx.fill();
   }
 
-  function drawParticles() { for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life / 45); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); } ctx.globalAlpha = 1; }
-  function drawFloaters() { ctx.textAlign = 'center'; for (const f of floaters) { ctx.globalAlpha = Math.min(1, f.life / 12); ctx.font = `900 ${f.big ? 20 : 16}px system-ui`; ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); } ctx.globalAlpha = 1; }
+  function drawParticles() { for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life / 30); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); } ctx.globalAlpha = 1; }
+  function drawFloaters() { ctx.textAlign = 'center'; for (const f of floaters) { ctx.globalAlpha = Math.min(1, f.life / 15); ctx.font = `900 ${f.big ? 20 : 16}px system-ui`; ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); } ctx.globalAlpha = 1; }
   function drawBanner() {
     if (banner.life <= 0) return; const alpha = Math.min(1, (banner.life / banner.max) * 4);
     ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.font = '1000 28px system-ui';
@@ -1606,7 +1773,7 @@
   function comboUp(points = 1) {
     state.combo += points;
     state.maxCombo = Math.max(state.maxCombo, state.combo);
-    state.mult = 1 + Math.floor(state.combo / 4) * 0.25;
+    state.mult = Math.min(5.0, 1 + Math.floor(state.combo / 4) * 0.25);
     state.comboTimer = 180;
   }
   function resetCombo() { state.combo = 0; state.mult = 1; state.comboTimer = 0; }
@@ -1614,14 +1781,13 @@
   function collectMeter(m) {
     if (m.taken) return; m.taken = true;
     state.readings++;
+    lifetimeReadings++;
     
-    // Atualização de readingsByRua garantindo acumulo perfeito
     if (m.ruaIdx !== undefined && state.readingsByRua[m.ruaIdx] !== undefined) {
       state.readingsByRua[m.ruaIdx]++;
     }
     state.totalFaseReadings++;
     
-    // Throttled persistence a cada 5 leituras
     if (state.totalFaseReadings % 5 === 0) persistProgress();
 
     comboUp(m.kind === 'gold' ? 2 : 1);
@@ -1629,7 +1795,13 @@
     let base = (m.avg3M || 20) * (m.kind === 'gold' ? 1.5 : 1);
     const perfect = !player.onGround && Math.abs(player.vy) < 3.8;
     const energyAdd = (perfect ? 22 : (m.kind === 'gold' ? 18 : 10)) * (state.flowState === 'active' ? 0.3 : 1);
+    
     state.flowEnergy = Math.min(100, state.flowEnergy + energyAdd);
+    if (state.flowEnergy >= 100 && state.flowState === 'idle') {
+      state.flowState = 'ready';
+      showBanner('⚡ MODALIDADE FLOW PRONTA!', 'Pule ou toque para ativar velocidade total!', 100, 'flow');
+      beep(880, 0.1, 0.04, 'triangle', 300);
+    }
 
     if (perfect) {
       state.perfects++; base += 50; state.skillHeat = Math.min(100, state.skillHeat + 8);
@@ -1654,11 +1826,13 @@
     const ctxRoute = getRouteContext();
     if (state.totalFaseReadings >= ctxRoute.total_hidrometros && !state.phaseCompleted) {
       if (state.isEndless) {
-        // Modo Infinito: transiciona para a próxima rota sem parar!
         state.faseIdx = (state.faseIdx + 1) % ROTAS_SEMAE.length;
         state.phaseMeterList = buildPhaseMeters(state.faseIdx);
+        state.nextMeterIndex = 0;
+        state.pendingMeters = [];
         state.readingsByRua = Array(ROTAS_SEMAE[state.faseIdx].ruas.length).fill(0);
         state.totalFaseReadings = 0;
+        state.readingClock = 0; state.spawnClock = 0;
         showBanner(`♾️ ROTA CONTINUA: ${ROTAS_SEMAE[state.faseIdx].bairro}`, 'Modo Infinito em andamento!', 180, 'victory');
       } else {
         triggerPhaseCompletion();
@@ -1666,12 +1840,12 @@
     }
 
     updateHudRouteInfo();
+    updateCollectionUI();
   }
 
   function missMeter(m) {
     if (m.taken) return; m.taken = true;
-    m.isReturnedPending = true;
-    state.pendingMeters.push({ data: m, retryAfterBeats: Math.floor(gameRandRange(4, 7)) });
+    state.pendingMeters.push({ data: m.data, retryAfterBeats: Math.floor(gameRandRange(3, 5)) });
     resetCombo(); state.dogThreat = Math.min(100, state.dogThreat + 6);
     addFloater('LEITURA PENDENTE!', W - 160, groundY - 140, '#FFCD07', false);
     beep(140, 0.08, 0.02, 'sawtooth', -30);
@@ -1681,6 +1855,19 @@
 
   function jump() {
     if (!state.running || state.paused || state.over) return;
+    
+    state.jumpCount++;
+    if (state.jumpCount >= 3 && touchHint) {
+      touchHint.classList.add('hidden');
+    }
+
+    if (state.flowState === 'ready') {
+      state.flowState = 'active';
+      state.flowActiveTime = 360;
+      showBanner('⚡ FLOW ATIVADO!', 'Velocidade e imunidade temporária!', 120, 'flow');
+      beep(1040, 0.12, 0.04, 'sine', 300);
+    }
+
     if (player.onGround || state.coyote > 0) {
       doJump();
     } else {
@@ -1701,6 +1888,24 @@
   function update(dt) {
     if (!state.running || state.paused) return;
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
+
+    // DECREMENTO E EXPIRAÇÃO DE TIMERS
+    if (state.comboTimer > 0) {
+      state.comboTimer -= step;
+      if (state.comboTimer <= 0) resetCombo();
+    }
+    if (state.jumpBuffer > 0) state.jumpBuffer = Math.max(0, state.jumpBuffer - step);
+    if (state.shoeTimer > 0) state.shoeTimer -= step;
+    if (player.hurt > 0) player.hurt -= step;
+
+    // ATUALIZAÇÃO DO SISTEMA FLOW ACTIVE
+    if (state.flowState === 'active') {
+      state.flowActiveTime -= step;
+      if (state.flowActiveTime <= 0) {
+        state.flowState = 'idle';
+        state.flowEnergy = 0;
+      }
+    }
 
     if (player.onGround) {
       state.coyote = 7;
@@ -1735,8 +1940,8 @@
     } else if (state.kombiState === 'dog_entry') {
       dog.x += 4.5 * step;
       if (dog.x >= 35) {
-        dog.x = 35; state.dogThreat = 0; state.spawnClock = 0; state.nextSpawn = 120;
-        state.readingClock = 0; state.nextReading = 20; state.kombiState = 'running';
+        dog.x = 35; state.dogThreat = 0; state.spawnClock = 0; state.nextSpawn = 45;
+        state.readingClock = 0; state.nextReading = 45; state.kombiState = 'running';
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
       return;
@@ -1771,49 +1976,97 @@
 
     const ctxRoute = getRouteContext();
     const progressPct = clamp(state.totalFaseReadings / (ctxRoute.total_hidrometros || 1), 0, 1);
-    state.speed = state.baseSpeed + (progressPct * 1.3);
+    state.speed = (ctxRoute.baseSpeed || 5.0) + (progressPct * 1.3);
 
     const turbo = state.shoeTimer > 0 ? 1.08 : 1, flowSpeed = state.flowState === 'active' ? 1.06 : 1;
     const actualSpeed = state.speed * turbo * flowSpeed;
     
+    // ANIMAÇÃO DE PERNAS ATUALIZADA A CADA FRAME
+    player.legPhase += 0.22 * actualSpeed * step;
+    dog.legPhase += 0.24 * actualSpeed * step;
+
     state.score += 0.16 * actualSpeed * step * (state.shoeTimer > 0 ? 1.25 : 1);
     state.roadOffset = (state.roadOffset + actualSpeed * step) % 80;
     state.bgOffset += actualSpeed * 0.28 * step;
 
-    // SPAWNING DE OBSTÁCULOS E HIDRÔMETROS
-    state.spawnClock += step; state.readingClock += step;
-    
-    if (state.readingClock >= state.nextReading) {
-      state.readingClock = 0; state.nextReading = rand(140, 220);
-      if (state.nextMeterIndex < state.phaseMeterList.length) {
-        const mData = state.phaseMeterList[state.nextMeterIndex++];
-        meters.push({
-          x: W + 60, y: groundY - (mData.isGold ? 160 : 88), r: 18, taken: false,
-          kind: mData.isGold ? 'gold' : 'normal', avg3M: mData.avg3Months, ruaIdx: mData.ruaIdx, spin: 0
-        });
-      }
+    // CONTROLES DE AGENDAMENTO DE PATTERNS E POWERUPS
+    state.spawnClock += step;
+    state.powerClock += step;
+    for (const p of state.pendingMeters) p.retryAfterBeats -= step;
+
+    if (state.spawnClock >= state.nextSpawn) {
+      state.spawnClock = 0;
+      spawnDirectorPattern();
+    }
+    if (state.powerClock >= state.nextPower) {
+      state.powerClock = 0;
+      state.nextPower = rand(450, 750);
+      spawnPowerup();
     }
 
     // ATUALIZAÇÃO DOS ITENS EM TELA
     const pb = playerBox();
+
+    // 1. HIDRÔMETROS
     for (let i = meters.length - 1; i >= 0; i--) {
       const m = meters[i]; m.x -= actualSpeed * step; m.spin += 0.05 * step;
       if (!m.taken && Math.hypot(m.x - (pb.x + pb.w / 2), m.y - (pb.y + pb.h / 2)) < (m.r + 20)) {
         collectMeter(m);
       } else if (m.x < -40 && !m.taken) {
         missMeter(m);
-        meters.splice(i, 1);
-      } else if (m.x < -40) {
-        meters.splice(i, 1);
       }
     }
+    meters = meters.filter(m => !m.taken && m.x + m.r > -40);
 
-    // MOVIMENTAÇÃO DO CÃO E AMEAÇA DE SEGURANÇA
+    // 2. OBSTÁCULOS
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i]; o.x -= actualSpeed * step;
+      if (!o.hit && o.x < pb.x + pb.w && o.x + o.w > pb.x && o.y < pb.y + pb.h && o.y + o.h > pb.y) {
+        hitObstacle(o);
+      }
+    }
+    obstacles = obstacles.filter(o => o.x + o.w > -40);
+
+    // 3. POWERUPS
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const p = powerups[i]; p.x -= actualSpeed * step;
+      if (!p.taken && Math.hypot(p.x - (pb.x + pb.w / 2), p.y - (pb.y + pb.h / 2)) < (p.r + 22)) {
+        collectPower(p);
+      }
+    }
+    powerups = powerups.filter(p => !p.taken && p.x + p.r > -40);
+
+    // 4. PARTICULAS & FLOATERS (CLEANUP & UPDATE)
+    for (const p of particles) {
+      p.x += p.vx * step; p.y += p.vy * step; p.life -= step;
+    }
+    particles = particles.filter(p => p.life > 0);
+
+    for (const f of floaters) {
+      f.y += f.vy * step; f.life -= step;
+    }
+    floaters = floaters.filter(f => f.life > 0);
+
+    // 5. PLACAS DE RUA E EVENTOS
+    for (const s of streetSigns) s.x -= actualSpeed * step;
+    streetSigns = streetSigns.filter(s => s.x > -350);
+
+    // MOVIMENTAÇÃO DINÂMICA E INVESTIDA DO CÃO
     state.dogThreat = clamp(state.dogThreat + 0.04 * step, 0, 100);
     dangerBar.style.width = `${state.dogThreat}%`;
     dangerBar.style.background = state.dogThreat > 75 ? 'var(--erro)' : (state.dogThreat > 40 ? 'var(--alerta)' : 'var(--semae-verde)');
     
-    if (state.dogThreat >= 100) {
+    const targetDogX = player.x - 220 + (state.dogThreat / 100) * 160;
+    dog.x += (targetDogX - dog.x) * 0.08 * step;
+
+    if (state.dogThreat > 80) {
+      dog.lungeOffset = Math.sin(state.time * 0.3) * 14;
+      if (Math.random() < 0.04) barkSound();
+    } else {
+      dog.lungeOffset = 0;
+    }
+
+    if (dog.x + dog.w >= player.x + 8 || state.dogThreat >= 100) {
       gameOver();
     }
 
@@ -1824,18 +2077,38 @@
 
   function resetGame() {
     state.faseIdx = currentSelectedFase - 1;
+    const ctxRoute = getRouteContext();
+    
     state.running = true; state.paused = false; state.over = false;
-    state.score = 0; state.readings = 0; state.perfects = 0; state.maxCombo = 0; state.combo = 0;
+    state.score = 0; state.readings = 0; state.perfects = 0; state.maxCombo = 0; state.combo = 0; state.mult = 1; state.comboTimer = 0;
     state.totalFaseReadings = 0;
-    state.readingsByRua = Array(ROTAS_SEMAE[state.faseIdx].ruas.length).fill(0);
+    state.speed = ctxRoute.baseSpeed || 5.0; state.baseSpeed = ctxRoute.baseSpeed || 5.0;
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0;
+    state.dogThreat = 0; state.shake = 0; state.flash = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpCount = 0;
+    
+    state.readingsByRua = Array(ctxRoute.ruas.length).fill(0);
+    state.ruaIdx = 0;
     state.phaseMeterList = buildPhaseMeters(state.faseIdx);
-    state.nextMeterIndex = 0;
+    state.nextMeterIndex = 0; state.pendingMeters = []; state.recentPatternIds = [];
+    
+    state.flowEnergy = 0; state.flowState = 'idle'; state.flowActiveTime = 0; state.flowReadyFlash = 0;
+    state.skillHeat = 0; state.recentHits = 0; state.shoeTimer = 0; state.shield = 0; state.dogDistract = 0;
+    state.previousBest = bestByPhase[state.faseIdx] || 0;
+
+    state.spawnClock = 0; state.nextSpawn = 45; state.readingClock = 0; state.nextReading = 45; state.powerClock = 0; state.nextPower = 600;
+
     state.kombiState = 'arrival'; state.kombiX = -220; state.kombiDoorOpen = true;
     state.phaseCompleted = false;
-    meters = []; obstacles = []; powerups = []; particles = []; floaters = [];
+
+    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false; player.state = 'idle'; player.legPhase = 0;
+    dog.x = -250; dog.visible = false; dog.bark = 0; dog.lungeOffset = 0; dog.legPhase = 0;
+
+    meters = []; obstacles = []; powerups = []; particles = []; floaters = []; streetSigns = []; events = [];
     
     overlay.hidden = true;
     pauseBtn.disabled = false;
+    if (touchHint) touchHint.classList.remove('hidden');
+    
     updateHudRouteInfo();
     resizeCanvas();
   }
@@ -1853,7 +2126,7 @@
     render();
   }
 
-  // EVENT LISTENERS & DEBOUNCED RESIZE
+  // EVENT LISTENERS & POINTER CAPTURE MOILE
   if (skinBtn) {
     skinBtn.addEventListener('click', () => {
       const u = unlockedSkins(); let pos = u.findIndex(x => x.i === selectedSkin); pos = (pos + 1) % u.length;
@@ -1863,14 +2136,11 @@
 
   startBtn.addEventListener('click', () => {
     audio.ensure();
-    if (campaignCompleted && state.isEndless) {
-      currentSelectedFase = 5;
-    }
+    state.isEndless = (campaignCompleted && currentSelectedFase === 5);
     resetGame(); startLoop();
   });
   
   overlay.addEventListener('pointerdown', e => {
-    // Evita reinício acidental se o toque for dentro da caixa do modal
     if (e.target === overlay && state.over) {
       e.preventDefault(); audio.ensure(); resetGame(); startLoop();
     }
@@ -1879,6 +2149,8 @@
   canvas.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    
     if (cutsceneState.running && !cutsceneState.paused) {
       advanceCutsceneScene({ manual: true });
       return;
@@ -1888,8 +2160,12 @@
     else jump();
   }, { passive: false });
   
-  canvas.addEventListener('pointerup', e => { releaseJump(); }, { passive: true });
-  canvas.addEventListener('pointercancel', e => { releaseJump(); }, { passive: true });
+  const releasePointer = e => {
+    try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    releaseJump();
+  };
+  canvas.addEventListener('pointerup', releasePointer, { passive: true });
+  canvas.addEventListener('pointercancel', releasePointer, { passive: true });
 
   pauseBtn.addEventListener('click', () => { audio.ensure(); setPaused(!state.paused); });
   function toggleMusic() { audio.ensure(); audioPrefs.musicOn = !audioPrefs.musicOn; syncAudioButtons(); persistProgress(); }
@@ -1907,8 +2183,9 @@
     const file = importFile.files?.[0]; if (!file) return;
     try {
       const d = JSON.parse(await file.text());
-      if (!validateSave(d)) throw new Error('Save inválido');
-      applySave(d);
+      const valid = validateSave(d) ? d : migrateSave(d);
+      if (!valid) throw new Error('Save inválido');
+      applySave(valid);
       showBanner('✅ BACKUP RESTAURADO', 'Progresso carregado com sucesso', 120);
     } catch {
       alert('Arquivo de salvamento inválido ou corrompido.');
