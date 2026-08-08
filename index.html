@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Jogo do Leiturista — SEMAE Piracicaba (v3.3.0 Engine Restaurada)</title>
+  <title>Jogo do Leiturista — SEMAE Piracicaba (v3.4.0 Engine Master)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -168,6 +168,11 @@
       cursor: pointer; box-shadow: 0 5px 0 #d9a800; touch-action: manipulation; margin-top: 8px;
     }
     .botao:active { box-shadow: 0 2px 0 #d9a800; transform: translateY(3px); }
+
+    .botao-endless {
+      background: #0284c7; color: #ffffff; box-shadow: 0 5px 0 #0369a1; margin-top: 8px;
+    }
+    .botao-endless:active { box-shadow: 0 2px 0 #0369a1; transform: translateY(3px); }
     
     .utility-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
     .utility-btn {
@@ -204,9 +209,9 @@
       </div>
       <div class="card">
         <small>Segurança / Cão</small>
-        <strong id="distance">Seguro</strong>
+        <strong id="distance">Seguro (Distante)</strong>
         <div class="perigo"><span id="dangerBar"></span></div>
-        <small id="missionHud">Rota carregando…</small>
+        <small id="missionHud">Rua 1/2 · Rua Ajudante Albano</small>
       </div>
     </div>
 
@@ -260,9 +265,10 @@
           <button class="utility-btn" id="importBtn" type="button">⬆ Importar progresso</button>
         </div>
         <input id="importFile" type="file" accept="application/json,.json" hidden />
-        <p class="version" id="versionText">v3.3.0 · SEMAE Piracicaba Engine</p>
+        <p class="version" id="versionText">v3.4.0 · SEMAE Piracicaba Engine</p>
         
         <button class="botao" id="startBtn" type="button">TOQUE PARA INICIAR A ROTA</button>
+        <button class="botao botao-endless" id="endlessBtn" type="button" style="display:none;">♾️ JOGAR MODO INFINITO ▶</button>
       </div>
     </div>
 
@@ -363,7 +369,7 @@
   const hudFaseBairro = document.getElementById('hudFaseBairro'), hudRotaInfo = document.getElementById('hudRotaInfo');
   const hudRuaAtual = document.getElementById('hudRuaAtual'), hudHidrometroCount = document.getElementById('hudHidrometroCount');
   const distanceEl = document.getElementById('distance'), dangerBar = document.getElementById('dangerBar'), missionHud = document.getElementById('missionHud');
-  const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText'), missionLine = document.getElementById('missionLine'), startBtn = document.getElementById('startBtn'), skinBtn = document.getElementById('skinBtn'), live = document.getElementById('live'), touchHint = document.getElementById('touchHint');
+  const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText'), missionLine = document.getElementById('missionLine'), startBtn = document.getElementById('startBtn'), endlessBtn = document.getElementById('endlessBtn'), skinBtn = document.getElementById('skinBtn'), live = document.getElementById('live'), touchHint = document.getElementById('touchHint');
   const pauseBtn = document.getElementById('pauseBtn'), musicModalBtn = document.getElementById('musicModalBtn'), sfxModalBtn = document.getElementById('sfxModalBtn'), exportBtn = document.getElementById('exportBtn'), importBtn = document.getElementById('importBtn'), importFile = document.getElementById('importFile'), versionText = document.getElementById('versionText');
   const fasesGrid = document.getElementById('fasesGrid'), medalhasBox = document.getElementById('medalhasBox'), quaseBox = document.getElementById('quaseBox'), quaseMsg = document.getElementById('quaseMsg');
   const rewardsBox = document.getElementById('rewardsBox');
@@ -373,7 +379,8 @@
   const replayCutsceneRow = document.getElementById('replayCutsceneRow');
 
   let W = 540, H = 960, groundY = Math.round(H * 0.79); const gravity = 0.82;
-  const APP_ID = 'jogo-do-leiturista-3', APP_VERSION = '3.3.0', SAVE_SCHEMA = 2, SAVE_KEY = `semae.${APP_ID}.v${SAVE_SCHEMA}`, MAX_SAVE_BYTES = 256 * 1024;
+  const APP_ID = 'jogo-do-leiturista-3', APP_VERSION = '3.4.0', SAVE_SCHEMA = 2, SAVE_KEY = `semae.${APP_ID}.v${SAVE_SCHEMA}`, MAX_SAVE_BYTES = 256 * 1024;
+  let storageWarningShown = false;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n)), rand = (a, b) => a + Math.random() * (b - a), reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // SYSTEM LOGGING & ANNOUNCER
@@ -381,14 +388,17 @@
     if (live) live.textContent = msg;
   }
 
-  // 1. SAVE MANAGER MODULE (COM FNV1A CHECKSUM, MIGRAÇÃO DE SCHEMA V1 -> V2 E VALIDAÇÃO COMPLETA)
+  // 1. SAVE MANAGER MODULE (COM FNV1A CHECKSUM, MIGRAÇÃO RÍGIDA E VALIDAÇÃO PROFUNDA DE CAMPOS)
   const rawStore = {
     get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
     set(k, v) {
       try {
         localStorage.setItem(k, v); return true;
       } catch {
-        alert('⚠️ Armazenamento cheio: Não foi possível salvar o progresso localmente.');
+        if (!storageWarningShown) {
+          storageWarningShown = true;
+          alert('⚠️ Armazenamento cheio: Não foi possível salvar o progresso localmente.');
+        }
         return false;
       }
     }
@@ -398,53 +408,85 @@
   function saveCore(d) { return { app: d.app, versaoJogo: d.versaoJogo, versaoEsquema: d.versaoEsquema, criadoEm: d.criadoEm, estado: d.estado }; }
   function checksumSave(d) { return `fnv1a-${fnv1a(JSON.stringify(saveCore(d)))}`; }
   
+  function validPhaseResult(r) {
+    return r === null || (
+      typeof r === 'object' &&
+      Number.isFinite(r.meters) && r.meters >= 0 &&
+      Number.isFinite(r.perfects) && r.perfects >= 0 &&
+      Number.isFinite(r.maxCombo) && r.maxCombo >= 0 &&
+      Number.isFinite(r.score) && r.score >= 0
+    );
+  }
+
+  function validCampaignStats(s) {
+    return s === null || (
+      typeof s === 'object' &&
+      Number.isFinite(s.meters) && s.meters >= 0 &&
+      Number.isFinite(s.totalMeters) && s.totalMeters >= 0 &&
+      Number.isFinite(s.perfects) && s.perfects >= 0 &&
+      Number.isFinite(s.maxCombo) && s.maxCombo >= 0 &&
+      Number.isFinite(s.score) && s.score >= 0
+    );
+  }
+
   function validateSave(d) {
     if (!d || typeof d !== 'object' || d.app !== APP_ID || d.versaoEsquema !== SAVE_SCHEMA || typeof d.criadoEm !== 'string' || !d.estado || typeof d.estado !== 'object' || typeof d.checksum !== 'string') return false;
     const e = d.estado;
     if (!Number.isFinite(e.lifetimeReadings) || e.lifetimeReadings < 0) return false;
     if (!Number.isFinite(e.best) || e.best < 0) return false;
+    if (!Number.isFinite(e.endlessBest) || e.endlessBest < 0) return false;
     if (!Number.isInteger(e.selectedSkin) || e.selectedSkin < 0) return false;
     if (!Number.isInteger(e.maxUnlockedFase) || e.maxUnlockedFase < 1 || e.maxUnlockedFase > 5) return false;
     if (!Array.isArray(e.bestByPhase) || e.bestByPhase.length !== 5 || !e.bestByPhase.every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0)) return false;
+    if (!Array.isArray(e.phaseResults) || e.phaseResults.length !== 5 || !e.phaseResults.every(validPhaseResult)) return false;
+    if (!validCampaignStats(e.lastCampaignStats)) return false;
     if (typeof e.campaignCompleted !== 'boolean') return false;
     if (typeof e.grandFinaleSeen !== 'boolean') return false;
     if (typeof e.musicOn !== 'boolean' || typeof e.sfxOn !== 'boolean') return false;
     return checksumSave(d) === d.checksum;
   }
 
-  function migrateSave(d) {
-    if (!d || typeof d !== 'object' || !d.estado) return null;
-    const e = d.estado;
-    const migrated = {
-      app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: d.criadoEm || new Date().toISOString(),
-      estado: {
-        lifetimeReadings: Number.isFinite(e.lifetimeReadings) ? e.lifetimeReadings : (Number.isFinite(e.totalReadings) ? e.totalReadings : 0),
-        best: Number.isFinite(e.best) ? e.best : 0,
-        bestByPhase: Array.isArray(e.bestByPhase) && e.bestByPhase.length === 5 ? e.bestByPhase : [0, 0, 0, 0, 0],
-        campaignCompleted: Boolean(e.campaignCompleted),
-        grandFinaleSeen: Boolean(e.grandFinaleSeen),
-        lastCampaignStats: e.lastCampaignStats || null,
-        phaseResults: Array.isArray(e.phaseResults) && e.phaseResults.length === 5 ? e.phaseResults : [null, null, null, null, null],
-        selectedSkin: Number.isInteger(e.selectedSkin) ? clamp(e.selectedSkin, 0, 4) : 0,
-        maxUnlockedFase: Number.isInteger(e.maxUnlockedFase) ? clamp(e.maxUnlockedFase, 1, 5) : 1,
-        musicOn: e.musicOn !== undefined ? Boolean(e.musicOn) : true,
-        sfxOn: e.sfxOn !== undefined ? Boolean(e.sfxOn) : true
-      },
-      checksum: ''
-    };
-    migrated.checksum = checksumSave(migrated);
-    return migrated;
+  function tryMigrateV1() {
+    try {
+      const rawV1 = rawStore.get(`semae.${APP_ID}.v1`);
+      if (!rawV1 || rawV1.length > MAX_SAVE_BYTES) return null;
+      const d1 = JSON.parse(rawV1);
+      if (!d1 || typeof d1 !== 'object' || d1.app !== APP_ID || d1.versaoEsquema !== 1 || !d1.estado) return null;
+      const e = d1.estado;
+      const migrated = {
+        app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: d1.criadoEm || new Date().toISOString(),
+        estado: {
+          lifetimeReadings: Number.isFinite(e.lifetimeReadings) ? e.lifetimeReadings : (Number.isFinite(e.totalReadings) ? e.totalReadings : 0),
+          best: Number.isFinite(e.best) ? e.best : 0,
+          endlessBest: Number.isFinite(e.endlessBest) ? e.endlessBest : 0,
+          bestByPhase: Array.isArray(e.bestByPhase) && e.bestByPhase.length === 5 ? e.bestByPhase : [0, 0, 0, 0, 0],
+          campaignCompleted: Boolean(e.campaignCompleted),
+          grandFinaleSeen: Boolean(e.grandFinaleSeen),
+          lastCampaignStats: validCampaignStats(e.lastCampaignStats) ? e.lastCampaignStats : null,
+          phaseResults: Array.isArray(e.phaseResults) && e.phaseResults.length === 5 ? e.phaseResults : [null, null, null, null, null],
+          selectedSkin: Number.isInteger(e.selectedSkin) ? clamp(e.selectedSkin, 0, 4) : 0,
+          maxUnlockedFase: Number.isInteger(e.maxUnlockedFase) ? clamp(e.maxUnlockedFase, 1, 5) : 1,
+          musicOn: e.musicOn !== undefined ? Boolean(e.musicOn) : true,
+          sfxOn: e.sfxOn !== undefined ? Boolean(e.sfxOn) : true
+        },
+        checksum: ''
+      };
+      migrated.checksum = checksumSave(migrated);
+      return migrated;
+    } catch {
+      return null;
+    }
   }
 
   function loadSaved() {
     try {
-      const raw = rawStore.get(SAVE_KEY) || rawStore.get(`semae.${APP_ID}.v1`);
-      if (!raw || raw.length > MAX_SAVE_BYTES) return null;
+      const raw = rawStore.get(SAVE_KEY);
+      if (!raw || raw.length > MAX_SAVE_BYTES) return tryMigrateV1();
       const d = JSON.parse(raw);
       if (validateSave(d)) return d;
-      return migrateSave(d);
+      return null; // Rejeita estritamente saves v2 alterados ou corrompidos
     } catch {
-      return null;
+      return tryMigrateV1();
     }
   }
 
@@ -465,6 +507,7 @@
   let lastCampaignStats = saved && saved.estado.lastCampaignStats ? saved.estado.lastCampaignStats : null;
   let currentSelectedFase = 1;
   let bestByPhase = saved && saved.estado.bestByPhase ? saved.estado.bestByPhase : [0, 0, 0, 0, 0];
+  let endlessBest = saved && saved.estado.endlessBest ? saved.estado.endlessBest : 0;
   let phaseResults = saved && saved.estado.phaseResults ? saved.estado.phaseResults : [null, null, null, null, null];
   const audioPrefs = { musicOn: saved ? saved.estado.musicOn : true, sfxOn: saved ? saved.estado.sfxOn : true };
 
@@ -479,7 +522,7 @@
     const d = {
       app: APP_ID, versaoJogo: APP_VERSION, versaoEsquema: SAVE_SCHEMA, criadoEm: new Date().toISOString(),
       estado: {
-        lifetimeReadings, best: Math.floor(state.best), bestByPhase, campaignCompleted, grandFinaleSeen,
+        lifetimeReadings, best: Math.floor(state.best), endlessBest: Math.floor(endlessBest), bestByPhase, campaignCompleted, grandFinaleSeen,
         lastCampaignStats, phaseResults, selectedSkin, maxUnlockedFase: clamp(maxUnlockedFase, 1, 5),
         musicOn: audioPrefs.musicOn, sfxOn: audioPrefs.sfxOn
       },
@@ -491,7 +534,7 @@
   function persistProgress() { const raw = JSON.stringify(makeSave()); if (raw.length <= MAX_SAVE_BYTES) rawStore.set(SAVE_KEY, raw); }
 
   function applySave(d) {
-    lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best;
+    lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best; endlessBest = d.estado.endlessBest || 0;
     if (d.estado.bestByPhase) bestByPhase = d.estado.bestByPhase;
     if (d.estado.phaseResults) phaseResults = d.estado.phaseResults;
     campaignCompleted = d.estado.campaignCompleted || false;
@@ -502,32 +545,31 @@
     normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
   }
 
-  // 2. STATE MANAGER & GAME ENGINE V3.3.0
+  // 2. STATE MANAGER & GAME ENGINE V3.4.0
   const state = {
     running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.0, baseSpeed: 5.0, time: 0, roadOffset: 0, bgOffset: 0,
-    minSpawnDistance: 210,
-    spawnClock: 0, nextSpawn: 45, readingClock: 0, nextReading: 45, powerClock: 0, nextPower: 600, eventClock: 0, nextEvent: 450,
-    dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpCount: 0,
+    lastSpawnX: 540,
+    powerClock: 0, nextPower: 12.0,
+    dogThreat: 0, lastTime: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpCount: 0,
     best: saved ? saved.estado.best : 0, musicAccumulator: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
-    nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0,
+    perfects: 0, shoeTimer: 0, shield: 0,
     previousBest: 0,
     
-    flowEnergy: 0, flowState: 'idle', flowActiveTime: 0, flowReadyFlash: 0,
-    skillHeat: 0, recentHits: 0,
+    flowEnergy: 0, flowState: 'idle', flowActiveTime: 0,
+    skillHeat: 0, recentHits: 0, recentHitTimer: 0,
     recentPatternIds: [], pendingMeters: [], phaseMeterList: [], nextMeterIndex: 0,
 
     faseIdx: 0,
     ruaIdx: 0,
     readingsByRua: [],
     totalFaseReadings: 0,
-    isEndless: false,
-
-    kombiState: 'arrival', kombiX: -220, kombiDoorOpen: true, phaseCompleted: false
+    lastCompletedStreetCount: 0,
+    isEndless: false
   };
 
   const player = { x: 140, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: false, state: 'idle', landSquash: 0 };
   const dog = { x: -250, y: groundY - 48, w: 75, h: 48, legPhase: 0, bark: 0, visible: false, lungeOffset: 0 };
-  let obstacles = [], meters = [], powerups = [], particles = [], floaters = [], streetSigns = [], events = [];
+  let obstacles = [], meters = [], powerups = [], particles = [], floaters = [], streetSigns = [];
   let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal', priority: 0 };
 
   function gameRand() { return Math.random(); }
@@ -656,7 +698,7 @@
   }
   function playHitSound() { beep(120, 0.15, 0.045, 'sawtooth', -60); }
   function playPowerupSound() { beep(520, 0.08, 0.03, 'sine', 200); setTimeout(() => beep(840, 0.12, 0.035, 'sine', 220), 70); }
-  function barkSound() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); dog.bark = 42; }
+  function barkSound() { beep(165, 0.07, 0.035, 'square', -35); setTimeout(() => beep(130, 0.09, 0.028, 'sawtooth', -25), 65); }
   function successSound() { beep(720, 0.05, 0.022, 'triangle', 180); setTimeout(() => beep(1040, 0.07, 0.02, 'triangle', 140), 55); }
   function syncAudioButtons() {
     musicModalBtn.textContent = audioPrefs.musicOn ? '♫ Música: ligada' : '♫ Música: desligada'; sfxModalBtn.textContent = audioPrefs.sfxOn ? '🔊 Efeitos: ligados' : '🔇 Efeitos: desligados';
@@ -697,12 +739,21 @@
     else render();
   }
 
+  function updateThreatHud() {
+    if (state.dogThreat < 25) distanceEl.textContent = 'Seguro (Distante)';
+    else if (state.dogThreat < 50) distanceEl.textContent = 'Alerta (Aproximando)';
+    else if (state.dogThreat < 75) distanceEl.textContent = 'Perigo (Perto!)';
+    else distanceEl.textContent = '🚨 INVESTIDA!';
+
+    dangerBar.style.width = `${state.dogThreat}%`;
+    dangerBar.style.background = state.dogThreat > 75 ? 'var(--erro)' : (state.dogThreat > 40 ? 'var(--alerta)' : 'var(--semae-verde)');
+  }
+
   function updateHudRouteInfo() {
     const ctxRoute = getRouteContext();
-    hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${state.faseIdx + 1}</span> ${ctxRoute.bairro}`;
+    hudFaseBairro.innerHTML = `<span class="badge-fase">${state.isEndless ? 'INFINITO' : 'FASE ' + (state.faseIdx + 1)}</span> ${ctxRoute.bairro}`;
     hudRotaInfo.textContent = `Setor ${ctxRoute.setor} · Rota ${ctxRoute.rota}`;
     
-    // Atualização de Rua e Contadores Duplos (Rua / Rota)
     let activeRuaIdx = 0;
     for (let i = 0; i < ctxRoute.ruas.length; i++) {
       if ((state.readingsByRua[i] || 0) < ctxRoute.ruas[i].hidrometros) {
@@ -712,32 +763,29 @@
       if (i === ctxRoute.ruas.length - 1) activeRuaIdx = i;
     }
     
-    // Detecção de Checkpoint de Rua concluída
-    if (state.running && activeRuaIdx > state.ruaIdx) {
-      const prevRua = ctxRoute.ruas[state.ruaIdx];
-      streetSigns.push({ text: prevRua ? prevRua.nome_rua : 'Rua Concluída', x: W + 40, y: groundY - 140 });
-      showBanner('📍 RUA CONCLUÍDA!', prevRua ? prevRua.nome_rua : '', 140, 'checkpoint');
+    // Detecção de Checkpoint por contagem exata de ruas concluídas
+    const completedCount = ctxRoute.ruas.filter((rua, i) => (state.readingsByRua[i] || 0) >= rua.hidrometros).length;
+    if (state.running && completedCount > state.lastCompletedStreetCount) {
+      const newlyFinishedIdx = completedCount - 1;
+      const finishedRua = ctxRoute.ruas[newlyFinishedIdx];
+      streetSigns.push({ text: finishedRua ? finishedRua.nome_rua : 'Rua Concluída', x: W + 40, y: groundY - 140 });
+      showBanner('📍 RUA CONCLUÍDA!', finishedRua ? finishedRua.nome_rua : '', 140, 'checkpoint');
       state.score += 500; state.dogThreat = Math.max(0, state.dogThreat - 12);
       beep(620, 0.08, 0.03, 'triangle', 180);
-      announce(`Rua ${prevRua ? prevRua.nome_rua : ''} concluída.`);
+      state.lastCompletedStreetCount = completedCount;
+      announce(`Rua ${finishedRua ? finishedRua.nome_rua : ''} concluída.`);
     }
 
     state.ruaIdx = activeRuaIdx;
-    
     const ruaData = ctxRoute.ruas[state.ruaIdx];
     const ruaLidos = state.readingsByRua[state.ruaIdx] || 0;
     const ruaTotal = ruaData ? ruaData.hidrometros : 1;
     
     hudRuaAtual.textContent = `📍 ${ruaData ? ruaData.nome_rua : 'Concluído'}`;
     hudHidrometroCount.textContent = `💧 Rua ${ruaLidos}/${ruaTotal} · Rota ${state.totalFaseReadings}/${ctxRoute.total_hidrometros}`;
-
-    // Ameaça do Cão no HUD
-    if (state.dogThreat < 25) distanceEl.textContent = 'Seguro (Distante)';
-    else if (state.dogThreat < 50) distanceEl.textContent = 'Alerta (Aproximando)';
-    else if (state.dogThreat < 75) distanceEl.textContent = 'Perigo (Perto!)';
-    else distanceEl.textContent = '🚨 INVESTIDA!';
-
     missionHud.textContent = `Rua ${state.ruaIdx + 1}/${ctxRoute.ruas.length} · ${ruaData ? ruaData.nome_rua : ''}`;
+    
+    updateThreatHud();
   }
 
   function renderMedalhasEPlacar() {
@@ -787,11 +835,17 @@
     state.running = false; state.over = true;
     resetModalUI();
     const currentScore = Math.floor(state.score);
-    bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
+    
+    if (!state.isEndless) {
+      bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
+    } else {
+      endlessBest = Math.max(endlessBest, currentScore);
+    }
+
     state.best = Math.max(state.best, currentScore);
     persistProgress(); playHitSound();
     
-    modalTitle.textContent = '🐶 O cão se aproximou!';
+    modalTitle.textContent = state.isEndless ? '♾️ FIM DO TURNO INFINITO' : '🐶 O cão se aproximou!';
     modalText.textContent = `Pontuação: ${currentScore.toLocaleString('pt-BR')} · Hidrômetros lidos: ${state.totalFaseReadings} · Leituras Perfeitas: ${state.perfects}`;
     startBtn.textContent = 'TOQUE PARA TENTAR NOVAMENTE'; pauseBtn.disabled = true;
     renderMedalhasEPlacar(); updateCollectionUI(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
@@ -801,19 +855,25 @@
   function phaseVictoryModal() {
     const ctxRoute = getRouteContext();
     const currentScore = Math.floor(state.score);
-    bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
     
-    // Salva e persiste os resultados da fase no vetor de histórico da campanha
-    phaseResults[state.faseIdx] = {
-      meters: state.totalFaseReadings,
-      perfects: state.perfects,
-      maxCombo: state.maxCombo,
-      score: currentScore
-    };
+    if (!state.isEndless) {
+      bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
+      phaseResults[state.faseIdx] = {
+        meters: state.totalFaseReadings,
+        perfects: state.perfects,
+        maxCombo: state.maxCombo,
+        score: currentScore
+      };
+    } else {
+      endlessBest = Math.max(endlessBest, currentScore);
+    }
 
     state.best = Math.max(state.best, currentScore);
 
-    if (state.faseIdx === 4) {
+    // Validação estrita: campanha só conclui se todas as 5 fases tiverem resultado válido registrado
+    const allCompleted = phaseResults.every((r, i) => r && r.meters >= ROTAS_SEMAE[i].total_hidrometros);
+
+    if (state.faseIdx === 4 && allCompleted) {
       campaignCompleted = true;
       maxUnlockedFase = 5;
       
@@ -846,7 +906,9 @@
       }
     }
 
-    maxUnlockedFase = clamp(Math.max(maxUnlockedFase, state.faseIdx + 2), 1, 5);
+    if (!state.isEndless) {
+      maxUnlockedFase = clamp(Math.max(maxUnlockedFase, state.faseIdx + 2), 1, 5);
+    }
     persistProgress(); renderFasesGrid();
 
     state.running = false;
@@ -855,12 +917,16 @@
     modalTitle.textContent = `🎉 ROTA ${ctxRoute.fase} CONCLUÍDA!`;
     modalText.textContent = `Você completou a rota de ${ctxRoute.bairro} (${ctxRoute.total_hidrometros} hidrômetros) e embarcou na Kombi Branca SEMAE! Pontuação: ${currentScore.toLocaleString('pt-BR')}`;
     
+    if (campaignCompleted) {
+      if (endlessBtn) endlessBtn.style.display = 'block';
+    }
+
     if (state.faseIdx < ROTAS_SEMAE.length - 1) {
       currentSelectedFase = state.faseIdx + 2;
       renderFasesGrid(); updateMissionLineUI();
       startBtn.textContent = `IR PARA FASE ${currentSelectedFase} NA KOMBI BRANCA ▶`;
     } else {
-      startBtn.textContent = '♾️ JOGAR MODO INFINITO ▶';
+      startBtn.textContent = 'REJOGAR FASE 5 ▶';
     }
     
     if (campaignCompleted && replayCutsceneRow) replayCutsceneRow.style.display = 'grid';
@@ -868,7 +934,7 @@
     announce(`Rota ${ctxRoute.fase} concluída.`);
   }
 
-  // 5. CUTSCENE GRAND FINALE ENGINE V7 (STANDALONE & INTEGRADA)
+  // 5. CUTSCENE GRAND FINALE ENGINE V7
   const CUTSCENE_SCENES = [
     { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },
     { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },
@@ -975,7 +1041,8 @@
     
     if (rewardsBox) rewardsBox.style.display = 'flex';
     if (replayCutsceneRow) replayCutsceneRow.style.display = 'grid';
-    startBtn.textContent = '♾️ JOGAR MODO INFINITO ▶';
+    if (endlessBtn) endlessBtn.style.display = 'block';
+    startBtn.textContent = 'REJOGAR FASE 5 ▶';
     
     renderCutscene();
     requestAnimationFrame(() => startBtn.focus({ preventScroll: true }));
@@ -1385,24 +1452,28 @@
     });
   }
 
-  // 6. DIREÇÃO DE PERCURSO, SPAWNING DE PADRÕES E POWER-UPS
+  // 6. DIREÇÃO DE PERCURSO ADAPTATIVA & SPAWNING POR DISTÂNCIA FÍSICA
   function spawnDirectorPattern() {
     if (state.nextMeterIndex >= state.phaseMeterList.length && state.pendingMeters.length === 0) return;
     
+    // Cálculo do Tier Adaptativo baseado no desempenho real (skillHeat & colisoes recentes)
+    let tier = state.faseIdx >= 3 ? 2 : (state.faseIdx >= 1 ? 1 : 0);
+    if (state.recentHits >= 2) tier = 0;
+    else if (state.recentHits === 1) tier = Math.min(tier, 1);
+    else if (state.skillHeat > 65) tier = Math.min(3, tier + 1);
+
     const speed = state.speed;
-    const tier = state.faseIdx >= 4 ? (speed > 7.0 ? 3 : 2) : (state.faseIdx >= 2 ? (speed > 6.0 ? 2 : 1) : (speed > 5.2 ? 1 : 0));
-    
     const candidates = PATTERNS_DB.filter(p => p.tier <= tier && speed >= p.minSpeed && speed <= p.maxSpeed && !state.recentPatternIds.includes(p.id));
     const chosen = candidates[Math.floor(gameRand() * candidates.length)] || PATTERNS_DB[0];
     
     state.recentPatternIds.push(chosen.id);
     if (state.recentPatternIds.length > 5) state.recentPatternIds.shift();
 
-    let startX = W + 40;
+    let startX = Math.max(W + 40, state.lastSpawnX + 60);
     
-    // Prioridade total para hidrômetros pendentes na fila
     for (const item of chosen.items) {
       const spawnX = startX + item.dx;
+      state.lastSpawnX = Math.max(state.lastSpawnX, spawnX);
       
       if (item.type === 'obstacle') {
         obstacles.push({
@@ -1432,22 +1503,25 @@
       }
     }
 
-    state.nextSpawn = chosen.endDx + gameRandRange(30, 70);
+    state.lastSpawnX = startX + chosen.endDx;
   }
 
   function spawnPowerup() {
     if (powerups.length > 0) return;
-    const types = ['shoe', 'shield', 'bone'];
-    const t = types[Math.floor(gameRand() * types.length)];
+    const candidates = [];
+    if (state.shoeTimer <= 0) candidates.push('shoe');
+    if (state.shield <= 0) candidates.push('shield');
+    if (state.dogThreat > 30) candidates.push('bone');
+    
+    const t = candidates.length ? candidates[Math.floor(gameRand() * candidates.length)] : 'shoe';
     powerups.push({ type: t, x: W + 60, y: groundY - gameRandRange(120, 180), r: 16, taken: false });
   }
 
   function hitObstacle(o) {
-    if (o.hit) return;
-    o.hit = true;
+    if (o.hit || player.hurt > 0) return;
     
     if (state.flowState === 'active') {
-      state.score += 250;
+      o.hit = true; state.score += 250;
       burst(o.x + o.w / 2, o.y + o.h / 2, '#5FDCF2', 15, true);
       addFloater('⚡ IMPACTO FLOW +250', o.x, o.y - 20, '#5FDCF2', true);
       beep(600, 0.08, 0.03, 'triangle', 200);
@@ -1455,14 +1529,14 @@
     }
 
     if (state.shield > 0) {
-      state.shield = 0;
+      o.hit = true; state.shield = 0;
       burst(player.x + 22, player.y + 36, '#1351B4', 18, true);
       addFloater('🛡️ ESCUDO BLOQUEOU!', player.x, player.y - 20, '#FFCD07', true);
       beep(400, 0.1, 0.04, 'square', -150);
       return;
     }
 
-    player.hurt = 35; state.shake = 12; state.recentHits++;
+    o.hit = true; player.hurt = 35; state.shake = reducedMotion ? 0 : 12; state.recentHits++;
     state.dogThreat = Math.min(100, state.dogThreat + 18);
     resetCombo(); playHitSound();
     if (navigator.vibrate) navigator.vibrate(80);
@@ -1472,11 +1546,11 @@
   }
 
   function collectPower(p) {
-    if (p.taken) return; p.taken = true; state.powerupsTaken++;
+    if (p.taken) return; p.taken = true;
     playPowerupSound();
     
     if (p.type === 'shoe') {
-      state.shoeTimer = 300;
+      state.shoeTimer = 5.0; // 5.0 segundos reais
       addFloater('🥾 TURBO OPERACIONAL!', p.x, p.y, '#FFCD07', true);
     } else if (p.type === 'shield') {
       state.shield = 1;
@@ -1620,18 +1694,6 @@
     ctx.font = '22px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.type === 'shoe' ? '🥾' : p.type === 'shield' ? '🛡️' : '🦴', 0, 1); ctx.restore();
   }
 
-  function drawEvents() {
-    for (const e of events) {
-      if (e.type === 'maintenance') {
-        ctx.fillStyle = 'rgba(95, 220, 242, 0.25)'; ctx.beginPath(); ctx.arc(e.x, groundY - 30, 40, 0, Math.PI * 2); ctx.fill();
-        rounded(e.x - 15, groundY - 45, 30, 45, 4, '#1351B4');
-      } else if (e.type === 'resident') {
-        ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(e.x, groundY - 95, 12, 0, Math.PI * 2); ctx.fill();
-        rounded(e.x - 12, groundY - 82, 24, 48, 6, '#475569');
-      }
-    }
-  }
-
   function drawStreetSigns() {
     for (const s of streetSigns) {
       ctx.save(); ctx.translate(s.x, s.y);
@@ -1699,7 +1761,6 @@
 
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     
-    // FAIXAS DA RUA EM MOVIMENTO
     ctx.fillStyle = '#ffffff';
     const roadX = -(state.roadOffset % 80);
     for (let x = roadX - 80; x < W + 80; x += 80) {
@@ -1739,7 +1800,6 @@
     ctx.clearRect(0, 0, W, H); ctx.save();
     if (state.shake > 0) ctx.translate(rand(-state.shake, state.shake), rand(-state.shake * 0.6, state.shake * 0.6));
     drawBackground();
-    drawEvents();
     drawStreetSigns();
     
     if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'arrival_finish' || state.kombiState === 'cross_screen' || state.kombiState === 'driving_away') {
@@ -1764,7 +1824,7 @@
   function triggerPhaseCompletion() {
     state.phaseCompleted = true; state.kombiState = 'arrival_finish';
     state.kombiX = W + 220; state.kombiDoorOpen = true;
-    meters = []; obstacles = []; powerups = []; events = [];
+    meters = []; obstacles = []; powerups = [];
     showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE está aguardando!', 160, 'victory');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
     announce('Rota finalizada. Kombi SEMAE aguardando.');
@@ -1774,7 +1834,7 @@
     state.combo += points;
     state.maxCombo = Math.max(state.maxCombo, state.combo);
     state.mult = Math.min(5.0, 1 + Math.floor(state.combo / 4) * 0.25);
-    state.comboTimer = 180;
+    state.comboTimer = 3.0; // 3.0 segundos reais
   }
   function resetCombo() { state.combo = 0; state.mult = 1; state.comboTimer = 0; }
 
@@ -1832,7 +1892,8 @@
         state.pendingMeters = [];
         state.readingsByRua = Array(ROTAS_SEMAE[state.faseIdx].ruas.length).fill(0);
         state.totalFaseReadings = 0;
-        state.readingClock = 0; state.spawnClock = 0;
+        state.lastCompletedStreetCount = 0;
+        state.lastSpawnX = W + 40;
         showBanner(`♾️ ROTA CONTINUA: ${ROTAS_SEMAE[state.faseIdx].bairro}`, 'Modo Infinito em andamento!', 180, 'victory');
       } else {
         triggerPhaseCompletion();
@@ -1845,7 +1906,10 @@
 
   function missMeter(m) {
     if (m.taken) return; m.taken = true;
-    state.pendingMeters.push({ data: m.data, retryAfterBeats: Math.floor(gameRandRange(3, 5)) });
+    state.pendingMeters.push({
+      data: { ...m.data, isGold: (m.kind === 'gold' || m.data.isGold) },
+      retryAfterBeats: rand(3, 5)
+    });
     resetCombo(); state.dogThreat = Math.min(100, state.dogThreat + 6);
     addFloater('LEITURA PENDENTE!', W - 160, groundY - 140, '#FFCD07', false);
     beep(140, 0.08, 0.02, 'sawtooth', -30);
@@ -1863,8 +1927,8 @@
 
     if (state.flowState === 'ready') {
       state.flowState = 'active';
-      state.flowActiveTime = 360;
-      showBanner('⚡ FLOW ATIVADO!', 'Velocidade e imunidade temporária!', 120, 'flow');
+      state.flowActiveTime = 6.0; // 6.0 segundos reais
+      showBanner('⚡ FLOW ATIVADO!', 'Proteção contra obstáculos e bônus 1.5x!', 120, 'flow');
       beep(1040, 0.12, 0.04, 'sine', 300);
     }
 
@@ -1887,20 +1951,36 @@
 
   function update(dt) {
     if (!state.running || state.paused) return;
-    const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
+    const step = Math.min(2.2, dt / 16.6667 || 1);
+    const dtSeconds = dt / 1000;
+    state.time += step;
 
-    // DECREMENTO E EXPIRAÇÃO DE TIMERS
+    // DECREMENTO E EXPIRAÇÃO DE TIMERS EM SEGUNDOS REAIS
     if (state.comboTimer > 0) {
-      state.comboTimer -= step;
+      state.comboTimer -= dtSeconds;
       if (state.comboTimer <= 0) resetCombo();
     }
     if (state.jumpBuffer > 0) state.jumpBuffer = Math.max(0, state.jumpBuffer - step);
-    if (state.shoeTimer > 0) state.shoeTimer -= step;
+    if (state.shoeTimer > 0) state.shoeTimer -= dtSeconds;
     if (player.hurt > 0) player.hurt -= step;
+    if (player.landSquash > 0) player.landSquash = Math.max(0, player.landSquash - step);
+
+    // DECAY TEMPORAL ADAPTATIVO (skillHeat & recentHits)
+    state.skillHeat = Math.max(0, state.skillHeat - 0.05 * step);
+    if (state.recentHits > 0) {
+      state.recentHitTimer += dtSeconds;
+      if (state.recentHitTimer >= 6.0) {
+        state.recentHits = Math.max(0, state.recentHits - 1);
+        state.recentHitTimer = 0;
+      }
+    }
+
+    // COOLDOWN LATIDO DO CÃO
+    if (dog.bark > 0) dog.bark -= dtSeconds;
 
     // ATUALIZAÇÃO DO SISTEMA FLOW ACTIVE
     if (state.flowState === 'active') {
-      state.flowActiveTime -= step;
+      state.flowActiveTime -= dtSeconds;
       if (state.flowActiveTime <= 0) {
         state.flowState = 'idle';
         state.flowEnergy = 0;
@@ -1940,8 +2020,8 @@
     } else if (state.kombiState === 'dog_entry') {
       dog.x += 4.5 * step;
       if (dog.x >= 35) {
-        dog.x = 35; state.dogThreat = 0; state.spawnClock = 0; state.nextSpawn = 45;
-        state.readingClock = 0; state.nextReading = 45; state.kombiState = 'running';
+        dog.x = 35; state.dogThreat = 0; state.lastSpawnX = W;
+        state.powerClock = 0; state.nextPower = 12.0; state.kombiState = 'running';
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
       return;
@@ -1981,26 +2061,25 @@
     const turbo = state.shoeTimer > 0 ? 1.08 : 1, flowSpeed = state.flowState === 'active' ? 1.06 : 1;
     const actualSpeed = state.speed * turbo * flowSpeed;
     
-    // ANIMAÇÃO DE PERNAS ATUALIZADA A CADA FRAME
     player.legPhase += 0.22 * actualSpeed * step;
     dog.legPhase += 0.24 * actualSpeed * step;
 
     state.score += 0.16 * actualSpeed * step * (state.shoeTimer > 0 ? 1.25 : 1);
     state.roadOffset = (state.roadOffset + actualSpeed * step) % 80;
     state.bgOffset += actualSpeed * 0.28 * step;
+    state.lastSpawnX -= actualSpeed * step;
 
-    // CONTROLES DE AGENDAMENTO DE PATTERNS E POWERUPS
-    state.spawnClock += step;
-    state.powerClock += step;
-    for (const p of state.pendingMeters) p.retryAfterBeats -= step;
+    // CONTROLES DE AGENDAMENTO DE PATTERNS E POWERUPS POR DISTÂNCIA E TEMPO REAL
+    for (const p of state.pendingMeters) p.retryAfterBeats -= dtSeconds * 2.5;
 
-    if (state.spawnClock >= state.nextSpawn) {
-      state.spawnClock = 0;
+    if (state.lastSpawnX <= W + 40) {
       spawnDirectorPattern();
     }
+    
+    state.powerClock += dtSeconds;
     if (state.powerClock >= state.nextPower) {
       state.powerClock = 0;
-      state.nextPower = rand(450, 750);
+      state.nextPower = rand(10.0, 16.0);
       spawnPowerup();
     }
 
@@ -2047,31 +2126,33 @@
     }
     floaters = floaters.filter(f => f.life > 0);
 
-    // 5. PLACAS DE RUA E EVENTOS
+    // 5. PLACAS DE RUA
     for (const s of streetSigns) s.x -= actualSpeed * step;
     streetSigns = streetSigns.filter(s => s.x > -350);
 
     // MOVIMENTAÇÃO DINÂMICA E INVESTIDA DO CÃO
     state.dogThreat = clamp(state.dogThreat + 0.04 * step, 0, 100);
-    dangerBar.style.width = `${state.dogThreat}%`;
-    dangerBar.style.background = state.dogThreat > 75 ? 'var(--erro)' : (state.dogThreat > 40 ? 'var(--alerta)' : 'var(--semae-verde)');
+    updateThreatHud();
     
     const targetDogX = player.x - 220 + (state.dogThreat / 100) * 160;
     dog.x += (targetDogX - dog.x) * 0.08 * step;
 
     if (state.dogThreat > 80) {
       dog.lungeOffset = Math.sin(state.time * 0.3) * 14;
-      if (Math.random() < 0.04) barkSound();
+      if (dog.bark <= 0 && Math.random() < 0.015) {
+        barkSound();
+        dog.bark = 1.2;
+      }
     } else {
       dog.lungeOffset = 0;
     }
 
-    if (dog.x + dog.w >= player.x + 8 || state.dogThreat >= 100) {
+    const dogVisualX = dog.x + dog.lungeOffset;
+    if (dogVisualX + dog.w >= player.x + 8 || state.dogThreat >= 100) {
       gameOver();
     }
 
     if (banner.life > 0) banner.life -= step;
-    if (state.flash > 0) state.flash -= step;
     if (state.shake > 0) state.shake -= step;
   }
 
@@ -2081,29 +2162,29 @@
     
     state.running = true; state.paused = false; state.over = false;
     state.score = 0; state.readings = 0; state.perfects = 0; state.maxCombo = 0; state.combo = 0; state.mult = 1; state.comboTimer = 0;
-    state.totalFaseReadings = 0;
+    state.totalFaseReadings = 0; state.lastCompletedStreetCount = 0;
     state.speed = ctxRoute.baseSpeed || 5.0; state.baseSpeed = ctxRoute.baseSpeed || 5.0;
-    state.time = 0; state.roadOffset = 0; state.bgOffset = 0;
-    state.dogThreat = 0; state.shake = 0; state.flash = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpCount = 0;
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.lastTime = 0; state.musicAccumulator = 0;
+    state.dogThreat = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpCount = 0;
     
     state.readingsByRua = Array(ctxRoute.ruas.length).fill(0);
     state.ruaIdx = 0;
     state.phaseMeterList = buildPhaseMeters(state.faseIdx);
     state.nextMeterIndex = 0; state.pendingMeters = []; state.recentPatternIds = [];
     
-    state.flowEnergy = 0; state.flowState = 'idle'; state.flowActiveTime = 0; state.flowReadyFlash = 0;
-    state.skillHeat = 0; state.recentHits = 0; state.shoeTimer = 0; state.shield = 0; state.dogDistract = 0;
-    state.previousBest = bestByPhase[state.faseIdx] || 0;
+    state.flowEnergy = 0; state.flowState = 'idle'; state.flowActiveTime = 0;
+    state.skillHeat = 0; state.recentHits = 0; state.recentHitTimer = 0; state.shoeTimer = 0; state.shield = 0;
+    state.previousBest = state.isEndless ? endlessBest : (bestByPhase[state.faseIdx] || 0);
 
-    state.spawnClock = 0; state.nextSpawn = 45; state.readingClock = 0; state.nextReading = 45; state.powerClock = 0; state.nextPower = 600;
+    state.lastSpawnX = W; state.powerClock = 0; state.nextPower = 12.0;
 
     state.kombiState = 'arrival'; state.kombiX = -220; state.kombiDoorOpen = true;
     state.phaseCompleted = false;
 
-    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false; player.state = 'idle'; player.legPhase = 0;
+    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false; player.state = 'idle'; player.legPhase = 0; player.landSquash = 0;
     dog.x = -250; dog.visible = false; dog.bark = 0; dog.lungeOffset = 0; dog.legPhase = 0;
 
-    meters = []; obstacles = []; powerups = []; particles = []; floaters = []; streetSigns = []; events = [];
+    meters = []; obstacles = []; powerups = []; particles = []; floaters = []; streetSigns = [];
     
     overlay.hidden = true;
     pauseBtn.disabled = false;
@@ -2126,7 +2207,7 @@
     render();
   }
 
-  // EVENT LISTENERS & POINTER CAPTURE MOILE
+  // EVENT LISTENERS & POINTER CAPTURE MOBILE
   if (skinBtn) {
     skinBtn.addEventListener('click', () => {
       const u = unlockedSkins(); let pos = u.findIndex(x => x.i === selectedSkin); pos = (pos + 1) % u.length;
@@ -2136,9 +2217,18 @@
 
   startBtn.addEventListener('click', () => {
     audio.ensure();
-    state.isEndless = (campaignCompleted && currentSelectedFase === 5);
+    state.isEndless = false;
     resetGame(); startLoop();
   });
+
+  if (endlessBtn) {
+    endlessBtn.addEventListener('click', () => {
+      audio.ensure();
+      state.isEndless = true;
+      currentSelectedFase = 5;
+      resetGame(); startLoop();
+    });
+  }
   
   overlay.addEventListener('pointerdown', e => {
     if (e.target === overlay && state.over) {
@@ -2181,9 +2271,13 @@
   importBtn.addEventListener('click', () => importFile.click());
   importFile.addEventListener('change', async () => {
     const file = importFile.files?.[0]; if (!file) return;
+    if (file.size > MAX_SAVE_BYTES) {
+      alert('⚠️ Arquivo excede o limite máximo permitido (256 KB).');
+      importFile.value = ''; return;
+    }
     try {
       const d = JSON.parse(await file.text());
-      const valid = validateSave(d) ? d : migrateSave(d);
+      const valid = validateSave(d) ? d : tryMigrateV1(d);
       if (!valid) throw new Error('Save inválido');
       applySave(valid);
       showBanner('✅ BACKUP RESTAURADO', 'Progresso carregado com sucesso', 120);
@@ -2230,8 +2324,9 @@
   });
 
   // RESTAURAÇÃO DE UI NA INICIALIZAÇÃO
-  if (campaignCompleted && replayCutsceneRow) {
-    replayCutsceneRow.style.display = 'grid';
+  if (campaignCompleted) {
+    if (replayCutsceneRow) replayCutsceneRow.style.display = 'grid';
+    if (endlessBtn) endlessBtn.style.display = 'block';
   }
 
   syncAudioButtons(); normalizeSkin(); renderFasesGrid(); updateMissionLineUI(); resizeCanvas(); updateHudRouteInfo(); render();
