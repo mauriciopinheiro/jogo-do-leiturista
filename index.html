@@ -248,7 +248,7 @@
 (() => {
   'use strict';
   
-  // DADOS REAIS EXTRAÍDOS DO BANCO PRODUÇÃO SEMAE PIRACICABA
+  // DADOS REAIS EXTRAÍDOS DO SEMAE PIRACICABA
   const ROTAS_SEMAE = [
     {
       fase: 1,
@@ -384,7 +384,7 @@
   // ESTADO GLOBAL DO JOGO
   const state = {
     running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
-    spawnClock: 0, nextSpawn: 120, readingClock: 0, nextReading: 100, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
+    spawnClock: 0, nextSpawn: 200, readingClock: 0, nextReading: 30, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
     dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
     nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
@@ -547,9 +547,9 @@
     const rota = ROTAS_SEMAE[state.faseIdx];
     
     state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.2 + state.faseIdx * 0.4;
-    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 120;
-    state.readingClock = 0; state.nextReading = 100; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
-    state.dogThreat = 0; // AMEAÇA INICIAL ZERO!
+    state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 220; // 3.5s de respiro para obstáculos!
+    state.readingClock = 0; state.nextReading = 30; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
+    state.dogThreat = 0; // AMEAÇA INICIAL RIGOROSAMENTE ZERO!
     state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
     state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
     state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
@@ -564,8 +564,8 @@
     state.kombiDoorOpen = true;
     state.phaseCompleted = false;
     
-    player.x = 100; player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false;
-    dog.x = -200; dog.y = groundY - dog.h; dog.bark = 0; dog.visible = false;
+    player.x = 80; player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false;
+    dog.x = -250; dog.y = groundY - dog.h; dog.bark = 0; dog.visible = false;
     
     obstacles = []; meters = []; powerups = []; particles = []; floaters = []; streetSigns = []; events = [];
     overlay.hidden = true; pauseBtn.disabled = false; musicBtn.disabled = false; sfxBtn.disabled = false;
@@ -837,6 +837,10 @@
       if (dog.x >= 35) {
         dog.x = 35;
         state.dogThreat = 0; // AMEAÇA RIGOROSAMENTE EM 0%
+        state.spawnClock = 0;
+        state.nextSpawn = 200; // 3.5 SEGUNDOS DE RESPIRO ANTES DO PRIMEIRO OBSTÁCULO!
+        state.readingClock = 0;
+        state.nextReading = 30; // PRIMEIRO HIDRÔMETRO SURGE QUASE DE IMEDIATO!
         state.kombiState = 'running'; // FASE INICIA DE FATO!
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
@@ -926,15 +930,17 @@
 
     if (banner.life > 0) banner.life -= step;
 
-    // CÃO PERSEGUIDOR
+    // CÃO PERSEGUIDOR - CÁLCULO DE AMEAÇA
     state.dogThreat += (state.dogDistract > 0 ? -0.055 : (0.010 + state.speed * 0.0015)) * step;
     state.dogThreat = clamp(state.dogThreat, 0, 100);
-    const dogStart = Math.max(18, W * 0.08), dogCatch = Math.max(dogStart, player.x - dog.w + 5);
-    dog.x += ((dogStart + (dogCatch - dogStart) * (state.dogThreat / 100)) - dog.x) * 0.035 * step;
+    
+    const dogStart = 35;
+    const dogCatch = Math.max(dogStart, player.x - dog.w + 10);
+    dog.x = dogStart + (dogCatch - dogStart) * (state.dogThreat / 100);
 
     if (state.dogThreat > 76 && Math.floor(state.time) % 290 < 2 && dog.bark <= 0) bark();
     
-    // TESTE DE COLISÃO REAL E SEGURA
+    // TESTE DE COLISÃO REAL E SEGURA APENAS QUANDO A PARTIDA ESTÁ EM 'RUNNING'
     if (state.kombiState === 'running') {
       if (state.dogThreat >= 100 || (dog.visible && overlap(playerBox(), dogBox()))) {
         gameOver();
