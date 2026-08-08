@@ -219,9 +219,9 @@
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca e caminha com total segurança. No fim da rota, a Kombi resgata o leiturista e parte!</div>
-          <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure na tela ou use Espaço/↑/W. Soltar cedo = salto curto. <b>P:</b> Pausar.</div>
-          <div class="controle-item">✨ <b>Leitura Perfeita:</b> Pegue o hidrômetro no ápice do salto dentro do anel dourado!</div>
+          <div class="controle-item">💧 <b>Médias dos 3 Meses:</b> Cada hidrômetro exibe sua média em m³. Os 10% com maiores médias são <b>Especiais Dourados</b>!</div>
+          <div class="controle-item">🚐 <b>Kombi SEMAE:</b> Ao pegar o último registro, a pista limpa, o cachorro para e você corre para entrar na Kombi!</div>
+          <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure para pular alto. Solte cedo para salto curto. <b>P:</b> Pausar.</div>
         </div>
 
         <button class="skin-btn" id="skinBtn" type="button">👕 Uniforme: Azul SEMAE Clássico</button>
@@ -390,12 +390,15 @@
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
     nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
     
-    // KOMBI BRANCA E SEQUÊNCIA DE SEGURANÇA
+    // SEQUÊNCIA DE FASE & MÉDIAS DOS HIDRÔMETROS
     faseIdx: 0,
     ruaIdx: 0,
     ruaReadings: 0,
     totalFaseReadings: 0,
-    kombiState: 'arrival', // 'arrival', 'disembark', 'leaving_arrival', 'dog_entry', 'running', 'arrival_finish', 'enter_van', 'driving_away', 'completed_modal'
+    phaseMeterList: [],
+    nextMeterIndex: 0,
+    
+    kombiState: 'arrival', // 'arrival', 'disembark', 'leaving_arrival', 'dog_entry', 'running', 'arrival_finish', 'cross_screen', 'driving_away', 'completed_modal'
     kombiX: -220,
     kombiDoorOpen: true,
     phaseCompleted: false,
@@ -428,6 +431,33 @@
     lifetimeReadings = d.estado.lifetimeReadings; state.best = d.estado.best; selectedSkin = d.estado.selectedSkin;
     maxUnlockedFase = d.estado.maxUnlockedFase || 1; audioPrefs.musicOn = d.estado.musicOn; audioPrefs.sfxOn = d.estado.sfxOn;
     normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
+  }
+
+  // CONSTRUÇÃO DETERMINÍSTICA DA LISTA DE HIDRÔMETROS COM MÉDIAS E 10% DE ESPECIAIS (DOURADOS)
+  function buildPhaseMeters(faseIdx) {
+    const rota = ROTAS_SEMAE[faseIdx];
+    const total = rota.total_hidrometros;
+    const list = [];
+    let seed = 777 + (faseIdx + 1) * 31415;
+    const pseudoRand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+
+    for (let i = 0; i < total; i++) {
+      const r = pseudoRand();
+      const avg = r < 0.14 ? Math.round(44 + pseudoRand() * 34) : Math.round(10 + pseudoRand() * 28);
+      list.push({ index: i + 1, avg3Months: avg, isGold: false });
+    }
+
+    // Exatamente os 10% de maiores médias viram Especiais Dourados!
+    const numGold = Math.max(1, Math.ceil(total * 0.10));
+    const sorted = [...list].map((item, origIdx) => ({ origIdx, avg: item.avg3Months }));
+    sorted.sort((a, b) => b.avg - a.avg);
+
+    for (let g = 0; g < numGold; g++) {
+      const idx = sorted[g].origIdx;
+      list[idx].isGold = true;
+    }
+
+    return list;
   }
 
   function renderFasesGrid() {
@@ -556,6 +586,10 @@
     state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
     state.dogDistract = 0; state.dogLeap = 0;
     
+    // CONSTRUIR LISTA ÚNICA DE HIDRÔMETROS DA ROTA COM MÉDIAS E 10% DE ESPECIAIS
+    state.phaseMeterList = buildPhaseMeters(state.faseIdx);
+    state.nextMeterIndex = 0;
+
     // Kombi Branca e Sequência Inicial de Segurança
     state.ruaIdx = 0;
     state.ruaReadings = 0;
@@ -620,7 +654,7 @@
       spawnMeter(W + 65, groundY - 145);
     } else if (r < 0.55) {
       obstacles.push({ type: 'barrier', x: W + 45, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 80, groundY - 165, 'gold');
+      spawnMeter(W + 80, groundY - 165);
     } else if (r < 0.78) {
       obstacles.push({ type: 'bin', x: W + 45, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 70, groundY - 95);
@@ -630,11 +664,25 @@
     }
   }
 
-  function spawnMeter(x = W + 45, y = null, kind = null) {
+  // GERAR HIDRÔMETRO SEGUINDO A ORDEM E EXIBINDO A MÉDIA DOS 3 MESES
+  function spawnMeter(x = W + 45, y = null) {
     if (state.kombiState !== 'running') return;
-    if (!kind) kind = Math.random() < 0.09 ? 'gold' : 'normal';
-    const high = Math.random() < 0.37;
-    meters.push({ x, y: y ?? (high ? groundY - 158 : groundY - 88), r: kind === 'gold' ? 20 : 18, taken: false, spin: Math.random() * 6.3, kind });
+    if (state.nextMeterIndex >= state.phaseMeterList.length) return; // Todos os hidrômetros da fase já foram gerados
+
+    const meterData = state.phaseMeterList[state.nextMeterIndex];
+    state.nextMeterIndex++;
+
+    const high = meterData.isGold || Math.random() < 0.35;
+    meters.push({
+      x,
+      y: y ?? (high ? groundY - 158 : groundY - 88),
+      r: meterData.isGold ? 22 : 18,
+      taken: false,
+      spin: Math.random() * 6.3,
+      kind: meterData.isGold ? 'gold' : 'normal',
+      avg3M: meterData.avg3Months,
+      meterIndex: meterData.index
+    });
   }
 
   function spawnPowerup() {
@@ -692,6 +740,7 @@
       checkMicroMission('perfect');
     } else if (m.kind === 'gold') {
       playGoldMeterSound();
+      addFloater('🌟 MAIOR MÉDIA!', m.x, m.y - 32, '#FFCD07', true);
     } else {
       successSound();
     }
@@ -710,7 +759,7 @@
         state.ruaIdx++;
         state.ruaReadings = 0;
         const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
-        showBanner(proximaRua, '', 240, 'region'); // 4 SEGUNDOS BEM VISÍVEL!
+        showBanner(proximaRua, '', 240, 'region');
         streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 210 });
       }
     }
@@ -723,12 +772,12 @@
     updateHudRouteInfo();
   }
 
-  // ANIMAÇÃO DE FIM DE FASE: KOMBI RESGATA LEITURISTA E NENHUM OUTRO HIDRÔMETRO OU OBSTÁCULO É PERMITIDO
+  // ANIMAÇÃO DE FIM DE FASE: KOMBI ESTACIONA NA DIREITA COM PORTA ABERTA, LEITURISTA ATRAVESSA A TELA E ENTRA!
   function triggerPhaseCompletion() {
     state.phaseCompleted = true;
     state.kombiState = 'arrival_finish';
     state.kombiX = W + 220;
-    state.kombiDoorOpen = false;
+    state.kombiDoorOpen = true; // Porta da Kombi aberta aguardando!
     
     // LIMPEZA IMEDIATA: ZERAR ABSOLUTAMENTE TODOS OS HIDRÔMETROS E OBSTÁCULOS DA TELA!
     meters = [];
@@ -736,7 +785,7 @@
     powerups = [];
     events = [];
 
-    showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE chegou para o resgate!', 160, 'unlock');
+    showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE está aguardando!', 160, 'unlock');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
   }
 
@@ -860,42 +909,39 @@
       }
       return;
     }
-    // 5. KOMBI CHEGA DO LADO DIREITO NA VITÓRIA DE FASE (RESGATE)
+    // 5. KOMBI CHEGA E ESTACIONA NO LADO DIREITO DA TELA (RESGATE)
     else if (state.kombiState === 'arrival_finish') {
       dog.bark = 0; state.dogThreat = 0;
-      dog.x = Math.max(20, dog.x - 1.5 * step); // Cachorro para e recua
+      dog.x = Math.max(20, dog.x - 2 * step); // Cachorro para e recua
       
-      // Limpeza absoluta a cada frame do resgate: ZERO hidrômetros ou obstáculos na tela!
-      meters = [];
-      obstacles = [];
-      powerups = [];
+      meters = []; obstacles = []; powerups = [];
       
-      state.kombiX -= 4 * step;
-      if (state.kombiX <= player.x + 35) {
-        state.kombiX = player.x + 35;
-        state.kombiDoorOpen = true; // Porta se abre
-        state.kombiState = 'enter_van';
+      state.kombiX -= 4.5 * step;
+      if (state.kombiX <= W - 160) {
+        state.kombiX = W - 160; // Kombi estaciona na direita
+        state.kombiDoorOpen = true; // Porta fica aberta aguardando leiturista
+        state.kombiState = 'cross_screen';
       }
       return;
     }
-    // 6. LEITURISTA ENTRA NA KOMBI BRANCA
-    else if (state.kombiState === 'enter_van') {
+    // 6. LEITURISTA ATRAVESSA A TELA CORRENDO E ENTRA NA KOMBI ESTACIONADA
+    else if (state.kombiState === 'cross_screen') {
       dog.bark = 0; state.dogThreat = 0;
       meters = []; obstacles = []; powerups = [];
       
-      player.x += 2.5 * step;
+      player.x += 3.8 * step; // Leiturista corre pela tela em direção à van
       if (player.x >= state.kombiX + 25) {
-        player.visible = false; // Entra na van
-        state.kombiDoorOpen = false; // Porta fecha
+        player.visible = false; // Leiturista entra na Kombi
+        state.kombiDoorOpen = false; // Porta se fecha
         state.kombiState = 'driving_away';
       }
       return;
     }
-    // 7. KOMBI PARTE PARA A PRÓXIMA FASE
+    // 7. KOMBI ACELERA E VAI EMBORA PELA DIREITA
     else if (state.kombiState === 'driving_away') {
       meters = []; obstacles = []; powerups = [];
       
-      state.kombiX += 7 * step;
+      state.kombiX += 7.5 * step; // Kombi vai embora
       if (state.kombiX >= W + 220) {
         state.kombiState = 'completed_modal';
         phaseVictoryModal();
@@ -1211,16 +1257,36 @@
     }
   }
 
+  // DESENHO DO HIDRÔMETRO COM EMBLEMA DA MÉDIA DOS ÚLTIMOS 3 MESES E 10% ESPECIAIS (DOURADOS)
   function drawMeter(m) {
     ctx.save(); ctx.translate(m.x, m.y); const gold = m.kind === 'gold';
     
-    ctx.strokeStyle = gold ? 'rgba(255, 205, 7, 0.5)' : 'rgba(19, 81, 180, 0.4)';
-    ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, m.r + 6 + Math.sin(m.spin * 2) * 2, 0, Math.PI * 2); ctx.stroke();
+    // Anel externo pulsante
+    ctx.strokeStyle = gold ? 'rgba(255, 205, 7, 0.75)' : 'rgba(19, 81, 180, 0.5)';
+    ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r + 6 + Math.sin(m.spin * 2) * 2, 0, Math.PI * 2); ctx.stroke();
 
+    // Corpo do hidrômetro
     ctx.fillStyle = gold ? '#d79b00' : '#0C326F'; ctx.beginPath(); ctx.arc(0, 0, m.r + 2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = gold ? '#fff0a8' : '#c7f4fb'; ctx.beginPath(); ctx.arc(0, 0, m.r - 4, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = gold ? '#9b6900' : '#1351B4'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r - 7, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke();
-    ctx.fillStyle = gold ? '#805900' : '#0C326F'; ctx.font = '900 8px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('m³', 0, 4); ctx.restore();
+    ctx.fillStyle = gold ? '#805900' : '#0C326F'; ctx.font = '900 8px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('m³', 0, 4);
+    
+    // EMBLEMA DA MÉDIA DOS ÚLTIMOS 3 MESES
+    if (m.avg3M) {
+      rounded(-28, -m.r - 22, 56, 17, 5, gold ? '#FFCD07' : '#0C326F');
+      ctx.fillStyle = gold ? '#0c326f' : '#ffffff';
+      ctx.font = '900 10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${m.avg3M} m³/mês`, 0, -m.r - 10);
+
+      if (gold) {
+        ctx.fillStyle = '#FFCD07';
+        ctx.font = '900 9px system-ui';
+        ctx.fillText('🌟 10% MAIOR MÉDIA', 0, -m.r - 26);
+      }
+    }
+
+    ctx.restore();
   }
 
   function drawPower(p) {
@@ -1276,7 +1342,7 @@
     drawEvents();
     drawStreetSigns();
     
-    if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'arrival_finish' || state.kombiState === 'enter_van' || state.kombiState === 'driving_away') {
+    if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'arrival_finish' || state.kombiState === 'cross_screen' || state.kombiState === 'driving_away') {
       drawKombi(state.kombiX, groundY - 82);
     }
     
