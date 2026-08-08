@@ -217,9 +217,9 @@
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">💧 <b>Diretor de Percurso:</b> Padrões harmônicos de salto! Hidrômetro perdido entra na <b>Fila de Pendências</b> da rota.</div>
+          <div class="controle-item">💧 <b>Pontuação por Média:</b> Ao pegar um hidrômetro, ganhe a sua média dos últimos 3 meses em pontos!</div>
           <div class="controle-item">⚡ <b>Barra de Fluxo (0-100%):</b> Sequências perfeitas carregam o Fluxo de Leitura com velocidade, trilha luminosa e super bônus!</div>
-          <div class="controle-item">🚐 <b>Kombi SEMAE:</b> Ao pegar o último registro, a pista limpa, o cachorro para e você corre para entrar na Kombi!</div>
+          <div class="controle-item">🚐 <b>Kombi SEMAE:</b> Ao pegar o último registro, o leiturista cai no chão, o cachorro para e você corre para a Kombi!</div>
         </div>
 
         <button class="skin-btn" id="skinBtn" type="button">👕 Uniforme: Azul SEMAE Clássico</button>
@@ -390,16 +390,13 @@
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
     nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0,
     
-    // BARRA DE FLUXO RECARREGÁVEL (0 - 100%)
     flowEnergy: 0,
     flowActiveTime: 0,
     
-    // FILA DE PENDÊNCIAS DA ROTA (P0 - NUNCA PERDER UM HIDRÔMETRO DEFINITIVAMENTE)
     pendingMeters: [],
     phaseMeterList: [],
     nextMeterIndex: 0,
 
-    // DIRETOR DE PERCURSO & DIREÇÃO ADAPTATIVA
     recentHits: 0,
     respiroTimer: 0,
     patternQueue: [],
@@ -414,7 +411,6 @@
     kombiDoorOpen: true,
     phaseCompleted: false,
 
-    // MICRO-MISSÕES EM PARTIDA
     microMission: null,
     microProgress: 0,
     microTarget: 3
@@ -442,7 +438,6 @@
     normalizeSkin(); syncAudioButtons(); renderFasesGrid(); persistProgress();
   }
 
-  // CONSTRUÇÃO DETERMINÍSTICA DA LISTA DE HIDRÔMETROS COM MÉDIAS E 10% DE ESPECIAIS (DOURADOS)
   function buildPhaseMeters(faseIdx) {
     const rota = ROTAS_SEMAE[faseIdx];
     const total = rota.total_hidrometros;
@@ -555,7 +550,6 @@
     player.x = Math.min(W * 0.5, Math.max(150, player.x * rx)); player.y = Math.min(player.y, groundY - player.h);
   }
 
-  // GERADOR DE MICRO-MISSÕES EM PARTIDA (CONTEXTUAL E PROGRESSIVO)
   function generateMicroMission() {
     const pool = [
       { id: 'combo', label: '🎯 Ritmo', target: 3 },
@@ -582,7 +576,6 @@
     }
   }
 
-  // RESET & INICIALIZAÇÃO SEGURO DA PARTIDA
   function resetGame() {
     state.faseIdx = currentSelectedFase - 1;
     const rota = ROTAS_SEMAE[state.faseIdx];
@@ -607,7 +600,6 @@
     state.ruaReadings = 0;
     state.totalFaseReadings = 0;
     
-    // P1: RETRY RÁPIDO - SE FOR RETRY (retryCount > 0), INTRO É DE APENAS 0.6s
     if (retryCount > 0) {
       state.kombiState = 'running';
       state.kombiX = -250;
@@ -663,14 +655,12 @@
   }
   function jump(e) {
     if (!state.running || state.paused || state.over) {
-      // P1: TOQUE EM QUALQUER LUGAR NA TELA DE GAME OVER REINICIA A ROTA!
       if (state.over && !overlay.hidden) {
         audio.ensure(); resetGame(); startLoop(); return;
       }
       return;
     }
     if (state.kombiState !== 'running') {
-      // Pulamento de intro ao tocar na tela
       if (state.kombiState === 'arrival' || state.kombiState === 'disembark' || state.kombiState === 'leaving_arrival' || state.kombiState === 'dog_entry') {
         state.kombiState = 'running';
         player.visible = true; player.x = 205;
@@ -684,62 +674,51 @@
   }
   function releaseJump() { state.jumpHeld = false; if (!player.onGround && player.vy < -5.5) player.vy *= 0.58; }
 
-  // [P0] DIRETOR DE PERCURSO — GERADOR DE PADRÕES HARMÔNICOS DE GAMEPLAY (FRASES DE LEITURA)
   function spawnObstaclePattern() {
     if (state.kombiState !== 'running') return;
     
     const lastOb = obstacles[obstacles.length - 1];
     if (lastOb && (W + 45 - lastOb.x) < state.minSpawnDistance) return;
 
-    // Se estiver em respiro pós-batida, gerar obstáculo bem simples
     if (state.respiroTimer > 0) {
       obstacles.push({ type: 'cone', x: W + 50, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 110, groundY - 88);
       return;
     }
 
-    const patterns = [
-      'cone_apex',     // Cone + hidrômetro no ápice do salto
-      'barrier_gold',  // Barreira + hidrômetro ouro no alto
-      'hose_tap',      // Mangueira + hidrômetro baixo
-      'bin_combo',     // Lixeira + hidrômetro duplo
-      'wave'           // Sequência em onda (baixo -> alto -> baixo)
-    ];
-
+    const patterns = ['cone_apex', 'barrier_gold', 'hose_tap', 'bin_combo', 'wave'];
     const chosen = patterns[Math.floor(Math.random() * patterns.length)];
 
     if (chosen === 'cone_apex') {
       obstacles.push({ type: 'cone', x: W + 50, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 50, groundY - 165); // Hidrômetro exato no ápice!
+      spawnMeter(W + 50, groundY - 165);
     } else if (chosen === 'barrier_gold') {
       obstacles.push({ type: 'barrier', x: W + 50, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 70, groundY - 170); // Hidrômetro alto
+      spawnMeter(W + 70, groundY - 170);
     } else if (chosen === 'hose_tap') {
       obstacles.push({ type: 'hose', x: W + 50, y: groundY - 22, w: 92, h: 22, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 130, groundY - 88); // Hidrômetro baixo após pulo curto
+      spawnMeter(W + 130, groundY - 88);
     } else if (chosen === 'bin_combo') {
       obstacles.push({ type: 'bin', x: W + 50, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 65, groundY - 145);
       spawnMeter(W + 210, groundY - 88);
     } else {
-      // Wave
       spawnMeter(W + 50, groundY - 88);
       spawnMeter(W + 180, groundY - 160);
     }
   }
 
-  // [P0] GERAR HIDRÔMETRO REUTILIZANDO FILA DE PENDÊNCIAS (`pendingMeters`)
   function spawnMeter(x = W + 50, y = null) {
     if (state.kombiState !== 'running') return;
     
     let meterData = null;
     if (state.pendingMeters.length > 0) {
-      meterData = state.pendingMeters.shift(); // Pega da fila de pendências!
+      meterData = state.pendingMeters.shift();
     } else if (state.nextMeterIndex < state.phaseMeterList.length) {
       meterData = state.phaseMeterList[state.nextMeterIndex];
       state.nextMeterIndex++;
     } else {
-      return; // Todos os hidrômetros já foram lidos ou estão em tela!
+      return;
     }
 
     const MIN_DIST = 130;
@@ -770,7 +749,6 @@
     });
   }
 
-  // POWER-UPS CONTEXTUAIS (P1 - NÃO SORTEAR SE JÁ POSSUI OU NÃO PRECISA)
   function spawnPowerup() {
     if (state.kombiState !== 'running') return;
     const candidates = [];
@@ -790,7 +768,6 @@
     events.push({ type, x: W + 90, y: 0, life: 500, triggered: false });
   }
 
-  // HITBOXES MAIS GENEROSAS QUE A ARTE (P1)
   function playerBox() { return { x: player.x + 10, y: player.y + 10, w: player.w - 18, h: player.h - 14 }; }
   function dogBox() { return { x: dog.x + 10, y: dog.y + 10, w: dog.w - 16, h: dog.h - 14 }; }
   function overlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
@@ -808,8 +785,7 @@
       addFloater('🛡️ DEFESA SEMAE!', player.x + 25, player.y - 12, '#dff7ff', true); beep(460, 0.12, 0.035, 'triangle', 250); return;
     }
     
-    // [P0] ADAPTATIVO & IMPACTO REAL
-    player.hurt = 48; state.recentHits++; state.respiroTimer = 90; // 1.5s de respiro
+    player.hurt = 48; state.recentHits++; state.respiroTimer = 90;
     state.dogThreat = Math.min(100, state.dogThreat + 22); state.flash = 12; state.shake = reducedMotion ? 0 : 10; state.dogLeap = 48;
     resetCombo(); burst(player.x + 25, player.y + 35, '#ffcc3d', 14, true);
     beep(120, 0.16, 0.05, 'sawtooth', -40); bark();
@@ -818,7 +794,7 @@
 
   function comboUp(amount = 1) {
     state.combo += amount;
-    state.comboTimer = 170; // ENCURTADO PARA 2.8 SECONDS (P1)
+    state.comboTimer = 170;
     state.maxCombo = Math.max(state.maxCombo, state.combo);
     const old = state.mult; state.mult = Math.min(5, 1 + Math.floor(state.combo / 3));
     if (state.mult > old) { showBanner(`🔥 COMBO x${state.mult}`, `${state.combo} leituras na sequência`, 75, 'combo'); beep(900 + state.mult * 90, 0.08, 0.025, 'triangle', 100); }
@@ -829,10 +805,9 @@
     m.taken = true; state.readings++; lifetimeReadings++; state.ruaReadings++; state.totalFaseReadings++;
     persistProgress(); comboUp(m.kind === 'gold' ? 2 : 1);
     
-    // PONTUAÇÃO = MÉDIA DE LEITURA DOS ÚLTIMOS 3 MESES
-    let base = (m.avg3M || 20) * (m.kind === 'gold' ? 2 : 1);
+    // SEM MULTIPLICADOR DUPLO PARA OS 10% DOURADOS: A PONTUAÇÃO BASE É A PRÓPRIA MÉDIA DOS 3 MESES!
+    let base = m.avg3M || 20;
     
-    // BARRA DE FLUXO DE LEITURA RECARREGÁVEL (P1)
     const perfect = !player.onGround && Math.abs(player.vy) < 3.8;
     if (perfect) {
       state.perfects++; base += 50; state.flowEnergy = Math.min(100, state.flowEnergy + 22);
@@ -844,17 +819,15 @@
     } else if (m.kind === 'gold') {
       state.flowEnergy = Math.min(100, state.flowEnergy + 18);
       playGoldMeterSound();
-      addFloater('🌟 MAIOR MÉDIA!', m.x, m.y - 32, '#FFCD07', true);
       if (navigator.vibrate) navigator.vibrate(30);
     } else {
       state.flowEnergy = Math.min(100, state.flowEnergy + 10);
       successSound();
     }
 
-    // ATIVAÇÃO DO FLUXO RECARREGÁVEL
     if (state.flowEnergy >= 100 && state.flowActiveTime <= 0) {
-      state.flowActiveTime = 360; // 6 segundos
-      state.flowEnergy = 15; // Volta para 15% para poder recarregar de novo!
+      state.flowActiveTime = 360;
+      state.flowEnergy = 15;
       state.dogThreat = Math.max(0, state.dogThreat - 20);
       showBanner('⚡ FLUXO DE LEITURA ATIVADO!', '6s de Velocidade & Super Bônus SEMAE!', 140, 'bonus');
       burst(W * 0.5, H * 0.35, '#5FDCF2', 32, true);
@@ -864,14 +837,14 @@
 
     const gain = Math.round(base * state.mult * (state.flowActiveTime > 0 ? 1.5 : 1)); state.score += gain;
     
-    // REBALANCEAMENTO DO CACHORRO (P0)
     const threatRed = perfect ? 6 : (m.kind === 'gold' ? 10 : 3);
     state.dogThreat = Math.max(0, state.dogThreat - threatRed);
     
     burst(m.x, m.y, m.kind === 'gold' ? '#ffd85d' : '#1351B4', 12, m.kind === 'gold');
+    
+    // EXIBIR PONTUAÇÃO (MÉDIA DOS 3 MESES) APENAS AO COLETAR O HIDRÔMETRO!
     addFloater(`+${gain} pts`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
 
-    // MUDANÇA DE RUA
     const rota = ROTAS_SEMAE[state.faseIdx];
     const ruaAtualData = rota.ruas[state.ruaIdx];
     
@@ -885,7 +858,6 @@
       }
     }
 
-    // CONCLUSÃO DA ROTA (ÚLTIMO REGISTRO PEGO)
     if (state.totalFaseReadings >= rota.total_hidrometros && !state.phaseCompleted) {
       triggerPhaseCompletion();
     }
@@ -893,14 +865,13 @@
     updateHudRouteInfo();
   }
 
-  // [P0] LEITURA PERDIDA VOLTA PARA A FILA DE PENDÊNCIAS
   function missMeter(m) {
     if (m.taken) return;
     m.taken = true;
-    state.pendingMeters.push(m.data); // Volta para a fila de pendências!
+    state.pendingMeters.push(m.data);
     resetCombo();
     state.dogThreat = Math.min(100, state.dogThreat + 6);
-    addFloater('LEITURA PERDIDA!', W - 140, groundY - 140, '#ff7b7b', false);
+    addFloater('LEITURA PERFEITA PERDIDA!', W - 160, groundY - 140, '#ff7b7b', false);
     beep(140, 0.08, 0.02, 'sawtooth', -30);
   }
 
@@ -972,7 +943,6 @@
     bestByPhase[state.faseIdx] = Math.max(bestByPhase[state.faseIdx] || 0, currentScore);
     state.best = Math.max(state.best, currentScore);
     
-    // [P0] CORREÇÃO DO DESBLOQUEIO DA PRÓXIMA FASE
     maxUnlockedFase = Math.max(maxUnlockedFase, Math.min(ROTAS_SEMAE.length, state.faseIdx + 2));
     persistProgress(); renderFasesGrid();
     
@@ -991,12 +961,23 @@
     renderMedalhasEPlacar(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
   }
 
-  // UPDATE LOOP COM TODAS AS CORREÇÕES E EVOLUÇÕES DE DIFICULDADE P0/P1
+  // UPDATE LOOP COM SIMULAÇÃO DA GRAVIDADE DURANTE O EMBARQUE NA KOMBI
   function update(dt) {
     if (!state.running || state.paused) return;
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
 
-    // INTRO DA KOMBI
+    // ATUALIZAÇÃO DA GRAVIDADE EM QUALQUER ESTADO DE JOGO PARA PERMITIR QUE O PERSONAGEM CAIA NO CHÃO AO FINAL
+    if (!player.onGround) {
+      player.vy += gravity * step;
+      player.y += player.vy * step;
+      if (player.y >= groundY - player.h) {
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.onGround = true;
+        state.landSquash = 9;
+      }
+    }
+
     if (state.kombiState === 'arrival') {
       state.kombiX += 4 * step;
       if (state.kombiX >= 80) { state.kombiX = 80; player.visible = true; player.x = 90; state.kombiState = 'disembark'; }
@@ -1025,8 +1006,14 @@
       return;
     } else if (state.kombiState === 'cross_screen') {
       dog.bark = 0; state.dogThreat = 0; meters = []; obstacles = []; powerups = [];
+      
+      // O leiturista corre continuamente até a Kombi somente quando já estiver no chão ou caindo
       player.x += 3.8 * step;
-      if (player.x >= state.kombiX + 25) { player.visible = false; state.kombiDoorOpen = false; state.kombiState = 'driving_away'; }
+      if (player.x >= state.kombiX + 25 && player.onGround) {
+        player.visible = false;
+        state.kombiDoorOpen = false;
+        state.kombiState = 'driving_away';
+      }
       return;
     } else if (state.kombiState === 'driving_away') {
       meters = []; obstacles = []; powerups = [];
@@ -1037,8 +1024,6 @@
 
     // GAMEPLAY ATIVO 'RUNNING'
     const rota = ROTAS_SEMAE[state.faseIdx];
-    
-    // [P0] CURVA PROGRESSIVA DE INTENSIDADE DA VELOCIDADE (0 a 100% DO PROGRESSO DA FASE)
     const progressPct = clamp(state.totalFaseReadings / (rota.total_hidrometros || 1), 0, 1);
     state.speed = state.baseSpeed + (progressPct * 1.3);
 
@@ -1064,20 +1049,12 @@
     if (state.eventClock >= state.nextEvent) { spawnEvent(); state.eventClock = 0; state.nextEvent = rand(450, 750); }
 
     if (player.onGround) state.coyote = 7; else state.coyote = Math.max(0, state.coyote - step);
-    if (!player.onGround) {
-      player.vy += gravity * step; player.y += player.vy * step;
-      if (player.y >= groundY - player.h) {
-        player.y = groundY - player.h; player.vy = 0; player.onGround = true; state.landSquash = 9;
-        if (state.jumpBuffer > 0) doJump();
-      }
-    }
 
     player.hurt = Math.max(0, player.hurt - step);
     if (state.combo > 0 && state.comboTimer <= 0) resetCombo();
     player.legPhase += 0.22 * actualSpeed * step; dog.legPhase += 0.27 * actualSpeed * step;
     const pb = playerBox();
 
-    // PROCESSAR OBSTÁCULOS E CONTABILIZAR DESVIOS PARA MICRO-MISSÕES (P1)
     for (const o of obstacles) {
       o.x -= actualSpeed * step;
       if (!o.hit && overlap(pb, o)) hitObstacle(o);
@@ -1089,22 +1066,19 @@
     }
     obstacles = obstacles.filter(o => o.x + o.w > -30);
 
-    // PROCESSAR HIDRÔMETROS E APLICAÇÃO DE TOLERÂNCIA MAGNÉTICA (P1)
     for (const m of meters) {
       m.x -= actualSpeed * step; m.spin += 0.08 * step;
       if (!m.taken) {
-        // Atração magnética suave quando perto (28px)
         const dist = Math.hypot(player.x + 22 - m.x, player.y + 36 - m.y);
         if (dist < 42) {
           m.y += (player.y + 36 - m.y) * 0.15 * step;
         }
         if (circleOverlap(pb, m)) collectMeter(m);
-        else if (m.x < player.x - 30) missMeter(m); // Se passou sem ser lido, entra na fila de pendências!
+        else if (m.x < player.x - 30) missMeter(m);
       }
     }
     meters = meters.filter(m => !m.taken && m.x + m.r > -30);
 
-    // [P0] CORREÇÃO DO VAZAMENTO DO ARRAY DE POWERUPS
     for (const p of powerups) { p.x -= actualSpeed * step; p.spin += 0.08 * step; if (!p.taken && circleOverlap(pb, p)) collectPower(p); }
     powerups = powerups.filter(p => !p.taken && p.x + p.r > -30);
 
@@ -1133,7 +1107,6 @@
 
     if (banner.life > 0) banner.life -= step;
 
-    // CÃO PERSEGUIDOR
     state.dogThreat += (state.dogDistract > 0 ? -0.055 : (0.010 + state.speed * 0.0015)) * step;
     state.dogThreat = clamp(state.dogThreat, 0, 100);
     
@@ -1206,7 +1179,6 @@
     ctx.fillStyle = '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
     ctx.fillStyle = '#f7e27a'; for (let x = -state.roadOffset * 1.4; x < W; x += 130) ctx.fillRect(x, groundY + 82, 70, 8);
 
-    // [P0] VIGNETTE DE PERIGO DO CACHORRO NAS BORDAS DA TELA
     if (state.dogThreat > 60) {
       const alpha = ((state.dogThreat - 60) / 40) * 0.35;
       ctx.fillStyle = `rgba(220, 38, 38, ${alpha})`;
@@ -1250,48 +1222,79 @@
     ctx.restore();
   }
 
+  // ANIMAÇÃO DE CORRIDA PROCEDURAL 2D FLUIDA (CINEMÁTICA DE 2 ARTICULAÇÕES DA PERNA)
   function drawPlayer() {
     if (!player.visible) return;
     const skin = skins[selectedSkin], air = !player.onGround, x = player.x;
-    const runBob = air ? 0 : Math.sin(player.legPhase) * 1.8;
+    const runBob = air ? 0 : Math.sin(player.legPhase * 2) * 2.2;
     const y = player.y + runBob + (state.landSquash > 0 ? Math.sin((state.landSquash / 9) * Math.PI) * 4 : 0);
     
     if (player.hurt > 0 && Math.floor(player.hurt / 4) % 2 === 0) ctx.globalAlpha = 0.38;
 
     ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x + 23, groundY + 4, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
 
-    const hipL = { x: x + 17, y: y + 57 }, hipR = { x: x + 31, y: y + 57 };
-    let kneeL, kneeR, footL, footR;
-    if (air) {
-      kneeL = { x: x + 10, y: y + 64 }; kneeR = { x: x + 37, y: y + 66 };
-      footL = { x: x + 4, y: y + 72 }; footR = { x: x + 42, y: y + 70 };
-    } else {
-      const stride = Math.sin(player.legPhase) * 11;
-      kneeL = { x: x + 16 - stride * 0.34, y: y + 68 }; kneeR = { x: x + 31 + stride * 0.34, y: y + 68 };
-      footL = { x: x + 12 - stride, y: y + 79 }; footR = { x: x + 35 + stride, y: y + 79 };
+    const hipL = { x: x + 18, y: y + 55 }, hipR = { x: x + 28, y: y + 55 };
+    
+    // ANIMAÇÃO PROCEDURAL SUAVE DE CORRIDA (FLUXO ARTICULADO DE COXA E CANELA)
+    function calcLeg(hip, phaseOffset) {
+      if (air) {
+        return {
+          knee: { x: hip.x + (phaseOffset > 0 ? 6 : -4), y: hip.y + 12 },
+          foot: { x: hip.x + (phaseOffset > 0 ? 12 : -8), y: hip.y + 24 }
+        };
+      }
+      const p = player.legPhase + phaseOffset;
+      const swing = Math.sin(p);
+      const lift = Math.cos(p);
+      
+      const thighAngle = swing * 0.65;
+      const kneeX = hip.x + Math.sin(thighAngle) * 13;
+      const kneeY = hip.y + Math.cos(thighAngle) * 13;
+      
+      const kneeBend = Math.max(0, -lift) * 0.6;
+      const shinAngle = thighAngle - kneeBend;
+      
+      const footX = kneeX + Math.sin(shinAngle) * 13;
+      const footY = kneeY + Math.cos(shinAngle) * 13;
+      
+      return { knee: { x: kneeX, y: kneeY }, foot: { x: footX, y: footY } };
     }
-    ctx.strokeStyle = skin.pants; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(kneeL.x, kneeL.y); ctx.lineTo(footL.x, footL.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(kneeR.x, kneeR.y); ctx.lineTo(footR.x, footR.y); ctx.stroke();
 
+    const legL = calcLeg(hipL, 0);
+    const legR = calcLeg(hipR, Math.PI);
+
+    // Desenha Pernas com articulações suaves
+    ctx.strokeStyle = skin.pants; ctx.lineWidth = 8.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    
+    // Perna Traseira
+    ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
+    // Perna Dianteira
+    ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
+
+    // Sapatos
     ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 6; ctx.beginPath();
-    ctx.moveTo(footL.x - 2, footL.y); ctx.lineTo(footL.x + 7, footL.y + 1);
-    ctx.moveTo(footR.x - 2, footR.y); ctx.lineTo(footR.x + 8, footR.y + 1); ctx.stroke();
+    ctx.moveTo(legL.foot.x - 2, legL.foot.y); ctx.lineTo(legL.foot.x + 7, legL.foot.y + 1);
+    ctx.moveTo(legR.foot.x - 2, legR.foot.y); ctx.lineTo(legR.foot.x + 7, legR.foot.y + 1); ctx.stroke();
 
+    // Tronco e Uniforme
     rounded(x + 6, y + 20, 37, 42, 9, skin.body);
     ctx.fillStyle = skin.stripe; ctx.fillRect(x + 8, y + 38, 33, 5);
     ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', x + 12, y + 32);
 
-    ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(x + 39, y + 30); ctx.lineTo(x + 53, y + 42); ctx.stroke();
-    ctx.save(); ctx.translate(x + 51, y + 36); rounded(0, 0, 24, 30, 4, '#334155');
+    // Braço e Prancheta Leiturista
+    const armAngle = Math.sin(player.legPhase) * 0.4;
+    ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7.5; ctx.beginPath();
+    ctx.moveTo(x + 38, y + 30); ctx.lineTo(x + 48 + Math.cos(armAngle) * 5, y + 40 + Math.sin(armAngle) * 5); ctx.stroke();
+    
+    ctx.save(); ctx.translate(x + 50, y + 36); rounded(0, 0, 24, 30, 4, '#334155');
     ctx.fillStyle = '#e2e8f0'; ctx.fillRect(4, 5, 16, 18);
     ctx.fillStyle = '#1351B4'; ctx.fillRect(6, 8, 12, 4); ctx.restore();
 
+    // Cabeça e Boné SEMAE
     ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = skin.cap; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
     ctx.fillRect(x + 20, y + 4, 24, 5);
 
-    // [P1] MICROBRILHO NO ÁPICE DO SALTO PARA APRENDER A LEITURA PERFEITA
     if (!player.onGround && Math.abs(player.vy) < 3.8) {
       ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + 24, y + 36, 38, 0, Math.PI * 2); ctx.stroke();
     }
@@ -1300,13 +1303,11 @@
     if (state.shield > 0) { ctx.strokeStyle = 'rgba(255, 205, 7, 0.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x + 24, y + 36, 36, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
 
-    // [P1] CÁPSULA DO COMBO E FLUXO PRÓXIMA AO LEITURISTA
+    // Cápsula de Combo/Fluxo
     if (state.kombiState === 'running') {
       ctx.save(); ctx.translate(x - 5, y - 28);
       rounded(0, 0, 68, 22, 6, 'rgba(12, 50, 111, 0.92)');
       ctx.fillStyle = '#FFCD07'; ctx.font = '900 11px system-ui'; ctx.fillText(`🔥 ${state.combo} · x${state.mult}`, 6, 15);
-      
-      // Mini barrinha do Fluxo
       ctx.fillStyle = '#08202f'; ctx.fillRect(6, 18, 56, 3);
       ctx.fillStyle = '#5FDCF2'; ctx.fillRect(6, 18, (state.flowEnergy / 100) * 56, 3);
       ctx.restore();
@@ -1326,6 +1327,7 @@
     }
   }
 
+  // DESENHO LIMPO DO HIDRÔMETRO (SEM RÓTULOS POLUÍDOS SOBRE A PISTA)
   function drawMeter(m) {
     ctx.save(); ctx.translate(m.x, m.y); const gold = m.kind === 'gold';
     
@@ -1337,16 +1339,6 @@
     ctx.strokeStyle = gold ? '#9b6900' : '#1351B4'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, m.r - 7, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke();
     ctx.fillStyle = gold ? '#805900' : '#0C326F'; ctx.font = '900 8px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('m³', 0, 4);
     
-    if (m.avg3M) {
-      rounded(-28, -m.r - 22, 56, 17, 5, gold ? '#FFCD07' : '#0C326F');
-      ctx.fillStyle = gold ? '#0c326f' : '#ffffff';
-      ctx.font = '900 10px system-ui'; ctx.textAlign = 'center'; ctx.fillText(`${m.avg3M} m³/mês`, 0, -m.r - 10);
-
-      if (gold) {
-        ctx.fillStyle = '#FFCD07'; ctx.font = '900 9px system-ui'; ctx.fillText('🌟 10% MAIOR MÉDIA', 0, -m.r - 26);
-      }
-    }
-
     ctx.restore();
   }
 
@@ -1433,7 +1425,6 @@
     render();
   }
 
-  // CONTROLES E EVENT LISTENERS COM CAPTURA DE PONTEIRO (`setPointerCapture`)
   skinBtn.addEventListener('click', () => {
     const u = unlockedSkins(); let pos = u.findIndex(x => x.i === selectedSkin); pos = (pos + 1) % u.length;
     selectedSkin = u[pos].i; updateCollectionUI(); persistProgress(); beep(560, 0.05, 0.02, 'triangle', 100);
