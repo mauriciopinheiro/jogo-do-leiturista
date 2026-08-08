@@ -131,8 +131,8 @@
       <div class="overlay" id="overlay">
         <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
           <span class="modal-badge" id="modalBadge">SEMAE PIRACICABA</span>
-          <h2 id="modalTitle">🏆 CAMPANHA CONCLUÍDA — 5/5 ROTAS</h2>
-          <p id="modalText">Você concluiu com sucesso a leitura das 5 rotas da jornada do SEMAE Piracicaba.<br>Toque abaixo para ver o encerramento!</p>
+          <h2 id="modalTitle">🏆 SEMANA CONCLUÍDA — 5 ROTAS</h2>
+          <p id="modalText">Você concluiu com sucesso as 5 rotas da semana (de Segunda a Sexta).<br>Chegou o fim de semana! Toque abaixo para ver o encerramento!</p>
           
           <div class="stats-summary" id="statsBox" style="display:none;">
             <div class="stat-card">💧 Leituras<strong id="stMeters">535 / 535</strong></div>
@@ -205,11 +205,11 @@
 
   // ENQUADRAMENTO NARRATIVO DAS CENAS
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 2200, cameraScale: 1.0 },    // 0s - 2.2s: Montagem (1..5 ✓)
-    { id: 1, name: 'conclusion', duration: 2500, cameraScale: 1.0 }, // 2.2s - 4.7s: Chegada ao SEMAE
-    { id: 2, name: 'reencounter', duration: 3000, cameraScale: 1.25 },// 4.7s - 7.7s: Reencontro (Zoom 1.25x)
-    { id: 3, name: 'friendship', duration: 3500, cameraScale: 1.45 }, // 7.7s - 11.2s: Amizade & Ração (Zoom 1.45x)
-    { id: 4, name: 'epilogue', duration: 3000, cameraScale: 1.0 }    // 11.2s - 14.2s: Caminhada Parallax (1.0x)
+    { id: 0, name: 'montage', duration: 2200, cameraScale: 1.0 },    // 0s - 2.2s: Montagem da Semana (1..5 SEG A SEX)
+    { id: 1, name: 'conclusion', duration: 2500, cameraScale: 1.0 }, // 2.2s - 4.7s: Fim da Sexta-Feira
+    { id: 2, name: 'reencounter', duration: 3000, cameraScale: 1.25 },// 4.7s - 7.7s: Chegou o Fim de Semana!
+    { id: 3, name: 'friendship', duration: 3500, cameraScale: 1.45 }, // 7.7s - 11.2s: Carinho & Ração no Fim de Semana
+    { id: 4, name: 'epilogue', duration: 3000, cameraScale: 1.0 }    // 11.2s - 14.2s: Passeio do Fim de Semana
   ];
 
   const state = {
@@ -265,27 +265,27 @@
     if (state.sceneIdx === 0) {
       dog.visible = false;
       playFanfare();
-      if (liveAnnouncer) liveAnnouncer.textContent = 'Cinco rotas concluídas. Encerramento da jornada SEMAE.';
+      if (liveAnnouncer) liveAnnouncer.textContent = 'Cinco rotas da semana concluídas. De segunda a sexta.';
     } else if (state.sceneIdx === 1) {
       player.x = -80; player.state = 'walking'; player.facing = 1; player.legPhase = 0;
       dog.visible = false; dog.x = -200; dog.sitting = false; dog.happy = false;
-      showBanner(`${state.stats.meters} LEITURAS CONCLUÍDAS`, 'Fim do turno nas 5 rotas SEMAE desta jornada', 1500);
+      showBanner(`${state.stats.meters} LEITURAS DA SEMANA`, 'Sexta-feira encerrada: 5 rotas lidas com sucesso!', 1500);
       playCalmSound();
     } else if (state.sceneIdx === 2) {
       player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
       dog.visible = true; dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
-      showBanner('Depois de tantas ruas, ele se acalmou.', 'O cão que cruzou sua jornada agora é um novo amigo', 1500);
+      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 dias de rotas, hora de descansar', 1500);
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
       dog.visible = true; dog.x = W * 0.26; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO COMPANHEIRO DA ROTA', '', 1200);
+      showBanner('UM NOVO COMPANHEIRO DE JORNADA', 'Carinho e recompensa no fim de semana', 1200);
     } else if (state.sceneIdx === 4) {
       bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
-      showBanner('JORNADA CONCLUÍDA NO SEMAE PIRACICABA', 'Missão cumprida com sucesso', 900);
+      showBanner('BOM FIM DE SEMANA NO SEMAE PIRACICABA', 'Semana cumprida com sucesso!', 900);
       playFanfare();
     }
   }
@@ -306,8 +306,8 @@
     clearAudioTimeouts();
     overlay.hidden = false; tapHint.classList.remove('visible');
     
-    modalTitle.textContent = '🏆 CAMPANHA CONCLUÍDA — 5/5 ROTAS';
-    modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você percorreu com dedicação as 5 rotas desta jornada, concluiu a leitura dos ${state.stats.meters} hidrômetros e ganhou a amizade do companheiro de percurso!`;
+    modalTitle.textContent = '🏆 SEMANA CONCLUÍDA — 5 ROTAS (SEG A SEX)';
+    modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você cumpriu a leitura das 5 rotas da semana (de Segunda a Sexta), totalizando ${state.stats.meters} hidrômetros! Agora aproveite o fim de semana com seu novo amigo!`;
     
     statsBox.style.display = 'grid'; unlockBox.style.display = 'block';
     startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶';
@@ -440,25 +440,25 @@
 
   function drawMontageScene() {
     ctx.fillStyle = '#081c38'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center';
-    const phases = ['SÃO DIMAS', 'VILA REZENDE', 'BAIRRO DOS ALEMÃES', 'JARAGUÁ', 'RECANTO DO PIRACICAMIRIM'];
+    const weekDays = ['SEG · SÃO DIMAS', 'TER · VILA REZENDE', 'QUA · BAIRRO DOS ALEMÃES', 'QUI · JARAGUÁ', 'SEX · RECANTO DO PIRACICAMIRIM'];
     const elapsed = state.sceneTimer;
     
     ctx.font = '900 16px system-ui'; ctx.fillStyle = '#5FDCF2';
-    ctx.fillText('JORNADA DAS 5 ROTAS CONCLUÍDA', W / 2, H * 0.22);
+    ctx.fillText('ROTAS DA SEMANA (SEG A SEX)', W / 2, H * 0.22);
     
     let y = H * 0.32;
-    for (let i = 0; i < phases.length; i++) {
+    for (let i = 0; i < weekDays.length; i++) {
       if (elapsed > i * 240) {
         ctx.font = '900 15px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1} · ${phases[i]}`, W * 0.14, y);
-        ctx.fillStyle = '#22c55e'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.86, y);
+        ctx.fillText(weekDays[i], W * 0.12, y);
+        ctx.fillStyle = '#22c55e'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.88, y);
       }
       y += 44;
     }
 
     if (elapsed > 1300) {
       ctx.font = '900 22px system-ui'; ctx.fillStyle = '#22c55e'; ctx.textAlign = 'center';
-      ctx.fillText('5/5 ROTAS CONCLUÍDAS! 🏆', W / 2, H * 0.76);
+      ctx.fillText('5 ROTAS CONCLUÍDAS! 🎉', W / 2, H * 0.76);
     }
   }
 
@@ -472,7 +472,6 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // SOL NATURAL AMARELO SOLAR (#FFCD07 E #FDBA74 NO PÔR DO SOL)
     const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 3000) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
@@ -608,7 +607,7 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
 
-    // Uniforme azul com faixa verde institucional (#168821)
+    // Uniforme azul do SEMAE com faixa verde institucional
     rounded(6, 20, 37, 42, 9, '#1351B4');
     ctx.fillStyle = '#168821'; ctx.fillRect(8, 38, 33, 5);
 
@@ -619,15 +618,16 @@
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 28); ctx.lineTo(46, 48); ctx.stroke();
     } else if (!isKneeling) {
-      rounded(42, 32, 22, 16, 3, '#fef08a');
-      ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; ctx.strokeRect(42, 32, 22, 16);
-      if (player.facing === -1) {
-        ctx.save(); ctx.translate(53, 44); ctx.scale(-1, 1);
-        ctx.fillStyle = '#1351B4'; ctx.font = '900 10px system-ui'; ctx.fillText('📋', 0, 0);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = '#1351B4'; ctx.font = '900 10px system-ui'; ctx.fillText('📋', 46, 44);
-      }
+      // TELEFONE CELULAR (SMARTPHONE DE LEITURA REVOLUCIONÁRIO NA MÃO)
+      const phoneX = 40, phoneY = 28;
+      // Corpo do Celular
+      rounded(phoneX, phoneY, 13, 24, 4, '#0f172a');
+      // Tela Iluminada com App de Leitura SEMAE
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(phoneX + 1.5, phoneY + 2.5, 10, 19);
+      // Ícone e linhas do App de Leitura na tela do Smartphone
+      ctx.fillStyle = '#168821'; ctx.fillRect(phoneX + 3, phoneY + 5, 7, 3);
+      ctx.fillStyle = '#0c326f'; ctx.fillRect(phoneX + 3, phoneY + 10, 7, 1.5);
+      ctx.fillStyle = '#0c326f'; ctx.fillRect(phoneX + 3, phoneY + 13, 5, 1.5);
     }
 
     ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(24, 10, 15, 0, Math.PI * 2); ctx.fill();
