@@ -472,10 +472,11 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
+    // SOL NATURAL AMARELO SOLAR ILUMINADO (#FFCD07 E #FDBA74 NO PÔR DO SOL)
     const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 3000) * 80) : 140;
-    ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.25)' : 'rgba(255, 233, 168, 0.35)';
+    ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = isDusk ? '#fdba74' : '#22c55e'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = isDusk ? '#fdba74' : '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
 
     const kombiX = Math.min(W - 175, W * 0.62) - (isDusk ? (bgScroll * 0.3) % 400 : 0);
     drawKombi(kombiX, groundY - 82);
@@ -609,7 +610,7 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
 
-    // Uniforme azul do SEMAE com faixa verde institucional (SEM a palavra SEMAE)
+    // Uniforme azul com faixa verde institucional (#168821)
     rounded(6, 20, 37, 42, 9, '#1351B4');
     ctx.fillStyle = '#168821'; ctx.fillRect(8, 38, 33, 5);
 
