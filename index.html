@@ -217,7 +217,6 @@
 
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
-        <button class="skin-btn" id="skinBtn" type="button">👕 Uniforme: Azul SEMAE Clássico</button>
         <div class="utility-row">
           <button class="utility-btn" id="musicModalBtn" type="button">♫ Música: ligada</button>
           <button class="utility-btn" id="sfxModalBtn" type="button">🔊 Efeitos: ligados</button>
@@ -227,9 +226,7 @@
           <button class="utility-btn" id="importBtn" type="button">⬆ Importar progresso</button>
         </div>
         <input id="importFile" type="file" accept="application/json,.json" hidden />
-        <p class="collection" id="collectionText">Coleção: 1/5 visuais desbloqueados</p>
         <p class="version" id="versionText">v3.1.0 · SEMAE Piracicaba Engine</p>
-        <p class="disclaimer">Médias simuladas para fins de jogo baseadas em dados do SEMAE</p>
         
         <button class="botao" id="startBtn" type="button">TOQUE PARA INICIAR A ROTA</button>
       </div>
@@ -386,7 +383,7 @@
 
   function unlockedSkins() { return skins.map((s, i) => ({ s, i })).filter(x => lifetimeReadings >= x.s.need); }
   function normalizeSkin() { const u = unlockedSkins(); if (!u.some(x => x.i === selectedSkin)) selectedSkin = u[u.length - 1]?.i || 0; updateCollectionUI(); }
-  function updateCollectionUI() { const u = unlockedSkins(); const s = skins[selectedSkin]; skinBtn.textContent = `👕 Uniforme: ${s.name}`; collectionText.textContent = `Coleção: ${u.length}/${skins.length} visuais · ${lifetimeReadings} leituras totais`; }
+  function updateCollectionUI() { const u = unlockedSkins(); const s = skins[selectedSkin]; if (skinBtn) skinBtn.textContent = `👕 Uniforme: ${s.name}`; if (collectionText) collectionText.textContent = `Coleção: ${u.length}/${skins.length} visuais · ${lifetimeReadings} leituras totais`; }
 
   // ESTADO GLOBAL DO JOGO (V3.1.0 ENGINE)
   const state = {
