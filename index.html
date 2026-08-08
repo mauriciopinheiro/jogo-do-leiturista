@@ -87,7 +87,7 @@
     .touch-hint.hidden { opacity: 0; transform: translate(-50%, 8px); }
 
     .quick-controls {
-      position: absolute; right: calc(8px + var(--safe-right)); top: calc(180px + var(--safe-top));
+      position: absolute; right: calc(8px + var(--safe-right)); top: calc(160px + var(--safe-top));
       z-index: 7; display: grid; gap: 8px;
     }
     .mini-btn {
@@ -172,12 +172,11 @@
     
     <!-- HUD DE ROTAS SEMAE PIRACICABA -->
     <div class="hud" aria-hidden="true">
-      <div class="card" style="grid-column: 1 / -1; background: rgba(12, 50, 111, 0.96); border: 2px solid #FFCD07; padding: 8px 12px; border-radius: 14px;">
+      <div class="card" style="grid-column: 1 / -1; background: rgba(12, 50, 111, 0.96); border: 2px solid #FFCD07; padding: 8px 14px; border-radius: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <small style="color: #FFCD07; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;">📍 RUA ATUAL DA ROTA SEMAE:</small>
-          <span id="hudHidrometroCount" style="color: #FFCD07; font-size: 1rem; font-weight: 900;">💧 0 / 15</span>
+          <strong id="hudRuaAtual" style="font-size: clamp(1.15rem, 5vw, 1.45rem); color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-family: 'Segoe UI', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Rua Ajudante Albano</strong>
+          <span id="hudHidrometroCount" style="color: #FFCD07; font-size: 1.05rem; font-weight: 900; margin-left: 10px; flex-shrink: 0;">💧 0 / 15</span>
         </div>
-        <strong id="hudRuaAtual" style="display: block; margin-top: 3px; font-size: clamp(1.15rem, 5vw, 1.45rem); color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-family: 'Segoe UI', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Rua Ajudante Albano</strong>
       </div>
       <div class="card">
         <small id="hudFaseBairro"><span class="badge-fase">FASE 1</span> SAO DIMAS</small>
@@ -581,7 +580,7 @@
     const primeiraRua = rota.ruas[0].nome_rua;
     streetSigns.push({ text: primeiraRua, x: W + 50, y: groundY - 210 });
 
-    showBanner(`🚐 DESEMBARQUE DA KOMBI`, `Bairro ${rota.bairro}`, 150, 'bonus');
+    showBanner(`VAN DA SEMAE CHEGANDO`, `Bairro ${rota.bairro}`, 150, 'bonus');
     beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
   }
 
@@ -590,7 +589,7 @@
     const ruaAtual = r.ruas[state.ruaIdx] ? r.ruas[state.ruaIdx].nome_rua : r.ruas[r.ruas.length - 1].nome_rua;
     hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${r.fase}</span> ${r.bairro}`;
     hudRotaInfo.textContent = `SETOR ${r.setor} · ROTA ${r.rota}`;
-    hudRuaAtual.textContent = ruaAtual;
+    hudRuaAtual.textContent = `📍 ${ruaAtual}`;
     hudHidrometroCount.textContent = `💧 ${state.totalFaseReadings} / ${r.total_hidrometros}`;
     missionHud.textContent = state.microMission ? state.microMission.label : `${ruaAtual}`;
   }
@@ -711,7 +710,7 @@
         state.ruaIdx++;
         state.ruaReadings = 0;
         const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
-        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 240, 'region'); // 4 SEGUNDOS BEM VISÍVEL!
+        showBanner(proximaRua, '', 240, 'region'); // 4 SEGUNDOS BEM VISÍVEL!
         streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 210 });
       }
     }
