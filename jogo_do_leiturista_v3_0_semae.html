@@ -1350,13 +1350,13 @@
 
   function drawBackground() {
     const phasePalettes = [
-      { skyTop: '#4a90e2', skyBot: '#eaf5fd', sun: '#FFCD07' },
-      { skyTop: '#2b5876', skyBot: '#4e4376', sun: '#ff9a44' },
-      { skyTop: '#1e3c72', skyBot: '#2a5298', sun: '#f7d070' },
-      { skyTop: '#d35400', skyBot: '#e67e22', sun: '#f39c12' },
-      { skyTop: '#0f2027', skyBot: '#203a43', sun: '#5FDCF2' },
-      { skyTop: '#1a2a6c', skyBot: '#f26419', sun: '#ffdd00' },
-      { skyTop: '#2c3e50', skyBot: '#3498db', sun: '#f1c40f' }
+      { skyTop: '#4a90e2', skyBot: '#eaf5fd', sun: '#FFCD07' }, // Fase 1 - São Dimas (Manhã ensolarada)
+      { skyTop: '#3b82f6', skyBot: '#dbeafe', sun: '#ffcc00' }, // Fase 2 - Vila Rezende (Dia claro)
+      { skyTop: '#2563eb', skyBot: '#e0f2fe', sun: '#f7d070' }, // Fase 3 - Bairro dos Alemães (Tarde ensolarada)
+      { skyTop: '#0284c7', skyBot: '#bae6fd', sun: '#f39c12' }, // Fase 4 - Jaraguá (Fim de tarde claro)
+      { skyTop: '#0284c7', skyBot: '#e0f2fe', sun: '#FFCD07' }, // Fase 5 - Recanto (Sol radiante)
+      { skyTop: '#38bdf8', skyBot: '#e0f2fe', sun: '#ffcc00' }, // Turno Infinito (Dia claro)
+      { skyTop: '#60a5fa', skyBot: '#dbeafe', sun: '#f1c40f' }  // Desafio Diário (Dia ensolarado)
     ];
     const pal = phasePalettes[state.faseIdx % phasePalettes.length];
 
@@ -1375,15 +1375,20 @@
       { w: 120, h: 100, wall: '#fca5a5', roof: '#b91c1c', door: '#7f1d1d' },
       { w: 140, h: 115, wall: '#fde047', roof: '#a16207', door: '#713f12' },
       { w: 110, h: 95, wall: '#86efac', roof: '#15803d', door: '#14532d' },
-      { w: 135, h: 110, wall: '#93c5fd', roof: '#1d4ed8', door: '#1e3a8a' }
+      { w: 135, h: 110, wall: '#93c5fd', roof: '#1d4ed8', door: '#1e3a8a' },
+      { w: 125, h: 105, wall: '#fed7aa', roof: '#c2410c', door: '#7c2d12' }
     ];
 
-    const totalWidth = 650; const scrollX = (state.bgOffset * 0.45) % totalWidth;
-    let posX = -scrollX - 50; let idx = 0;
-    while (posX < W + 150) {
-      const cfg = houseConfigs[idx % houseConfigs.length];
+    // SCROLL CONTÍNUO E SUAVE DE CASAS EM COORDENADAS MUNDIAIS (SEM PULOS OU MUDANÇAS SÚBITAS)
+    const stride = 170;
+    const scrollWorldX = state.bgOffset * 0.45;
+    const startHouseIdx = Math.floor((scrollWorldX - 100) / stride);
+    const endHouseIdx = startHouseIdx + Math.ceil(W / stride) + 2;
+
+    for (let i = startHouseIdx; i <= endHouseIdx; i++) {
+      const posX = (i * stride) - scrollWorldX;
+      const cfg = houseConfigs[Math.abs(i) % houseConfigs.length];
       drawGenericHouse(posX, groundY - 12, cfg.w, cfg.h, cfg.wall, cfg.roof, cfg.door);
-      posX += cfg.w + 40; idx++;
     }
 
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
@@ -1591,7 +1596,7 @@
       rounded(0, 0, 320, 56, 12, '#0C326F');
       ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 4; ctx.strokeRect(4, 4, 312, 48);
       ctx.fillStyle = '#ffffff'; ctx.font = '900 15px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('📍 RUA: ' + s.text.toUpperCase(), 160, 33);
+      ctx.fillText('📍 ' + s.text.toUpperCase(), 160, 33);
       ctx.restore();
     }
   }
