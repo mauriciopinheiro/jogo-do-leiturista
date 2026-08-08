@@ -203,18 +203,18 @@
     notes.forEach((n, i) => audioTimeouts.push(setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80)));
   }
 
-  // ENQUADRAMENTO NARRATIVO DAS CENAS
+  // RITMO NARRATIVO RECALIBRADO PARA LEITURA CONFORTÁVEL
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 2200, cameraScale: 1.0 },    // 0s - 2.2s: Montagem das 5 Rotas (1..5)
-    { id: 1, name: 'conclusion', duration: 2500, cameraScale: 1.0 }, // 2.2s - 4.7s: Fim da Leitura
-    { id: 2, name: 'reencounter', duration: 3000, cameraScale: 1.25 },// 4.7s - 7.7s: Chegou o Fim de Semana!
-    { id: 3, name: 'friendship', duration: 3500, cameraScale: 1.45 }, // 7.7s - 11.2s: Carinho & Ração no Fim de Semana
-    { id: 4, name: 'epilogue', duration: 3000, cameraScale: 1.0 }    // 11.2s - 14.2s: Passeio do Fim de Semana
+    { id: 0, name: 'montage', duration: 4200, cameraScale: 1.0 },    // 4.2s: Montagem com tempo de leitura confortável
+    { id: 1, name: 'conclusion', duration: 4500, cameraScale: 1.0 }, // 4.5s: Chegada ao SEMAE
+    { id: 2, name: 'reencounter', duration: 5000, cameraScale: 1.25 },// 5.0s: Chegou o Fim de Semana!
+    { id: 3, name: 'friendship', duration: 6000, cameraScale: 1.45 }, // 6.0s: Carinho & Ração com tempo estendido
+    { id: 4, name: 'epilogue', duration: 5500, cameraScale: 1.0 }    // 5.5s: Epílogo no Pôr do Sol
   ];
 
   const state = {
     running: false, paused: false, sceneIdx: 0, sceneTimer: 0, globalTime: 0,
-    bannerText: '', bannerSub: '', bannerTimer: 0, bannerDuration: 1500,
+    bannerText: '', bannerSub: '', bannerTimer: 0, bannerDuration: 3500,
     lastAdvanceTime: 0,
     stats: { meters: 535, totalMeters: 535, perfects: 87, maxCombo: 31, score: 184250 }
   };
@@ -235,7 +235,7 @@
     player.y = groundY - player.h; dog.y = groundY - dog.h;
   }
 
-  function showBanner(text, sub = '', duration = 1500) {
+  function showBanner(text, sub = '', duration = 3500) {
     state.bannerText = text; state.bannerSub = sub;
     state.bannerTimer = duration; state.bannerDuration = duration;
     if (liveAnnouncer) liveAnnouncer.textContent = sub ? `${text}. ${sub}` : text;
@@ -269,23 +269,23 @@
     } else if (state.sceneIdx === 1) {
       player.x = -80; player.state = 'walking'; player.facing = 1; player.legPhase = 0;
       dog.visible = false; dog.x = -200; dog.sitting = false; dog.happy = false;
-      showBanner(`${state.stats.meters} LEITURAS CONCLUÍDAS`, '5 rotas lidas com sucesso!', 1500);
+      showBanner(`${state.stats.meters} LEITURAS CONCLUÍDAS`, '5 rotas lidas com sucesso!', 3800);
       playCalmSound();
     } else if (state.sceneIdx === 2) {
       player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
       dog.visible = true; dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
-      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 rotas, hora de descansar', 1500);
+      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 rotas, hora de descansar', 4200);
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
       dog.visible = true; dog.x = W * 0.26; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 1200);
+      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 4500);
     } else if (state.sceneIdx === 4) {
       bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
-      showBanner('BOM FIM DE SEMANA', 'Jornada cumprida com sucesso!', 900);
+      showBanner('BOM FIM DE SEMANA', 'Jornada cumprida com sucesso!', 4000);
       playFanfare();
     }
   }
@@ -354,40 +354,40 @@
     }
 
     if (state.sceneIdx === 1) {
-      if (player.x < W * 0.32) { player.x += 2.0 * step; player.legPhase += 0.22 * step; }
+      if (player.x < W * 0.32) { player.x += 1.5 * step; player.legPhase += 0.18 * step; }
       else { player.state = 'idle'; player.legPhase = 0; }
     } else if (state.sceneIdx === 2) {
-      if (dog.x < W * 0.28) { dog.x += 1.6 * step; dog.legPhase += 0.18 * step; }
+      if (dog.x < W * 0.28) { dog.x += 1.2 * step; dog.legPhase += 0.15 * step; }
       else { dog.sitting = true; dog.legPhase = 0; }
     } else if (state.sceneIdx === 3) {
       const t = state.sceneTimer;
       const targetBowlX = dog.x + dog.w + 10;
       const targetPlayerX = targetBowlX + 28 + 10;
       
-      if (t < 1000) {
-        if (player.x > targetPlayerX) { player.x -= 1.0 * step; player.legPhase += 0.18 * step; }
+      if (t < 1500) {
+        if (player.x > targetPlayerX) { player.x -= 0.9 * step; player.legPhase += 0.16 * step; }
         else { player.state = 'idle'; }
-      } else if (t < 1200) {
+      } else if (t < 1800) {
         player.state = 'kneeling';
-      } else if (t < 1450) {
+      } else if (t < 2200) {
         player.state = 'placingBowl';
-        const progress = (t - 1200) / 250;
+        const progress = (t - 1800) / 400;
         bowlPos = { x: targetBowlX, y: (groundY - 35) + progress * 21 };
-      } else if (t < 2600) {
+      } else if (t < 4200) {
         player.state = 'kneeling';
         bowlPos = { x: targetBowlX, y: groundY - 14 };
-        if (dog.x < W * 0.28) { dog.x += 0.4 * step; dog.sitting = false; dog.legPhase += 0.12 * step; }
+        if (dog.x < W * 0.28) { dog.x += 0.3 * step; dog.sitting = false; dog.legPhase += 0.10 * step; }
         else { dog.sitting = true; }
         player.state = 'petting'; dog.happy = true;
-      } else if (t < 3100) {
+      } else if (t < 5200) {
         if (heartAlpha === 0) playPettingChord();
-        heartAlpha = Math.min(1, heartAlpha + 0.04 * step);
+        heartAlpha = Math.min(1, heartAlpha + 0.03 * step);
       } else {
-        heartAlpha = Math.max(0, heartAlpha - 0.04 * step);
+        heartAlpha = Math.max(0, heartAlpha - 0.03 * step);
       }
     } else if (state.sceneIdx === 4) {
-      bgScroll += 1.8 * step;
-      player.legPhase += 0.22 * step; dog.legPhase += 0.25 * step;
+      bgScroll += 1.4 * step;
+      player.legPhase += 0.18 * step; dog.legPhase += 0.20 * step;
     }
   }
 
@@ -400,8 +400,8 @@
 
     const elapsed = state.bannerDuration - state.bannerTimer;
     let alpha = 1.0;
-    if (elapsed < 150) alpha = elapsed / 150;
-    else if (state.bannerTimer < 300) alpha = state.bannerTimer / 300;
+    if (elapsed < 200) alpha = elapsed / 200;
+    else if (state.bannerTimer < 400) alpha = state.bannerTimer / 400;
     
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha)); ctx.textAlign = 'center';
     
@@ -448,7 +448,7 @@
     
     let y = H * 0.32;
     for (let i = 0; i < phases.length; i++) {
-      if (elapsed > i * 240) {
+      if (elapsed > i * 450) {
         ctx.font = '900 15px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
         ctx.fillText(`${i + 1} · ${phases[i]}`, W * 0.14, y);
         ctx.fillStyle = '#22c55e'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.86, y);
@@ -456,7 +456,7 @@
       y += 44;
     }
 
-    if (elapsed > 1300) {
+    if (elapsed > 2400) {
       ctx.font = '900 22px system-ui'; ctx.fillStyle = '#22c55e'; ctx.textAlign = 'center';
       ctx.fillText('5 ROTAS DA SEMANA CONCLUÍDAS! 🎉', W / 2, H * 0.76);
     }
@@ -472,7 +472,7 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 3000) * 80) : 140;
+    const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 5500) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = isDusk ? '#fdba74' : '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
@@ -618,7 +618,7 @@
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 28); ctx.lineTo(46, 48); ctx.stroke();
     } else if (!isKneeling) {
-      // TELEFONE CELULAR (SMARTPHONE DE LEITURA REVOLUCIONÁRIO NA MÃO)
+      // TELEFONE CELULAR (SMARTPHONE DE LEITURA NA MÃO DO LEITURISTA)
       const phoneX = 40, phoneY = 28;
       rounded(phoneX, phoneY, 13, 24, 4, '#0f172a');
       ctx.fillStyle = '#38bdf8'; ctx.fillRect(phoneX + 1.5, phoneY + 2.5, 10, 19);
