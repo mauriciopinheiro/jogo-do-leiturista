@@ -52,7 +52,6 @@
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       font-weight: 800;
     }
-    .card:nth-child(3) { grid-column: 1 / -1; padding-block: 6px; }
     .card small {
       display: block; overflow: hidden; font-size: clamp(0.58rem, 2.5vw, 0.70rem);
       line-height: 1.1; text-overflow: ellipsis; text-transform: uppercase;
@@ -88,7 +87,7 @@
     .touch-hint.hidden { opacity: 0; transform: translate(-50%, 8px); }
 
     .quick-controls {
-      position: absolute; right: calc(8px + var(--safe-right)); top: calc(140px + var(--safe-top));
+      position: absolute; right: calc(8px + var(--safe-right)); top: calc(180px + var(--safe-top));
       z-index: 7; display: grid; gap: 8px;
     }
     .mini-btn {
@@ -173,14 +172,16 @@
     
     <!-- HUD DE ROTAS SEMAE PIRACICABA -->
     <div class="hud" aria-hidden="true">
+      <div class="card" style="grid-column: 1 / -1; background: rgba(12, 50, 111, 0.96); border: 2px solid #FFCD07; padding: 8px 12px; border-radius: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <small style="color: #FFCD07; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;">📍 RUA ATUAL DA ROTA SEMAE:</small>
+          <span id="hudHidrometroCount" style="color: #FFCD07; font-size: 1rem; font-weight: 900;">💧 0 / 15</span>
+        </div>
+        <strong id="hudRuaAtual" style="display: block; margin-top: 3px; font-size: clamp(1.15rem, 5vw, 1.45rem); color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-family: 'Segoe UI', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Rua Ajudante Albano</strong>
+      </div>
       <div class="card">
         <small id="hudFaseBairro"><span class="badge-fase">FASE 1</span> SAO DIMAS</small>
         <strong id="hudRotaInfo">SETOR 36 · ROTA 129</strong>
-      </div>
-      <div class="card">
-        <small>Rua Atual (SEMAE)</small>
-        <strong id="hudRuaAtual">📍 Rua Ajudante Albano</strong>
-        <strong id="hudHidrometroCount" style="margin-top:2px; color:#FFCD07;">💧 0 / 15</strong>
       </div>
       <div class="card">
         <small>Segurança / Cão</small>
@@ -578,7 +579,7 @@
     
     // Adicionar a Placa da primeira rua
     const primeiraRua = rota.ruas[0].nome_rua;
-    streetSigns.push({ text: primeiraRua, x: W + 50, y: groundY - 180 });
+    streetSigns.push({ text: primeiraRua, x: W + 50, y: groundY - 210 });
 
     showBanner(`🚐 DESEMBARQUE DA KOMBI`, `Bairro ${rota.bairro}`, 150, 'bonus');
     beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
@@ -589,7 +590,7 @@
     const ruaAtual = r.ruas[state.ruaIdx] ? r.ruas[state.ruaIdx].nome_rua : r.ruas[r.ruas.length - 1].nome_rua;
     hudFaseBairro.innerHTML = `<span class="badge-fase">FASE ${r.fase}</span> ${r.bairro}`;
     hudRotaInfo.textContent = `SETOR ${r.setor} · ROTA ${r.rota}`;
-    hudRuaAtual.innerHTML = `📍 ${ruaAtual}`;
+    hudRuaAtual.textContent = ruaAtual;
     hudHidrometroCount.textContent = `💧 ${state.totalFaseReadings} / ${r.total_hidrometros}`;
     missionHud.textContent = state.microMission ? state.microMission.label : `${ruaAtual}`;
   }
@@ -710,8 +711,8 @@
         state.ruaIdx++;
         state.ruaReadings = 0;
         const proximaRua = rota.ruas[state.ruaIdx].nome_rua;
-        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 160, 'region');
-        streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 180 });
+        showBanner(`📍 ENTRANDO NA RUA:`, proximaRua, 240, 'region'); // 4 SEGUNDOS BEM VISÍVEL!
+        streetSigns.push({ text: proximaRua, x: W + 50, y: groundY - 210 });
       }
     }
 
@@ -723,12 +724,19 @@
     updateHudRouteInfo();
   }
 
-  // ANIMAÇÃO DE FIM DE FASE: KOMBI RESGATA LEITURISTA E CACHORRO PARA
+  // ANIMAÇÃO DE FIM DE FASE: KOMBI RESGATA LEITURISTA E NENHUM OUTRO HIDRÔMETRO OU OBSTÁCULO É PERMITIDO
   function triggerPhaseCompletion() {
     state.phaseCompleted = true;
     state.kombiState = 'arrival_finish';
     state.kombiX = W + 220;
     state.kombiDoorOpen = false;
+    
+    // LIMPEZA IMEDIATA: ZERAR ABSOLUTAMENTE TODOS OS HIDRÔMETROS E OBSTÁCULOS DA TELA!
+    meters = [];
+    obstacles = [];
+    powerups = [];
+    events = [];
+
     showBanner('🏁 ROTA FINALIZADA!', 'A Kombi Branca SEMAE chegou para o resgate!', 160, 'unlock');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
   }
@@ -858,7 +866,12 @@
       dog.bark = 0; state.dogThreat = 0;
       dog.x = Math.max(20, dog.x - 1.5 * step); // Cachorro para e recua
       
-      state.kombiX -= 5 * step;
+      // Limpeza absoluta a cada frame do resgate: ZERO hidrômetros ou obstáculos na tela!
+      meters = [];
+      obstacles = [];
+      powerups = [];
+      
+      state.kombiX -= 4 * step;
       if (state.kombiX <= player.x + 35) {
         state.kombiX = player.x + 35;
         state.kombiDoorOpen = true; // Porta se abre
@@ -869,6 +882,8 @@
     // 6. LEITURISTA ENTRA NA KOMBI BRANCA
     else if (state.kombiState === 'enter_van') {
       dog.bark = 0; state.dogThreat = 0;
+      meters = []; obstacles = []; powerups = [];
+      
       player.x += 2.5 * step;
       if (player.x >= state.kombiX + 25) {
         player.visible = false; // Entra na van
@@ -879,6 +894,8 @@
     }
     // 7. KOMBI PARTE PARA A PRÓXIMA FASE
     else if (state.kombiState === 'driving_away') {
+      meters = []; obstacles = []; powerups = [];
+      
       state.kombiX += 7 * step;
       if (state.kombiX >= W + 220) {
         state.kombiState = 'completed_modal';
@@ -944,8 +961,9 @@
     }
     events = events.filter(e => e.x > -250);
 
-    for (const s of streetSigns) { s.x -= actualSpeed * step; }
-    streetSigns = streetSigns.filter(s => s.x > -250);
+    // MOVIMENTO LENTO DA PLACA DE RUA (35% DA VELOCIDADE DO JOGO)
+    for (const s of streetSigns) { s.x -= actualSpeed * 0.35 * step; }
+    streetSigns = streetSigns.filter(s => s.x > -350);
 
     for (const p of particles) { p.x += p.vx * step; p.y += p.vy * step; p.vy += 0.18 * step; p.life -= step; }
     particles = particles.filter(p => p.life > 0);
@@ -1224,15 +1242,15 @@
     }
   }
 
-  // DESENHO DAS PLACAS DAS RUAS COM ALTA VISIBILIDADE
+  // DESENHO DAS PLACAS DAS RUAS COM ALTA VISIBILIDADE E MOVIMENTO MAIS LENTO
   function drawStreetSigns() {
     for (const s of streetSigns) {
       ctx.save(); ctx.translate(s.x, s.y);
-      rounded(0, 0, 250, 48, 10, '#0C326F');
-      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 3.5;
-      ctx.strokeRect(3, 3, 244, 42);
-      ctx.fillStyle = '#ffffff'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('📍 RUA: ' + s.text.toUpperCase(), 125, 28);
+      rounded(0, 0, 320, 56, 12, '#0C326F');
+      ctx.strokeStyle = '#FFCD07'; ctx.lineWidth = 4;
+      ctx.strokeRect(4, 4, 312, 48);
+      ctx.fillStyle = '#ffffff'; ctx.font = '900 15px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('📍 RUA: ' + s.text.toUpperCase(), 160, 33);
       ctx.restore();
     }
   }
@@ -1242,10 +1260,13 @@
   
   function drawBanner() {
     if (banner.life <= 0) return; const alpha = Math.min(1, (banner.life / banner.max) * 4);
-    ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.font = '1000 26px system-ui';
-    ctx.strokeStyle = 'rgba(12,50,111,0.6)'; ctx.lineWidth = 6; ctx.strokeText(banner.text, W / 2, H * 0.32);
+    ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.font = '1000 28px system-ui';
+    ctx.strokeStyle = 'rgba(12,50,111,0.85)'; ctx.lineWidth = 8; ctx.strokeText(banner.text, W / 2, H * 0.32);
     ctx.fillStyle = '#FFCD07'; ctx.fillText(banner.text, W / 2, H * 0.32);
-    if (banner.sub) { ctx.font = '800 15px system-ui'; ctx.fillText(banner.sub, W / 2, H * 0.32 + 28); }
+    if (banner.sub) {
+      ctx.font = '900 16px system-ui'; ctx.strokeStyle = 'rgba(12,50,111,0.85)'; ctx.lineWidth = 6; ctx.strokeText(banner.sub, W / 2, H * 0.32 + 32);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(banner.sub, W / 2, H * 0.32 + 32);
+    }
     ctx.globalAlpha = 1;
   }
 
