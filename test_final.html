@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>TESTE — Final do Jogo: O Dia do Pagamento SEMAE</title>
+  <title>TESTE V2 — Encerramento Narrativo SEMAE (O Arco do Cão)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -28,20 +28,20 @@
     canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: pointer; }
     .overlay {
       position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; padding: 16px;
-      background: linear-gradient(rgba(9, 32, 64, 0.70), rgba(9, 32, 64, 0.88));
-      backdrop-filter: blur(5px);
+      background: linear-gradient(rgba(9, 32, 64, 0.75), rgba(9, 32, 64, 0.90));
+      backdrop-filter: blur(6px);
     }
     .overlay[hidden] { display: none; }
     .modal {
       width: min(100%, 460px); padding: 24px; border: 2px solid rgba(255, 255, 255, 0.88);
       border-radius: 24px; background: var(--painel); text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.42);
     }
-    .modal h2 { margin: 0 0 6px; color: var(--semae-azul-escuro); font-size: 1.5rem; }
-    .modal p { margin: 8px 0; font-size: 0.95rem; line-height: 1.35; color: #233e5c; }
+    .modal h2 { margin: 0 0 8px; color: var(--semae-azul-escuro); font-size: clamp(1.3rem, 6vw, 1.7rem); line-height: 1.15; }
+    .modal p { margin: 10px 0; font-size: clamp(0.88rem, 3.8vw, 0.98rem); line-height: 1.4; color: #233e5c; }
     .botao {
       width: 100%; min-height: 54px; border: 0; border-radius: 16px; padding: 12px 18px;
       background: var(--semae-destaque); color: #3b2b00; font-size: 1.05rem; font-weight: 1000;
-      cursor: pointer; box-shadow: 0 5px 0 #d9a800; margin-top: 14px;
+      cursor: pointer; box-shadow: 0 5px 0 #d9a800; margin-top: 14px; touch-action: manipulation;
     }
     .botao:active { box-shadow: 0 2px 0 #d9a800; transform: translateY(3px); }
   </style>
@@ -52,9 +52,9 @@
     <canvas id="game" width="540" height="960"></canvas>
     <div class="overlay" id="overlay">
       <div class="modal">
-        <h2>🎬 TESTE DO FINAL DO JOGO</h2>
-        <p><b>“O DIA DO PAGAMENTO NO SEMAE”</b><br>Assista à animação do leiturista recebendo seu salário e bônus, comprando ração e adotando o cachorro!</p>
-        <button class="botao" id="startBtn" type="button">▶ ASSISTIR AO FINAL DO JOGO NOW</button>
+        <h2 id="modalTitle">🏆 FIM DE JOGO — 5 ROTAS CONCLUÍDAS</h2>
+        <p id="modalText">Você concluiu a leitura dos 535 hidrômetros em Piracicaba.<br>Toque para assistir ao encerramento da jornada do Leiturista!</p>
+        <button class="botao" id="startBtn" type="button">▶ VER ENCERRAMENTO NARRATIVO</button>
       </div>
     </div>
   </section>
@@ -64,16 +64,22 @@
 (() => {
   'use strict';
   const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-  const overlay = document.getElementById('overlay'), startBtn = document.getElementById('startBtn');
+  const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText'), startBtn = document.getElementById('startBtn');
 
   let W = 540, H = 960, groundY = Math.round(H * 0.79);
-  const state = { running: false, time: 0, kombiState: 'grand_finale', finaleTimer: 0, bgOffset: 0, roadOffset: 0 };
-  const player = { x: -60, y: groundY - 78, w: 45, h: 78, legPhase: 0, visible: true, onGround: true, landSquash: 0, vy: 0, hurt: 0 };
-  const dog = { x: -130, y: groundY - 48, w: 75, h: 48, legPhase: 0, visible: true, lungeOffset: 0, bark: 0 };
-  let particles = [], floaters = [];
-  let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal' };
+  
+  const state = {
+    running: false, time: 0, finaleTimer: 0,
+    scene1Triggered: false, scene2Triggered: false, scene3Triggered: false, scene4Triggered: false
+  };
 
-  function showBanner(text, sub = '', life = 180, kind = 'normal') { banner = { text, sub, life, max: life, kind }; }
+  const player = { x: -80, y: groundY - 78, w: 45, h: 78, legPhase: 0, visible: true, onGround: true, state: 'walking' };
+  const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, visible: false, sitting: false, happy: false };
+  let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal' };
+  let showBag = false;
+
+  function showBanner(text, sub = '', life = 200, kind = 'normal') { banner = { text, sub, life, max: life, kind }; }
+  
   function rounded(x, y, w, h, r, fill) {
     r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
@@ -87,12 +93,16 @@
     canvas.width = W; canvas.height = H;
   }
 
-  function triggerGrandFinale() {
-    state.running = true; state.kombiState = 'grand_finale'; state.finaleTimer = 0;
-    player.visible = true; player.x = -60; player.y = groundY - player.h;
-    dog.visible = true; dog.x = -130; dog.y = groundY - dog.h;
+  function startFinalCutscene() {
+    state.running = true; state.time = 0; state.finaleTimer = 0;
+    state.scene1Triggered = false; state.scene2Triggered = false;
+    state.scene3Triggered = false; state.scene4Triggered = false;
+    
+    player.visible = true; player.x = -80; player.y = groundY - player.h; player.state = 'walking'; player.legPhase = 0;
+    dog.visible = false; dog.x = -120; dog.y = groundY - dog.h; dog.sitting = false; dog.happy = false; dog.legPhase = 0;
+    showBag = false;
+    
     overlay.hidden = true;
-    showBanner('💰 O DIA DO PAGAMENTO NO SEMAE!', 'Você recebeu seu salário e bônus de produtividade!', 240, 'victory');
   }
 
   function update(dt) {
@@ -100,23 +110,58 @@
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
     state.finaleTimer += step;
 
-    if (state.finaleTimer < 160) {
-      if (player.x < W * 0.28) { player.x += 2.2 * step; player.legPhase += 0.22 * step; }
-      if (dog.x < W * 0.52) { dog.x += 3.0 * step; dog.legPhase += 0.25 * step; }
-    } else if (state.finaleTimer >= 160 && state.finaleTimer < 320) {
-      if (Math.floor(state.finaleTimer) === 160) showBanner('🐶 O CÃO DE GUARDA CHEGOU...', '“Agora ele quer ser seu amigo!”', 180, 'gold');
-    } else if (state.finaleTimer >= 320 && state.finaleTimer < 480) {
-      if (Math.floor(state.finaleTimer) === 320) showBanner('🥩 SACO DE RAÇÃO COMPRADO!', 'Com o pagamento, você comprou ração para seu novo amigo!', 180, 'power');
-    } else if (state.finaleTimer >= 480 && state.finaleTimer < 680) {
-      if (Math.floor(state.finaleTimer) === 480) showBanner('🌅 FIM DE JOGO — AMIGOS PARA SEMPRE!', 'Você concluiu todas as rotas do SEMAE Piracicaba!', 220, 'unlock');
+    // ATO 1: CONCLUSÃO DA JORNADA NO SEMAE (0s a 4s / 0 a 240 frames)
+    if (!state.scene1Triggered && state.finaleTimer >= 0) {
+      state.scene1Triggered = true;
+      showBanner('🏆 535 HIDRÔMETROS LIDOS COM SUCESSO!', 'Trabalho concluído nas 5 rotas de Piracicaba!', 220, 'victory');
+    }
+
+    if (state.finaleTimer < 240) {
+      if (player.x < W * 0.32) { player.x += 2.2 * step; player.legPhase += 0.22 * step; }
+      else { player.legPhase = 0; }
+    }
+
+    // ATO 2: O REENCONTRO COM O CACHORRO DA ROTA (4s a 8s / 240 a 480 frames)
+    if (!state.scene2Triggered && state.finaleTimer >= 240) {
+      state.scene2Triggered = true;
+      dog.visible = true; dog.x = -100;
+      showBanner('🐕 O CACHORRO DA ROTA SE APROXIMA...', 'Ele acompanhou sua jornada do início ao fim.', 220, 'gold');
+    }
+
+    if (state.finaleTimer >= 240 && state.finaleTimer < 480) {
+      if (dog.x < W * 0.52) {
+        dog.x += 1.8 * step; dog.legPhase += 0.20 * step;
+      } else {
+        dog.sitting = true; dog.legPhase = 0;
+      }
+    }
+
+    // ATO 3: A TRANSFORMAÇÃO NARRATIVA & COMPRA DA RAÇÃO (8s a 12s / 480 a 720 frames)
+    if (!state.scene3Triggered && state.finaleTimer >= 480) {
+      state.scene3Triggered = true;
+      showBag = true; dog.happy = true;
+      showBanner('🥩 UM GESTO DE CARINHO E ALIMENTO!', 'Ele só queria um amigo. Amizade selada!', 220, 'power');
+    }
+
+    // ATO 4: CAMINHADA JUNTOS PARA O POR DO SOL (12s a 16s / 720 a 960 frames)
+    if (!state.scene4Triggered && state.finaleTimer >= 720) {
+      state.scene4Triggered = true;
+      dog.sitting = false;
+      showBanner('🌅 AMIGOS DE JORNADA PARA SEMPRE!', 'Reconhecimento pelo trabalho dedicado no SEMAE!', 240, 'unlock');
+    }
+
+    if (state.finaleTimer >= 720 && state.finaleTimer < 960) {
       player.x += 2.2 * step; dog.x += 2.2 * step;
       player.legPhase += 0.22 * step; dog.legPhase += 0.25 * step;
-    } else if (state.finaleTimer >= 680) {
+    }
+
+    // ATO 5: MODAL FINAL DE VITÓRIA (> 16s / > 960 frames)
+    if (state.finaleTimer >= 960) {
       state.running = false;
       overlay.hidden = false;
-      document.querySelector('.modal h2').textContent = '🏆 JOGO CONCLUÍDO COM SUCESSO!';
-      document.querySelector('.modal p').innerHTML = '<b>🥇 TÍTULO CONFERIDO: LEITURISTA MESTRE SEMAE & AMIGO DOS ANIMAIS 🐶❤️</b><br><br>Parabéns! Você assistiu ao teste do final do jogo.';
-      startBtn.textContent = '▶ ASSISTIR NOVAMENTE 🔁';
+      modalTitle.textContent = '🏆 JOGO CONCLUÍDO COM SUCESSO!';
+      modalText.innerHTML = `🎉 <b>PARABÉNS, LEITURISTA DO SEMAE!</b><br><br>Você concluiu todas as 5 rotas oficiais de Piracicaba (535 hidrômetros), recebeu o reconhecimento pelo trabalho e ganhou a amizade do leal cachorro que te acompanhou na jornada!<br><br><b>🥇 TÍTULO CONFERIDO: LEITURISTA MESTRE SEMAE & AMIGO DOS ANIMAIS 🐶❤️</b>`;
+      startBtn.textContent = '▶ REPRISAR ENCERRAMENTO NARRATIVO 🔁';
     }
 
     if (banner.life > 0) banner.life -= step;
@@ -124,22 +169,16 @@
 
   function drawBackground() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#f97316'); g.addColorStop(1, '#fef08a');
+    g.addColorStop(0, '#ea580c'); g.addColorStop(1, '#fde047');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = 'rgba(255, 233, 168, 0.35)'; ctx.beginPath(); ctx.arc(W * 0.75, 130, 80, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.75, 130, 48, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255, 233, 168, 0.35)'; ctx.beginPath(); ctx.arc(W * 0.78, 130, 80, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, 130, 48, 0, Math.PI * 2); ctx.fill();
 
-    rounded(W * 0.1, groundY - 160, 240, 160, 8, '#0C326F');
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(W * 0.1 + 10, groundY - 145, 220, 26);
-    ctx.fillStyle = '#0C326F'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE — TESOURARIA E PAGAMENTO', W * 0.1 + 120, groundY - 128);
-    rounded(W * 0.1 + 95, groundY - 80, 50, 80, 4, '#1e293b');
-
-    if (state.finaleTimer >= 160 && state.finaleTimer < 480) {
-      ctx.fillStyle = '#168821'; rounded(W * 0.42, groundY - 55, 45, 55, 6, '#168821');
-      ctx.fillStyle = '#FFCD07'; ctx.font = '900 10px system-ui'; ctx.textAlign = 'center'; ctx.fillText('🥩 RAÇÃO', W * 0.42 + 22, groundY - 32);
-      ctx.fillText('15 KG', W * 0.42 + 22, groundY - 18);
-    }
+    rounded(W * 0.08, groundY - 160, 250, 160, 8, '#0C326F');
+    ctx.fillStyle = '#FFCD07'; ctx.fillRect(W * 0.08 + 10, groundY - 145, 230, 26);
+    ctx.fillStyle = '#0C326F'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE PIRACICABA — CENTRAL DE ROTAS', W * 0.08 + 125, groundY - 128);
+    rounded(W * 0.08 + 100, groundY - 80, 50, 80, 4, '#1e293b');
 
     ctx.fillStyle = '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     ctx.fillStyle = '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
@@ -148,20 +187,37 @@
 
   function drawDog() {
     if (!dog.visible) return;
-    const x = dog.x, y = dog.y + Math.sin(dog.legPhase) * 2;
+    const x = dog.x, y = dog.y + (dog.sitting ? 0 : Math.sin(dog.legPhase * 2) * 2);
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; ctx.beginPath(); ctx.ellipse(36, 46, 36, 7, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(60, 16, 16, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
-    ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + Math.sin(dog.legPhase * 1.5) * 6, -4, -6); ctx.stroke();
+    
+    if (dog.sitting) {
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(30, 26, 22, 20, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(38, 30, 14, 11, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(42, 14, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(51, 18, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(58, 16, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(34, 2); ctx.lineTo(38, -10); ctx.lineTo(48, 2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#1351B4'; ctx.fillRect(32, 22, 8, 12);
+    } else {
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(60, 16, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
 
-    if (state.finaleTimer >= 160) {
-      ctx.fillStyle = '#FF4D6D'; ctx.font = '16px system-ui'; ctx.fillText('❤️', 55, -8);
+      const leg1 = Math.sin(dog.legPhase) * 9;
+      ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(18, 34); ctx.lineTo(14 - leg1, 45); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(46, 34); ctx.lineTo(52 + leg1, 45); ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + Math.sin(dog.legPhase * 1.5) * 6, -4, -6); ctx.stroke();
+
+    if (dog.happy) {
+      ctx.fillStyle = '#FF4D6D'; ctx.font = '900 18px system-ui'; ctx.fillText('❤️', 40, -10);
     }
     ctx.restore();
   }
@@ -169,31 +225,61 @@
   function drawPlayer() {
     if (!player.visible) return;
     const x = player.x, y = player.y + Math.sin(player.legPhase * 2) * 2.2;
-    ctx.save(); ctx.translate(x, y);
-    rounded(6, 20, 37, 42, 9, '#1351B4');
-    ctx.fillStyle = '#FFCD07'; ctx.fillRect(8, 38, 33, 5);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', 12, 32);
-
-    if (state.finaleTimer < 320) {
-      rounded(48, 32, 22, 16, 3, '#fef08a');
-      ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; ctx.strokeRect(48, 32, 22, 16);
-      ctx.fillStyle = '#168821'; ctx.font = '900 10px system-ui'; ctx.fillText('💰', 51, 44);
+    const hipL = { x: x + 18, y: y + 55 }, hipR = { x: x + 28, y: y + 55 };
+    
+    function calcLeg(hip, phaseOffset) {
+      const p = player.legPhase + phaseOffset;
+      const swing = Math.sin(p);
+      const lift = Math.cos(p);
+      const thighAngle = swing * 0.65;
+      const kneeX = hip.x + Math.sin(thighAngle) * 13;
+      const kneeY = hip.y + Math.cos(thighAngle) * 13;
+      const kneeBend = Math.max(0, -lift) * 0.6;
+      const shinAngle = thighAngle - kneeBend;
+      const footX = kneeX + Math.sin(shinAngle) * 13;
+      const footY = kneeY + Math.cos(shinAngle) * 13;
+      return { knee: { x: kneeX, y: kneeY }, foot: { x: footX, y: footY } };
     }
 
-    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(24, 10, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(22, 6, 15, Math.PI, Math.PI * 2); ctx.fill();
-    ctx.fillRect(20, 4, 24, 5);
-    ctx.restore();
+    const legL = calcLeg(hipL, 0);
+    const legR = calcLeg(hipR, Math.PI);
+
+    ctx.strokeStyle = '#0C326F'; ctx.lineWidth = 8.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
+
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 6; ctx.beginPath();
+    ctx.moveTo(legL.foot.x - 2, legL.foot.y); ctx.lineTo(legL.foot.x + 7, legL.foot.y + 1);
+    ctx.moveTo(legR.foot.x - 2, legR.foot.y); ctx.lineTo(legR.foot.x + 7, legR.foot.y + 1); ctx.stroke();
+
+    rounded(x + 6, y + 20, 37, 42, 9, '#1351B4');
+    ctx.fillStyle = '#FFCD07'; ctx.fillRect(x + 8, y + 38, 33, 5);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', x + 12, y + 32);
+
+    if (showBag) {
+      rounded(x + 42, y + 24, 40, 48, 6, '#168821');
+      ctx.fillStyle = '#FFCD07'; ctx.font = '900 9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('🥩 RAÇÃO', x + 62, y + 44);
+      ctx.fillText('15 KG', x + 62, y + 56);
+    } else {
+      rounded(x + 42, y + 32, 22, 16, 3, '#fef08a');
+      ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 42, y + 32, 22, 16);
+      ctx.fillStyle = '#1351B4'; ctx.font = '900 10px system-ui'; ctx.fillText('📋', x + 46, y + 44);
+    }
+
+    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + 20, y + 4, 24, 5);
   }
 
   function drawBanner() {
     if (banner.life <= 0) return;
-    ctx.save(); ctx.textAlign = 'center'; ctx.font = '1000 26px system-ui';
-    ctx.strokeStyle = 'rgba(12,50,111,0.85)'; ctx.lineWidth = 8; ctx.strokeText(banner.text, W / 2, H * 0.32);
-    ctx.fillStyle = '#FFCD07'; ctx.fillText(banner.text, W / 2, H * 0.32);
+    ctx.save(); ctx.textAlign = 'center'; ctx.font = '1000 25px system-ui';
+    ctx.strokeStyle = 'rgba(12,50,111,0.9)'; ctx.lineWidth = 8; ctx.strokeText(banner.text, W / 2, H * 0.30);
+    ctx.fillStyle = '#FFCD07'; ctx.fillText(banner.text, W / 2, H * 0.30);
     if (banner.sub) {
-      ctx.font = '900 15px system-ui'; ctx.strokeStyle = 'rgba(12,50,111,0.85)'; ctx.lineWidth = 6; ctx.strokeText(banner.sub, W / 2, H * 0.32 + 32);
-      ctx.fillStyle = '#ffffff'; ctx.fillText(banner.sub, W / 2, H * 0.32 + 32);
+      ctx.font = '900 15px system-ui'; ctx.strokeStyle = 'rgba(12,50,111,0.9)'; ctx.lineWidth = 6; ctx.strokeText(banner.sub, W / 2, H * 0.30 + 32);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(banner.sub, W / 2, H * 0.30 + 32);
     }
     ctx.restore();
   }
@@ -212,7 +298,7 @@
     update(dt); render(); requestAnimationFrame(loop);
   }
 
-  startBtn.addEventListener('click', () => { triggerGrandFinale(); });
+  startBtn.addEventListener('click', () => { startFinalCutscene(); });
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas(); requestAnimationFrame(loop);
 })();
