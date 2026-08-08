@@ -219,7 +219,7 @@
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">💧 <b>Médias dos 3 Meses:</b> Cada hidrômetro exibe sua média em m³. Os 10% com maiores médias são <b>Especiais Dourados</b>!</div>
+          <div class="controle-item">💧 <b>Pontuação por Média:</b> A pontuação obtida é a própria média dos últimos 3 meses do hidrômetro! Os 10% de maiores médias são <b>Dourados</b> (pontuação dupla).</div>
           <div class="controle-item">🚐 <b>Kombi SEMAE:</b> Ao pegar o último registro, a pista limpa, o cachorro para e você corre para entrar na Kombi!</div>
           <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure para pular alto. Solte cedo para salto curto. <b>P:</b> Pausar.</div>
         </div>
@@ -385,7 +385,7 @@
   // ESTADO GLOBAL DO JOGO
   const state = {
     running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
-    spawnClock: 0, nextSpawn: 200, readingClock: 0, nextReading: 30, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
+    spawnClock: 0, nextSpawn: 200, readingClock: 0, nextReading: 20, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
     dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
     nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
@@ -579,7 +579,7 @@
     
     state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.2 + state.faseIdx * 0.4;
     state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 220;
-    state.readingClock = 0; state.nextReading = 30; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
+    state.readingClock = 0; state.nextReading = 20; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
     state.dogThreat = 0;
     state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
     state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
@@ -650,31 +650,42 @@
 
     const r = Math.random();
     if (r < 0.28) {
-      obstacles.push({ type: 'cone', x: W + 45, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 65, groundY - 145);
+      obstacles.push({ type: 'cone', x: W + 50, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
     } else if (r < 0.55) {
-      obstacles.push({ type: 'barrier', x: W + 45, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 80, groundY - 165);
+      obstacles.push({ type: 'barrier', x: W + 50, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
     } else if (r < 0.78) {
-      obstacles.push({ type: 'bin', x: W + 45, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 70, groundY - 95);
+      obstacles.push({ type: 'bin', x: W + 50, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
     } else {
-      obstacles.push({ type: 'hose', x: W + 45, y: groundY - 22, w: 92, h: 22, hit: false, passed: false, nearChecked: false });
-      spawnMeter(W + 90, groundY - 110);
+      obstacles.push({ type: 'hose', x: W + 50, y: groundY - 22, w: 92, h: 22, hit: false, passed: false, nearChecked: false });
     }
   }
 
-  // GERAR HIDRÔMETRO SEGUINDO A ORDEM E EXIBINDO A MÉDIA DOS 3 MESES
-  function spawnMeter(x = W + 45, y = null) {
+  // GERAR HIDRÔMETRO SEGUINDO A ORDEM, SEM ACAVALAR E COM FLUXO CONTÍNUO
+  function spawnMeter(x = W + 50, y = null) {
     if (state.kombiState !== 'running') return;
     if (state.nextMeterIndex >= state.phaseMeterList.length) return; // Todos os hidrômetros da fase já foram gerados
+
+    // GARANTIR QUE NÃO HAJA HIDRÔMETROS ACAVALADOS (SOBREPOSTOS): MIN_DISTANÇA = 140px
+    const MIN_DIST = 140;
+    let targetX = x;
+
+    for (const m of meters) {
+      if (Math.abs(m.x - targetX) < MIN_DIST) {
+        targetX = Math.max(targetX, m.x + MIN_DIST);
+      }
+    }
+    for (const ob of obstacles) {
+      if (Math.abs(ob.x - targetX) < MIN_DIST) {
+        targetX = Math.max(targetX, ob.x + MIN_DIST);
+      }
+    }
 
     const meterData = state.phaseMeterList[state.nextMeterIndex];
     state.nextMeterIndex++;
 
     const high = meterData.isGold || Math.random() < 0.35;
     meters.push({
-      x,
+      x: targetX,
       y: y ?? (high ? groundY - 158 : groundY - 88),
       r: meterData.isGold ? 22 : 18,
       taken: false,
@@ -730,10 +741,13 @@
     m.taken = true; state.readings++; lifetimeReadings++; state.ruaReadings++; state.totalFaseReadings++;
     persistProgress(); comboUp(m.kind === 'gold' ? 2 : 1);
     
+    // A PONTUAÇÃO DE CADA HIDRÔMETRO É A SUA MÉDIA DE LEITURA DOS ÚLTIMOS 3 MESES!
+    let base = (m.avg3M || 20) * (m.kind === 'gold' ? 2 : 1);
+    
     // Leitura Perfeita: Ápice do Salto
-    const perfect = !player.onGround && Math.abs(player.vy) < 3.8; let base = m.kind === 'gold' ? 450 : 120;
+    const perfect = !player.onGround && Math.abs(player.vy) < 3.8;
     if (perfect) {
-      state.perfects++; base += 100;
+      state.perfects++; base += 50;
       addFloater('✨ LEITURA PERFEITA!', m.x, m.y - 28, '#fff3a8', true);
       burst(m.x, m.y, '#fff09b', 20, true);
       playPerfectReadingSound();
@@ -748,7 +762,7 @@
     const gain = Math.round(base * state.mult * (state.flow > 0 ? 1.5 : 1)); state.score += gain;
     state.dogThreat = Math.max(0, state.dogThreat - (m.kind === 'gold' ? 12 : 7));
     burst(m.x, m.y, m.kind === 'gold' ? '#ffd85d' : '#1351B4', 12, m.kind === 'gold');
-    addFloater(`+${gain}`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
+    addFloater(`+${gain} pts`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
 
     // VERIFICAR MUDANÇA DE RUA
     const rota = ROTAS_SEMAE[state.faseIdx];
@@ -903,7 +917,7 @@
         state.spawnClock = 0;
         state.nextSpawn = 200;
         state.readingClock = 0;
-        state.nextReading = 30;
+        state.nextReading = 20;
         state.kombiState = 'running';
         showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
@@ -965,7 +979,14 @@
     state.musicClock += step;
 
     if (state.spawnClock >= state.nextSpawn) { spawnObstaclePattern(); state.spawnClock = 0; state.nextSpawn = Math.max(70, 115 - state.speed * 2.5) + rand(20, 50); }
-    if (state.readingClock >= state.nextReading) { spawnMeter(); state.readingClock = 0; state.nextReading = state.flow > 0 ? rand(70, 110) : rand(95, 160); }
+    
+    // GERAR HIDRÔMETROS EM FLUXO CONTÍNUO (SEMPRE HÁ UM HIDRÔMETRO NA TELA)
+    if (state.readingClock >= state.nextReading) {
+      spawnMeter();
+      state.readingClock = 0;
+      state.nextReading = rand(45, 65); // Intervalo curto e constante para nunca ficar sem hidrômetro!
+    }
+    
     if (state.powerClock >= state.nextPower) { spawnPowerup(); state.powerClock = 0; state.nextPower = rand(700, 1000); }
     if (state.eventClock >= state.nextEvent) { spawnEvent(); state.eventClock = 0; state.nextEvent = rand(450, 750); }
 
