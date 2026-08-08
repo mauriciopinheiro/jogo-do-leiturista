@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>Jogo do Leiturista SEMAE — Encerramento Narrativo (Fix Replay)</title>
+  <title>Jogo do Leiturista SEMAE — Encerramento Narrativo</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -60,7 +60,7 @@
       background: linear-gradient(rgba(9, 32, 64, 0.82), rgba(9, 32, 64, 0.94));
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
-    .overlay[hidden] { display: none; }
+    .overlay[hidden] { display: none !important; }
     
     .modal {
       width: min(100%, 440px); max-height: 88dvh; overflow-y: auto;
@@ -91,6 +91,7 @@
 
     .modal-footer {
       position: sticky; bottom: 0; background: var(--painel); padding-top: 10px; margin-top: 8px;
+      display: flex; flex-direction: column; gap: 8px;
     }
     .botao {
       width: 100%; min-height: 52px; border: 0; border-radius: 16px; padding: 12px 18px;
@@ -100,7 +101,7 @@
     .botao:active { box-shadow: 0 2px 0 #d9a800; transform: translateY(2px); }
     .botao-secundario {
       width: 100%; min-height: 46px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff;
-      color: #475569; font-size: 0.86rem; font-weight: 800; cursor: pointer; margin-top: 8px;
+      color: #475569; font-size: 0.86rem; font-weight: 800; cursor: pointer;
     }
 
     .tap-hint {
@@ -126,7 +127,7 @@
         <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
           <span class="modal-badge" id="modalBadge">SEMAE PIRACICABA</span>
           <h2 id="modalTitle">🏆 FIM DE JOGO — 5 ROTAS CONCLUÍDAS</h2>
-          <p id="modalText">Você concluiu com sucesso a leitura das 5 rotas da jornada do SEMAE Piracicaba.<br>Toque abaixo para ver a comemoração!</p>
+          <p id="modalText">Você concluiu com sucesso a leitura das 5 rotas da jornada do SEMAE Piracicaba.<br>Toque abaixo para ver o encerramento!</p>
           
           <div class="stats-summary" id="statsBox" style="display:none;">
             <div class="stat-card">💧 Leituras<strong id="stMeters">535 / 535</strong></div>
@@ -197,12 +198,12 @@
     notes.forEach((n, i) => audioTimeouts.push(setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80)));
   }
 
-  // ENQUADRAMENTO NARRATIVO DAS 5 CENAS
+  // ENQUADRAMENTO NARRATIVO DAS CENAS
   const CUTSCENE_SCENES = [
     { id: 0, name: 'montage', duration: 2200, cameraScale: 1.0 },    // 0s - 2.2s: Montagem (1..5 ✓)
     { id: 1, name: 'conclusion', duration: 2500, cameraScale: 1.0 }, // 2.2s - 4.7s: Chegada ao SEMAE
     { id: 2, name: 'reencounter', duration: 3000, cameraScale: 1.25 },// 4.7s - 7.7s: Reencontro (Zoom 1.25x)
-    { id: 3, name: 'friendship', duration: 3500, cameraScale: 1.45 }, // 7.7s - 11.2s: Amizade & Ração (Zoom 1.45x Emocional!)
+    { id: 3, name: 'friendship', duration: 3500, cameraScale: 1.45 }, // 7.7s - 11.2s: Amizade & Ração (Zoom 1.45x)
     { id: 4, name: 'epilogue', duration: 3000, cameraScale: 1.0 }    // 11.2s - 14.2s: Caminhada Parallax (1.0x)
   ];
 
@@ -273,7 +274,7 @@
       bowlPos = null; heartAlpha = 0;
       showBanner('UM NOVO COMPANHEIRO DA ROTA', '', 1200);
     } else if (state.sceneIdx === 4) {
-      bowlPos = null; heartAlpha = 0; // Limpeza total do estado da ração e coração
+      bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
       showBanner('JORNADA CONCLUÍDA NO SEMAE PIRACICABA', 'Missão cumprida com sucesso', 1200);
@@ -281,11 +282,10 @@
     }
   }
 
-  function startCutscene() {
+  function startCutscene(initialScene = 0) {
     ensureAudio();
     state.running = true; state.paused = false;
-    state.sceneIdx = 0; state.globalTime = 0; bgScroll = 0; bowlPos = null; heartAlpha = 0;
-    // Trava de 400ms para evitar que o clique no botão vaze para o Canvas!
+    state.sceneIdx = initialScene; state.globalTime = 0; bgScroll = 0; bowlPos = null; heartAlpha = 0;
     state.lastAdvanceTime = performance.now() + 400; lastTs = 0;
     overlay.hidden = true;
     initCurrentScene();
@@ -300,10 +300,10 @@
     modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você percorreu com dedicação as 5 rotas desta jornada, concluiu a leitura dos ${state.stats.meters} hidrômetros e ganhou a amizade do companheiro de percurso!`;
     
     statsBox.style.display = 'grid'; unlockBox.style.display = 'block';
-    startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶'; replayBtn.style.display = 'block';
+    startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶';
+    replayBtn.style.display = 'block';
     
     render();
-    startBtn.focus({ preventScroll: true });
   }
 
   window.startGrandFinale = function(playerStats = {}) {
@@ -317,7 +317,7 @@
     document.getElementById('stCombo').textContent = `${state.stats.maxCombo}x`;
     document.getElementById('stScore').textContent = `${state.stats.score.toLocaleString('pt-BR')} pts`;
 
-    startCutscene();
+    startCutscene(0);
   };
 
   function update(dt) {
@@ -690,12 +690,12 @@
       alert('♾️ Modo Turno Infinito Iniciado!\n(No jogo principal, esta ação abre a partida do Turno Infinito)');
       return;
     }
-    startCutscene();
+    startCutscene(0);
   });
 
   replayBtn.addEventListener('click', e => {
     e.stopPropagation();
-    startCutscene();
+    startCutscene(1); // Inicia diretamente a história animada (Cena 1) ao reprisar!
   });
 
   document.addEventListener('visibilitychange', () => {
