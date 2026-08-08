@@ -1225,7 +1225,7 @@
     
     state.score += 0.16 * actualSpeed * step * (state.shoeTimer > 0 ? 1.25 : 1);
     state.roadOffset = (state.roadOffset + actualSpeed * step) % 80;
-    state.bgOffset = (state.bgOffset + actualSpeed * 0.28 * step) % 300;
+    state.bgOffset += actualSpeed * 0.28 * step;
 
     state.spawnClock += step; state.readingClock += step; state.powerClock += step; state.eventClock += step;
     state.flash = Math.max(0, state.flash - step); state.shake = Math.max(0, state.shake - step);
