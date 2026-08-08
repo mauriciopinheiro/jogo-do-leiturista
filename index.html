@@ -212,13 +212,13 @@
         </div>
 
         <div class="quase-conseguiu" id="quaseBox" style="display:none;">
-          💪 <b>Quase conseguiu!</b> <span id="quaseMsg">Faltaram apenas 2 hidrômetros!</span>
+          💪 <b>Quase conseguiu!</b> <span id="quaseMsg">Faltavam apenas 2 hidrômetros!</span>
         </div>
 
         <p class="mission" id="missionLine">🎯 Rota Atual: Carregando dados do SEMAE...</p>
 
         <div class="controles-texto">
-          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca e caminha com segurança. O cão só surge depois!</div>
+          <div class="controle-item">🚐 <b>Kombi Branca SEMAE:</b> O leiturista desembarca e caminha com total segurança até o centro da tela. O cão só surge depois!</div>
           <div class="controle-item">👆⌨ <b>Pular:</b> Toque/segure na tela ou use Espaço/↑/W. Soltar cedo = salto curto. <b>P:</b> Pausar.</div>
           <div class="controle-item">✨ <b>Leitura Perfeita:</b> Pegue o hidrômetro no ápice do salto dentro do anel dourado!</div>
         </div>
@@ -383,8 +383,8 @@
 
   // ESTADO GLOBAL DO JOGO
   const state = {
-    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.5, time: 0, roadOffset: 0, bgOffset: 0,
-    spawnClock: 0, nextSpawn: 110, readingClock: 0, nextReading: 120, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
+    running: false, paused: false, over: false, score: 0, readings: 0, speed: 5.2, time: 0, roadOffset: 0, bgOffset: 0,
+    spawnClock: 0, nextSpawn: 120, readingClock: 0, nextReading: 100, powerClock: 0, nextPower: 750, eventClock: 0, nextEvent: 500,
     dogThreat: 0, lastTime: 0, flash: 0, shake: 0, jumpBuffer: 0, coyote: 0, jumpHeld: false, taps: 0,
     best: saved ? saved.estado.best : 0, musicClock: 0, combo: 0, comboTimer: 0, maxCombo: 0, mult: 1,
     nearMisses: 0, perfects: 0, powerupsTaken: 0, shoeTimer: 0, shield: 0, dogDistract: 0, dogLeap: 0, flow: 0, flowTriggered: false, landSquash: 0,
@@ -409,8 +409,8 @@
     minSpawnDistance: 240
   };
 
-  const player = { x: 205, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: true, state: 'idle' };
-  const dog = { x: -160, y: groundY - 45, w: 75, h: 48, legPhase: 0, bark: 0, visible: false };
+  const player = { x: 100, y: groundY - 78, w: 45, h: 78, vy: 0, onGround: true, hurt: 0, legPhase: 0, visible: false, state: 'idle' };
+  const dog = { x: -200, y: groundY - 48, w: 75, h: 48, legPhase: 0, bark: 0, visible: false };
   let obstacles = [], meters = [], powerups = [], particles = [], floaters = [], streetSigns = [], events = [];
   let banner = { text: '', sub: '', life: 0, max: 0, kind: 'normal' };
 
@@ -541,7 +541,7 @@
     }
   }
 
-  // RESET & INICIALIZAÇÃO DA PARTIDA
+  // RESET & INICIALIZAÇÃO SEGURO DA PARTIDA
   function resetGame() {
     state.faseIdx = currentSelectedFase - 1;
     const rota = ROTAS_SEMAE[state.faseIdx];
@@ -549,7 +549,8 @@
     state.running = true; state.paused = false; state.over = false; state.score = 0; state.readings = 0; state.speed = 5.2 + state.faseIdx * 0.4;
     state.time = 0; state.roadOffset = 0; state.bgOffset = 0; state.spawnClock = 0; state.nextSpawn = 120;
     state.readingClock = 0; state.nextReading = 100; state.powerClock = 0; state.nextPower = rand(600, 900); state.eventClock = 0; state.nextEvent = rand(450, 700);
-    state.dogThreat = 0; state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
+    state.dogThreat = 0; // AMEAÇA INICIAL ZERO!
+    state.flash = 0; state.shake = 0; state.jumpBuffer = 0; state.coyote = 0; state.jumpHeld = false;
     state.taps = 0; state.combo = 0; state.comboTimer = 0; state.maxCombo = 0; state.mult = 1; state.flow = 0; state.flowTriggered = false;
     state.landSquash = 0; state.nearMisses = 0; state.perfects = 0; state.powerupsTaken = 0; state.shoeTimer = 0; state.shield = 0;
     state.dogDistract = 0; state.dogLeap = 0;
@@ -558,13 +559,13 @@
     state.ruaIdx = 0;
     state.ruaReadings = 0;
     state.totalFaseReadings = 0;
-    state.kombiState = 'arrival'; // Kombi entra -> abre porta -> desembarca -> Kombi sai -> cão entra
+    state.kombiState = 'arrival'; // Kombi entra -> leiturista desce -> Kombi sai -> cão entra
     state.kombiX = -200;
     state.kombiDoorOpen = true;
     state.phaseCompleted = false;
     
     player.x = 100; player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.hurt = 0; player.visible = false;
-    dog.x = -180; dog.y = groundY - dog.h; dog.bark = 0; dog.visible = false;
+    dog.x = -200; dog.y = groundY - dog.h; dog.bark = 0; dog.visible = false;
     
     obstacles = []; meters = []; powerups = []; particles = []; floaters = []; streetSigns = []; events = [];
     overlay.hidden = true; pauseBtn.disabled = false; musicBtn.disabled = false; sfxBtn.disabled = false;
@@ -573,7 +574,7 @@
     
     generateMicroMission();
     updateHudRouteInfo();
-    showBanner(`🚐 INICIANDO ${rota.nome_fase.toUpperCase()}`, `Bairro ${rota.bairro}`, 150, 'bonus');
+    showBanner(`🚐 DESEMBARQUE DA KOMBI`, `Bairro ${rota.bairro}`, 150, 'bonus');
     beep(520, 0.06, 0.03); canvas.focus({ preventScroll: true });
   }
 
@@ -610,19 +611,15 @@
 
     const r = Math.random();
     if (r < 0.28) {
-      // Padrão 1: Cone + Hidrômetro suspenso
       obstacles.push({ type: 'cone', x: W + 45, y: groundY - 52, w: 42, h: 52, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 65, groundY - 145);
     } else if (r < 0.55) {
-      // Padrão 2: Barreira + Leitura Dourada no Ápice
       obstacles.push({ type: 'barrier', x: W + 45, y: groundY - 74, w: 70, h: 74, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 80, groundY - 165, 'gold');
     } else if (r < 0.78) {
-      // Padrão 3: Lixeira + Mangueira
       obstacles.push({ type: 'bin', x: W + 45, y: groundY - 65, w: 52, h: 65, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 70, groundY - 95);
     } else {
-      // Padrão 4: Mangueira SEMAE
       obstacles.push({ type: 'hose', x: W + 45, y: groundY - 22, w: 92, h: 22, hit: false, passed: false, nearChecked: false });
       spawnMeter(W + 90, groundY - 110);
     }
@@ -649,6 +646,7 @@
   }
 
   function playerBox() { return { x: player.x + 7, y: player.y + 8, w: player.w - 12, h: player.h - 12 }; }
+  function dogBox() { return { x: dog.x + 8, y: dog.y + 8, w: dog.w - 12, h: dog.h - 12 }; }
   function overlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
   function circleOverlap(box, o) { const cx = Math.max(box.x, Math.min(o.x, box.x + box.w)), cy = Math.max(box.y, Math.min(o.y, box.y + box.h)), dx = o.x - cx, dy = o.y - cy; return dx * dx + dy * dy < o.r * o.r; }
 
@@ -694,7 +692,7 @@
     }
 
     const gain = Math.round(base * state.mult * (state.flow > 0 ? 1.5 : 1)); state.score += gain;
-    state.dogThreat = Math.max(8, state.dogThreat - (m.kind === 'gold' ? 12 : 7));
+    state.dogThreat = Math.max(0, state.dogThreat - (m.kind === 'gold' ? 12 : 7));
     burst(m.x, m.y, m.kind === 'gold' ? '#ffd85d' : '#1351B4', 12, m.kind === 'gold');
     addFloater(`+${gain}`, m.x, m.y, m.kind === 'gold' ? '#fff0a5' : '#e6f7ff', m.kind === 'gold');
 
@@ -722,7 +720,7 @@
 
   function triggerPhaseCompletion() {
     state.phaseCompleted = true;
-    state.kombiState = 'departure'; // Leiturista corre até a Kombi Branca estacionada
+    state.kombiState = 'departure';
     state.kombiX = W + 180;
     showBanner('🏁 ROTA CONCLUÍDA!', 'A Kombi Branca SEMAE está esperando!', 160, 'unlock');
     beep(780, 0.1, 0.03, 'triangle', 200); setTimeout(() => beep(1180, 0.12, 0.03, 'triangle', 150), 120);
@@ -732,7 +730,7 @@
     p.taken = true; state.powerupsTaken++;
     if (p.type === 'shoe') { state.shoeTimer = 420; showBanner('🥾 TURBO LEITURISTA!', 'Velocidade e pontos', 105, 'power'); beep(520, 0.09, 0.03, 'square', 400); }
     else if (p.type === 'shield') { state.shield = 1; showBanner('🛡️ CAPACETE SEMAE!', 'Proteção contra impacto', 105, 'power'); beep(620, 0.1, 0.03, 'triangle', 300); }
-    else { state.dogThreat = Math.max(5, state.dogThreat - 38); state.dogDistract = 260; showBanner('🦴 OSSO PARA O CÃO!', 'Distância garantida', 110, 'power'); beep(360, 0.08, 0.03, 'triangle', -80); }
+    else { state.dogThreat = Math.max(0, state.dogThreat - 38); state.dogDistract = 260; showBanner('🦴 OSSO PARA O CÃO!', 'Distância garantida', 110, 'power'); beep(360, 0.08, 0.03, 'triangle', -80); }
     state.score += 250 * state.mult; burst(p.x, p.y, '#ffffff', 20, true);
   }
 
@@ -750,13 +748,11 @@
     const rota = ROTAS_SEMAE[state.faseIdx];
     const pctLeitura = state.totalFaseReadings / rota.total_hidrometros;
     
-    // Medalhas
     document.getElementById('medLeitura').style.opacity = pctLeitura >= 0.8 ? '1' : '0.3';
     document.getElementById('medPrecisao').style.opacity = state.perfects >= 2 ? '1' : '0.3';
     document.getElementById('medAgilidade').style.opacity = state.maxCombo >= 6 ? '1' : '0.3';
     medalhasBox.style.display = 'flex';
 
-    // Quase conseguiu
     const faltam = rota.total_hidrometros - state.totalFaseReadings;
     if (faltam > 0 && faltam <= 5) {
       quaseMsg.textContent = `Faltavam apenas ${faltam} hidrômetro(s) para concluir a rota!`;
@@ -799,51 +795,64 @@
     renderMedalhasEPlacar(); overlay.hidden = false; startBtn.focus({ preventScroll: true });
   }
 
-  // UPDATE LOOP COM CORREÇÃO DO SPAWN DA KOMBI E DO CACHORRO
+  // UPDATE LOOP COM SEQUÊNCIA DE DESEMBARQUE 100% CORRIGIDA
   function update(dt) {
     if (!state.running || state.paused) return;
     const step = Math.min(2.2, dt / 16.6667 || 1); state.time += step;
 
-    // SEQUÊNCIA DE DESEMBARQUE E INÍCIO SEGURO
+    // 1. CHEGADA DA KOMBI BRANCA
     if (state.kombiState === 'arrival') {
       state.kombiX += 4 * step;
-      if (state.kombiX >= 100) {
-        state.kombiX = 100;
+      if (state.kombiX >= 80) {
+        state.kombiX = 80;
         player.visible = true;
+        player.x = 90;
         state.kombiState = 'disembark';
       }
       return;
-    } else if (state.kombiState === 'disembark') {
+    }
+    // 2. DESEMBARQUE E CAMINHADA DO LEITURISTA ATÉ O MEIO DA TELA
+    else if (state.kombiState === 'disembark') {
       player.x += 2.5 * step;
-      if (player.x >= 200) {
-        player.x = 200;
+      if (player.x >= 205) { // Posição padrão do centro da corrida
+        player.x = 205;
         state.kombiDoorOpen = false;
         state.kombiState = 'leaving_arrival';
       }
       return;
-    } else if (state.kombiState === 'leaving_arrival') {
+    }
+    // 3. KOMBI PARTE PELA ESQUERDA
+    else if (state.kombiState === 'leaving_arrival') {
       state.kombiX -= 6 * step;
       if (state.kombiX <= -250) {
         state.kombiState = 'dog_entry';
         dog.visible = true;
+        dog.x = -160; // Cão entra pelo canto extremo esquerdo
       }
       return;
-    } else if (state.kombiState === 'dog_entry') {
-      dog.x += 5 * step;
-      if (dog.x >= 40) {
-        dog.x = 40;
-        state.kombiState = 'running'; // AGORA SIM COMEÇA A PARTIDA REAL!
-        showBanner('🏃‍♂️ ATENÇÃO NA ROTA!', 'Iniciando leituras de hidrômetros!', 110);
+    }
+    // 4. CÃO ENTRA EM CENA ATÉ A DISTÂNCIA DE SEGURANÇA
+    else if (state.kombiState === 'dog_entry') {
+      dog.x += 4.5 * step;
+      if (dog.x >= 35) {
+        dog.x = 35;
+        state.dogThreat = 0; // AMEAÇA RIGOROSAMENTE EM 0%
+        state.kombiState = 'running'; // FASE INICIA DE FATO!
+        showBanner('🏃‍♂️ CORRIDA INICIADA!', 'Boa sorte na leitura da rota SEMAE!', 120);
       }
       return;
-    } else if (state.kombiState === 'departure') {
+    }
+    // 5. EMBARQUE NA KOMBI NA CHEGADA
+    else if (state.kombiState === 'departure') {
       if (state.kombiX > W - 140) state.kombiX -= 5 * step; else state.kombiX = W - 140;
       player.x += 3.5 * step;
       if (player.x >= state.kombiX + 20) {
         player.visible = false; state.kombiDoorOpen = false; state.kombiState = 'driving_away';
       }
       return;
-    } else if (state.kombiState === 'driving_away') {
+    }
+    // 6. KOMBI PARTINDO PARA PRÓXIMA FASE
+    else if (state.kombiState === 'driving_away') {
       state.kombiX += 7 * step;
       if (state.kombiX >= W + 200) phaseVictoryModal();
       return;
@@ -890,7 +899,7 @@
     meters = meters.filter(m => !m.taken && m.x + m.r > -30);
 
     for (const p of powerups) { p.x -= actualSpeed * step; p.spin += 0.08 * step; if (!p.taken && circleOverlap(pb, p)) collectPower(p); }
-    powerups = powerups.filter(p => !p.taken && p.x + p.r > -30);
+    powerups.filter(p => !p.taken && p.x + p.r > -30);
 
     for (const e of events) {
       e.x -= actualSpeed * 0.75 * step;
@@ -924,7 +933,13 @@
     dog.x += ((dogStart + (dogCatch - dogStart) * (state.dogThreat / 100)) - dog.x) * 0.035 * step;
 
     if (state.dogThreat > 76 && Math.floor(state.time) % 290 < 2 && dog.bark <= 0) bark();
-    if (state.dogThreat >= 100 || (dog.visible && dog.x + dog.w > player.x + 3)) gameOver();
+    
+    // TESTE DE COLISÃO REAL E SEGURA
+    if (state.kombiState === 'running') {
+      if (state.dogThreat >= 100 || (dog.visible && overlap(playerBox(), dogBox()))) {
+        gameOver();
+      }
+    }
     
     updateHudDisplay();
   }
@@ -949,7 +964,6 @@
     g.addColorStop(0, '#549fe4'); g.addColorStop(0.62, '#bce3fb'); g.addColorStop(1, '#eaf5fd');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // Sol radiante
     ctx.fillStyle = 'rgba(255, 233, 168, 0.25)'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 65, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.82, 140, 38, 0, Math.PI * 2); ctx.fill();
 
@@ -957,21 +971,20 @@
     const bridgeX = ((state.bgOffset * 0.3) % (W + 500)) - 250;
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(bridgeX, groundY - 170); ctx.lineTo(bridgeX + 180, groundY - 170); ctx.stroke();
-    // Cabos de aço
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath();
     for (let i = 0; i <= 180; i += 20) { ctx.moveTo(bridgeX + i, groundY - 170); ctx.lineTo(bridgeX + i, groundY - 100); }
     ctx.stroke();
 
     // 🏭 ENGENHO CENTRAL DE PIRACICABA (TIJOLOS HISTÓRICOS E CHAMINÉ)
     const engenhoX = (((state.bgOffset * 0.5) + 150) % (W + 600)) - 200;
-    rounded(engenhoX, groundY - 160, 140, 120, 4, '#a04828'); // Tijolo histórico
-    ctx.fillStyle = '#7a3118'; ctx.fillRect(engenhoX + 105, groundY - 240, 24, 200); // Chaminé alta
-    ctx.fillStyle = '#f59e0b'; ctx.fillRect(engenhoX + 20, groundY - 120, 28, 35); ctx.fillRect(engenhoX + 65, groundY - 120, 28, 35); // Janelas iluminadas
+    rounded(engenhoX, groundY - 160, 140, 120, 4, '#a04828');
+    ctx.fillStyle = '#7a3118'; ctx.fillRect(engenhoX + 105, groundY - 240, 24, 200);
+    ctx.fillStyle = '#f59e0b'; ctx.fillRect(engenhoX + 20, groundY - 120, 28, 35); ctx.fillRect(engenhoX + 65, groundY - 120, 28, 35);
 
     // 💧 ESTAÇÃO DE TRATAMENTO DE ÁGUA SEMAE (ETA CAPIM FINO)
     const etaX = (((state.bgOffset * 0.7) + 320) % (W + 700)) - 180;
     rounded(etaX, groundY - 140, 110, 100, 12, '#0C326F');
-    ctx.fillStyle = '#1351B4'; ctx.fillRect(etaX + 15, groundY - 120, 80, 20); // Tanque principal
+    ctx.fillStyle = '#1351B4'; ctx.fillRect(etaX + 15, groundY - 120, 80, 20);
     ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px system-ui'; ctx.fillText('ETA SEMAE', etaX + 26, groundY - 106);
 
     // Calçada, meio-fio e pista
@@ -1018,46 +1031,32 @@
     const x = dog.x, y = dog.y + Math.sin(dog.legPhase) * 2 - (state.dogLeap > 0 ? Math.sin((48 - state.dogLeap) / 48 * Math.PI) * 18 : 0);
     
     ctx.save(); ctx.translate(x, y);
-    
-    // Sombra suave do cão
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; ctx.beginPath(); ctx.ellipse(36, 46, 36, 7, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Corpo Caramelo (`#d9822b`)
     ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
-
-    // Peito / Barriga branca suave
     ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
-
-    // Cabeça articulada
     ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(60, 16, 16, 0, Math.PI * 2); ctx.fill();
 
-    // Focinho Caramelo Claro + Nariz preto brilhante
     ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(71, 20, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(79, 17, 3.5, 0, Math.PI * 2); ctx.fill();
 
-    // Orelha caidinha/atenta vira-lata (`#b86217`)
     ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(50, 4); ctx.lineTo(54, -10); ctx.lineTo(66, 4); ctx.closePath(); ctx.fill();
 
-    // Olhos expressivos com brilho
     ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(65, 12, 3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(66, 11, 1, 0, Math.PI * 2); ctx.fill();
 
-    // Coleira Azul SEMAE
     ctx.fillStyle = '#1351B4'; ctx.fillRect(48, 24, 8, 12);
 
-    // Rabo em curva balançando
     ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 7; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + Math.sin(dog.legPhase * 1.5) * 6, -4, -6); ctx.stroke();
 
-    // Patas articuladas correndo (Quadrupede sprint)
     const leg1 = Math.sin(dog.legPhase) * 10;
     ctx.strokeStyle = '#b86217'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(18, 34); ctx.lineTo(14 - leg1, 45); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(46, 34); ctx.lineTo(52 + leg1, 45); ctx.stroke();
 
-    // Latido / Língua de fora
     if (dog.bark > 0) {
-      ctx.fillStyle = '#ef4444'; rounded(72, 23, 7, 8, 3, '#ef4444'); // Língua
+      ctx.fillStyle = '#ef4444'; rounded(72, 23, 7, 8, 3, '#ef4444');
       rounded(38, -45, 46, 24, 10, 'rgba(255,255,255,0.95)');
       ctx.fillStyle = '#714322'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('AU!', 61, -29);
     }
@@ -1074,10 +1073,8 @@
     
     if (player.hurt > 0 && Math.floor(player.hurt / 4) % 2 === 0) ctx.globalAlpha = 0.38;
 
-    // Sombra do leiturista
     ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x + 23, groundY + 4, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Pernas / Calça Escura SEMAE
     const hipL = { x: x + 17, y: y + 57 }, hipR = { x: x + 31, y: y + 57 };
     let kneeL, kneeR, footL, footR;
     if (air) {
@@ -1092,23 +1089,19 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(kneeL.x, kneeL.y); ctx.lineTo(footL.x, footL.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(kneeR.x, kneeR.y); ctx.lineTo(footR.x, footR.y); ctx.stroke();
 
-    // Botas de Segurança
     ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 6; ctx.beginPath();
     ctx.moveTo(footL.x - 2, footL.y); ctx.lineTo(footL.x + 7, footL.y + 1);
     ctx.moveTo(footR.x - 2, footR.y); ctx.lineTo(footR.x + 8, footR.y + 1); ctx.stroke();
 
-    // Camisa Azul SEMAE Principal e Faixa Refletiva Amarela
     rounded(x + 6, y + 20, 37, 42, 9, skin.body);
     ctx.fillStyle = skin.stripe; ctx.fillRect(x + 8, y + 38, 33, 5);
     ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px system-ui'; ctx.fillText('SEMAE', x + 12, y + 32);
 
-    // Braço + Coletor Digital SEMAE
     ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(x + 39, y + 30); ctx.lineTo(x + 53, y + 42); ctx.stroke();
     ctx.save(); ctx.translate(x + 51, y + 36); rounded(0, 0, 24, 30, 4, '#334155');
     ctx.fillStyle = '#e2e8f0'; ctx.fillRect(4, 5, 16, 18);
     ctx.fillStyle = '#1351B4'; ctx.fillRect(6, 8, 12, 4); ctx.restore();
 
-    // Rosto e Boné Azul SEMAE
     ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(x + 24, y + 10, 15, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = skin.cap; ctx.beginPath(); ctx.arc(x + 22, y + 6, 15, Math.PI, Math.PI * 2); ctx.fill();
     ctx.fillRect(x + 20, y + 4, 24, 5);
@@ -1132,11 +1125,9 @@
     }
   }
 
-  // DESENHO DO HIDRÔMETRO COM ANEL VISUAL DE TIMING
   function drawMeter(m) {
     ctx.save(); ctx.translate(m.x, m.y); const gold = m.kind === 'gold';
     
-    // ANEL VISUAL DE TIMING DE LEITURA PERFEITA
     ctx.strokeStyle = gold ? 'rgba(255, 205, 7, 0.5)' : 'rgba(19, 81, 180, 0.4)';
     ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, m.r + 6 + Math.sin(m.spin * 2) * 2, 0, Math.PI * 2); ctx.stroke();
 
@@ -1155,7 +1146,6 @@
   function drawEvents() {
     for (const e of events) {
       if (e.type === 'maintenance') {
-        // Névoa limpa de manutenção SEMAE
         ctx.fillStyle = 'rgba(95, 220, 242, 0.25)'; ctx.beginPath(); ctx.arc(e.x, groundY - 30, 40, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#1351B4'; rounded(e.x - 15, groundY - 45, 30, 45, 4, '#1351B4');
       } else if (e.type === 'resident') {
