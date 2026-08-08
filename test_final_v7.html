@@ -32,7 +32,6 @@
       overflow: hidden; background: radial-gradient(circle at center, #0c326f 0%, #081c38 100%);
     }
     
-    /* PALCO 9:16 PRESERVADO RIGOROSAMENTE COM LETTERBOX INSTITUCIONAL */
     .stage {
       position: relative;
       width: min(100vw, calc(100dvh * 9 / 16));
@@ -221,13 +220,12 @@
     notes.forEach((n, i) => audioTimeouts.push(setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80)));
   }
 
-  // RITMO NARRATIVO V7 (DURAÇÕES CONFORTÁVEIS E EASING DE CÂMERA)
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },     // Retrospectiva (4.0s)
-    { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },  // Chegada ao SEMAE (4.0s)
-    { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 }, // Reencontro do Cão (4.5s)
-    { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },  // Carinho & Ração (5.5s)
-    { id: 4, name: 'epilogue', duration: 5000, cameraScale: 1.08 }     // Epílogo Pôr do Sol (5.0s)
+    { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },
+    { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },
+    { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 },
+    { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },
+    { id: 4, name: 'epilogue', duration: 5000, cameraScale: 1.08 }
   ];
 
   const ROTAS_DEFAULT = ['SÃO DIMAS', 'VILA REZENDE', 'BAIRRO DOS ALEMÃES', 'JARAGUÁ', 'RECANTO DO PIRACICAMIRIM'];
@@ -344,7 +342,6 @@
     setTimeout(() => rw3.classList.add('visible'), 500);
   }
 
-  // API startGrandFinale V7 REFINADA (ACEITA DADOS DE CAMPANHA E PRESERVA VALORES REAIS)
   window.startGrandFinale = function(context = {}) {
     const playerStats = context.stats || context;
     const totalMeters = Number.isFinite(context.totalMeters) ? Math.max(1, Math.round(context.totalMeters)) : 535;
@@ -374,11 +371,9 @@
     if (state.bannerTimer > 0) state.bannerTimer -= dt;
     if (state.sceneFadeAlpha > 0) state.sceneFadeAlpha = Math.max(0, state.sceneFadeAlpha - dt / 120);
 
-    // Easing de Escala da Câmera
     const targetScale = prefersReducedMotion ? 1.0 : (CUTSCENE_SCENES[state.sceneIdx]?.cameraScale || 1.0);
     state.currentCameraScale += (targetScale - state.currentCameraScale) * Math.min(1, dt / 180);
 
-    // Controle de Exibição do Hint de Toque
     if (state.running && state.sceneTimer >= 600) {
       tapHint.classList.add('visible');
       tapHint.textContent = '👆 TOQUE PARA AVANÇAR';
@@ -520,7 +515,6 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // CAMADA 1 PARALLAX: SILHUETAS DISTANTES (0.15x)
     if (isDusk) {
       ctx.fillStyle = 'rgba(30, 27, 75, 0.4)';
       const distOffset = (bgScroll * 0.15) % 300;
@@ -530,13 +524,11 @@
       }
     }
 
-    // SOL NATURAL AMARELO SOLAR (#FFCD07 E #FDBA74 NO PÔR DO SOL)
     const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 5000) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = isDusk ? '#fdba74' : '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
 
-    // CAMADA 2 PARALLAX: EDIFÍCIOS & KOMBI (0.4x)
     const kombiX = Math.min(W - 175, W * 0.62) - (isDusk ? (bgScroll * 0.3) % 400 : 0);
     drawKombi(kombiX, groundY - 82);
 
@@ -546,19 +538,16 @@
     ctx.fillStyle = '#ffffff'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE PIRACICABA', buildingX + 120, groundY - 128);
     rounded(buildingX + 95, groundY - 80, 50, 80, 4, '#1e293b');
 
-    // PISO & CALÇADA (1.0x)
     ctx.fillStyle = isDusk ? '#64748b' : '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     ctx.fillStyle = isDusk ? '#475569' : '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
     ctx.fillStyle = isDusk ? '#1e293b' : '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
 
-    // ÁRVORES DIVERSAS E POSTES NO EPÍLOGO
     if (isDusk) {
       ctx.fillStyle = '#1e293b';
       const stride = 140;
       for (let x = - (bgScroll % stride); x < W + stride; x += stride) {
         ctx.fillRect(x, groundY - 110, 6, 110);
         ctx.beginPath(); ctx.arc(x + 3, groundY - 110, 26, 0, Math.PI * 2); ctx.fill();
-        // Poste sem copa intercalado
         ctx.fillRect(x + 70, groundY - 95, 4, 95);
         ctx.fillRect(x + 64, groundY - 95, 16, 4);
       }
@@ -585,7 +574,6 @@
     ctx.restore();
   }
 
-  // DESENHO DO CACHORRO V7 (POSE SENTADA EXPRESSIVA COM PEITO VERTICAL E PATAS NO CHÃO)
   function drawDog() {
     if (!dog.visible) return;
     ctx.save();
@@ -598,26 +586,21 @@
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; ctx.beginPath(); ctx.ellipse(36, 46, 30, 6, 0, 0, Math.PI * 2); ctx.fill();
     
     if (dog.sitting) {
-      // Corpo com peito mais vertical e traseiro assentado
       ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(26, 30, 18, 16, -0.1, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(36, 20, 14, 20, 0.2, 0, Math.PI * 2); ctx.fill(); // Peito vertical
+      ctx.beginPath(); ctx.ellipse(36, 20, 14, 20, 0.2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(40, 24, 10, 14, 0.2, 0, Math.PI * 2); ctx.fill();
       
-      // Duas Patas Dianteiras Firmes no Chão
       ctx.strokeStyle = '#b86217'; ctx.lineWidth = 5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(38, 28); ctx.lineTo(40, 46); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(44, 28); ctx.lineTo(46, 46); ctx.stroke();
 
-      // Cabeça Erguida Olhando o Leiturista
       ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(42, 10, 14, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(50, 13, 9, 6, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(55, 12, 3, 0, Math.PI * 2); ctx.fill(); // Olho
+      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(55, 12, 3, 0, Math.PI * 2); ctx.fill();
       
-      // Orelhas Relaxadas se Feliz
       const earY = dog.happy ? 0 : -4;
       ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(34, 0); ctx.lineTo(36, -8 + earY); ctx.lineTo(44, 0); ctx.closePath(); ctx.fill();
       
-      // Boca suavemente aberta quando feliz
       if (dog.happy) {
         ctx.fillStyle = '#ff85a1'; ctx.beginPath(); ctx.arc(52, 16, 2.5, 0, Math.PI); ctx.fill();
       }
@@ -652,19 +635,16 @@
     ctx.restore();
   }
 
-  // DESENHO DO LEITURISTA V7 (COM BALANÇO DE TRONCO, POSE NOTICE DOG E REACH EXTENDIDO DO BRAÇO DE CARINHO)
   function drawPlayer() {
     ctx.save();
     const w = player.w;
     let x = player.x;
     
-    // Pose noticeDog: pequeno recuo de 4px se recém avistou o cão
     if (player.noticeTimer > 0) x -= 4;
 
     const isKneeling = player.state === 'kneeling' || player.state === 'petting' || player.state === 'placingBowl';
     const isWalking = player.state === 'walking' || player.state === 'walkingWithDog';
     
-    // Balanço Dinâmico na Caminhada (Torso Bobbing & Head Tilt)
     const torsoBob = isWalking ? Math.sin(player.legPhase * 2) * 2.0 : 0;
     const y = player.y + (isKneeling ? 18 : torsoBob);
 
@@ -700,19 +680,16 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
 
-    // Uniforme azul do SEMAE com faixa verde institucional (#168821)
     rounded(6, 20, 37, 42, 9, '#1351B4');
     ctx.fillStyle = '#168821'; ctx.fillRect(8, 38, 33, 5);
 
     if (player.state === 'petting') {
-      // Braço alongado alcançando perfeitamente a cabeça do cão sem sobrepor corpos
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7.5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 26); ctx.lineTo(64, 30); ctx.stroke();
     } else if (player.state === 'placingBowl') {
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 28); ctx.lineTo(46, 48); ctx.stroke();
     } else if (!isKneeling) {
-      // TELEFONE CELULAR (SMARTPHONE DE LEITURA NA MÃO COM LIGEIRO SWAY)
       const phoneSway = isWalking ? Math.sin(player.legPhase) * 1.5 : 0;
       const phoneX = 40, phoneY = 28 + phoneSway;
       rounded(phoneX, phoneY, 13, 24, 4, '#0f172a');
@@ -722,7 +699,6 @@
       ctx.fillStyle = '#0c326f'; ctx.fillRect(phoneX + 3, phoneY + 13, 5, 1.5);
     }
 
-    // Cabeça com ligeira inclinação em noticeDog
     const headTilt = player.noticeTimer > 0 ? -0.15 : 0;
     ctx.save(); ctx.translate(24, 10); ctx.rotate(headTilt);
     ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
@@ -772,7 +748,6 @@
     
     drawWrappedText(state.bannerText, state.bannerSub);
 
-    // Micro-fade Suave entre Transições de Cena
     if (state.sceneFadeAlpha > 0) {
       ctx.fillStyle = `rgba(8, 28, 56, ${state.sceneFadeAlpha})`;
       ctx.fillRect(0, 0, W, H);
@@ -814,7 +789,6 @@
     startCutscene(0);
   });
 
-  // VISIBILITY CHANGE REFINADO PARA RETORNO DE BACKGROUND SEGURAMENTE PAUSADO
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       if (state.running) {
@@ -823,7 +797,7 @@
       }
     } else {
       if (state.running) {
-        state.paused = true; // Permanecer pausado ao voltar!
+        state.paused = true;
         lastTs = 0;
         tapHint.classList.add('visible');
         tapHint.textContent = '👆 TOQUE PARA CONTINUAR';

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1351B4" />
-  <title>Jogo do Leiturista SEMAE — Encerramento Narrativo (V7 Engine)</title>
+  <title>Jogo do Leiturista SEMAE — Encerramento Narrativo (V6 Backup)</title>
   <style>
     :root {
       --semae-azul: #1351B4;
@@ -32,7 +32,6 @@
       overflow: hidden; background: radial-gradient(circle at center, #0c326f 0%, #081c38 100%);
     }
     
-    /* PALCO 9:16 PRESERVADO RIGOROSAMENTE COM LETTERBOX INSTITUCIONAL */
     .stage {
       position: relative;
       width: min(100vw, calc(100dvh * 9 / 16));
@@ -60,7 +59,7 @@
       position: absolute; inset: 0; z-index: 10; display: grid; place-items: center;
       padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(16px + var(--safe-left));
       background: linear-gradient(rgba(9, 32, 64, 0.84), rgba(9, 32, 64, 0.95));
-      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
     .overlay[hidden] { display: none !important; }
     
@@ -74,8 +73,8 @@
       display: inline-block; padding: 4px 12px; border-radius: 999px; background: #dcfce7; color: #15803d;
       font-size: 0.76rem; font-weight: 900; margin-bottom: 8px; letter-spacing: 0.5px;
     }
-    .modal h2 { margin: 0 0 6px; color: var(--semae-azul-escuro); font-size: clamp(1.2rem, 5.5vw, 1.6rem); line-height: 1.15; }
-    .modal p { margin: 6px 0; font-size: clamp(0.82rem, 3.4vw, 0.92rem); line-height: 1.35; color: #233e5c; }
+    .modal h2 { margin: 0 0 6px; color: var(--semae-azul-escuro); font-size: clamp(1.25rem, 5.8vw, 1.7rem); line-height: 1.15; }
+    .modal p { margin: 6px 0; font-size: clamp(0.85rem, 3.6vw, 0.94rem); line-height: 1.35; color: #233e5c; }
     
     .stats-summary {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 12px 0; text-align: left;
@@ -86,15 +85,10 @@
     }
     .stat-card strong { display: block; font-size: 1.02rem; color: #1351B4; font-family: Consolas, monospace; margin-top: 2px; }
 
-    .rewards-stagger {
-      display: flex; flex-direction: column; gap: 6px; margin: 12px 0; text-align: left;
+    .unlock-banner {
+      margin: 10px 0; padding: 10px; border-radius: 14px; background: #dcfce7; border: 1.5px solid #86efac;
+      color: #14532d; font-size: 0.84rem; font-weight: 900; text-align: center; line-height: 1.4;
     }
-    .reward-item {
-      padding: 8px 12px; border-radius: 12px; background: #dcfce7; border: 1.5px solid #86efac;
-      color: #14532d; font-size: 0.82rem; font-weight: 900; opacity: 0; transform: translateY(6px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .reward-item.visible { opacity: 1; transform: translateY(0); }
 
     .modal-footer {
       position: sticky; bottom: 0; background: var(--painel); padding-top: 10px; margin-top: 8px;
@@ -123,13 +117,6 @@
     }
     .tap-hint.visible { opacity: 0.95; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-    @media (orientation: landscape) {
-      .modal { padding: 14px; }
-      .modal h2 { font-size: 1.1rem; }
-      .modal p { font-size: 0.8rem; }
-      .botao { min-height: 44px; padding: 8px 14px; font-size: 0.92rem; }
-    }
   </style>
 </head>
 <body>
@@ -144,20 +131,18 @@
       <div class="overlay" id="overlay">
         <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
           <span class="modal-badge" id="modalBadge">SEMAE PIRACICABA</span>
-          <h2 id="modalTitle">🏆 LEITURISTA MESTRE DA ROTA</h2>
-          <p id="modalText">Você concluiu com sucesso a leitura das 5 rotas da jornada do SEMAE Piracicaba!</p>
+          <h2 id="modalTitle">🏆 CAMPANHA CONCLUÍDA — 5 ROTAS</h2>
+          <p id="modalText">Você concluiu com sucesso a leitura das 5 rotas da jornada do SEMAE Piracicaba.<br>Chegou o fim de semana! Toque abaixo para ver o encerramento!</p>
           
           <div class="stats-summary" id="statsBox" style="display:none;">
-            <div class="stat-card">💧 Leituras<strong id="stMeters">0 / 0</strong></div>
-            <div class="stat-card">✨ Perfeitas<strong id="stPerfects">0</strong></div>
-            <div class="stat-card">🔥 Maior Combo<strong id="stCombo">0x</strong></div>
-            <div class="stat-card">🏆 Pontuação<strong id="stScore">0 pts</strong></div>
+            <div class="stat-card">💧 Leituras<strong id="stMeters">535 / 535</strong></div>
+            <div class="stat-card">✨ Perfeitas<strong id="stPerfects">87</strong></div>
+            <div class="stat-card">🔥 Maior Combo<strong id="stCombo">31x</strong></div>
+            <div class="stat-card">🏆 Pontuação<strong id="stScore">184.250 pts</strong></div>
           </div>
 
-          <div class="rewards-stagger" id="rewardsBox" style="display:none;">
-            <div class="reward-item" id="rw1">🏆 <b>CONQUISTA: LEITURISTA MESTRE</b></div>
-            <div class="reward-item" id="rw2">🐾 <b>INSÍGNIA: AMIGO DA ROTA</b></div>
-            <div class="reward-item" id="rw3">♾️ <b>MODO: TURNO INFINITO DESBLOQUEADO</b></div>
+          <div class="unlock-banner" id="unlockBox" style="display:none;">
+            🏆 <b>CONQUISTA DO JOGO: LEITURISTA MESTRE</b><br>🐾 <b>INSÍGNIA DESBLOQUEADA: AMIGO DA ROTA</b><br>♾️ <b>MODO DESBLOQUEADO: TURNO INFINITO</b>
           </div>
 
           <div class="modal-footer">
@@ -175,13 +160,10 @@
   'use strict';
   const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
   const overlay = document.getElementById('overlay'), modalTitle = document.getElementById('modalTitle'), modalText = document.getElementById('modalText');
-  const startBtn = document.getElementById('startBtn'), replayBtn = document.getElementById('replayBtn'), statsBox = document.getElementById('statsBox'), rewardsBox = document.getElementById('rewardsBox');
-  const rw1 = document.getElementById('rw1'), rw2 = document.getElementById('rw2'), rw3 = document.getElementById('rw3');
+  const startBtn = document.getElementById('startBtn'), replayBtn = document.getElementById('replayBtn'), statsBox = document.getElementById('statsBox'), unlockBox = document.getElementById('unlockBox');
   const tapHint = document.getElementById('tapHint'), liveAnnouncer = document.getElementById('liveAnnouncer');
 
   const W = 540, H = 960, groundY = Math.round(H * 0.79);
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
   let audioCtx = null;
   let audioTimeouts = [];
 
@@ -221,26 +203,23 @@
     notes.forEach((n, i) => audioTimeouts.push(setTimeout(() => beep(n, 0.14, 0.035, 'sine'), i * 80)));
   }
 
-  // RITMO NARRATIVO V7 (DURAÇÕES CONFORTÁVEIS E EASING DE CÂMERA)
+  // RITMO NARRATIVO RECALIBRADO PARA LEITURA CONFORTÁVEL
   const CUTSCENE_SCENES = [
-    { id: 0, name: 'montage', duration: 4000, cameraScale: 1.0 },     // Retrospectiva (4.0s)
-    { id: 1, name: 'conclusion', duration: 4000, cameraScale: 1.0 },  // Chegada ao SEMAE (4.0s)
-    { id: 2, name: 'reencounter', duration: 4500, cameraScale: 1.25 }, // Reencontro do Cão (4.5s)
-    { id: 3, name: 'friendship', duration: 5500, cameraScale: 1.45 },  // Carinho & Ração (5.5s)
-    { id: 4, name: 'epilogue', duration: 5000, cameraScale: 1.08 }     // Epílogo Pôr do Sol (5.0s)
+    { id: 0, name: 'montage', duration: 4200, cameraScale: 1.0 },    // 4.2s: Montagem com tempo de leitura confortável
+    { id: 1, name: 'conclusion', duration: 4500, cameraScale: 1.0 }, // 4.5s: Chegada ao SEMAE
+    { id: 2, name: 'reencounter', duration: 5000, cameraScale: 1.25 },// 5.0s: Chegou o Fim de Semana!
+    { id: 3, name: 'friendship', duration: 6000, cameraScale: 1.45 }, // 6.0s: Carinho & Ração com tempo estendido
+    { id: 4, name: 'epilogue', duration: 5500, cameraScale: 1.0 }    // 5.5s: Epílogo no Pôr do Sol
   ];
-
-  const ROTAS_DEFAULT = ['SÃO DIMAS', 'VILA REZENDE', 'BAIRRO DOS ALEMÃES', 'JARAGUÁ', 'RECANTO DO PIRACICAMIRIM'];
 
   const state = {
     running: false, paused: false, sceneIdx: 0, sceneTimer: 0, globalTime: 0,
     bannerText: '', bannerSub: '', bannerTimer: 0, bannerDuration: 3500,
-    lastAdvanceTime: 0, currentCameraScale: 1.0, sceneFadeAlpha: 0,
-    stats: { meters: 0, totalMeters: 535, perfects: 0, maxCombo: 0, score: 0 },
-    routes: ROTAS_DEFAULT, campaignCompleted: false, firstCompletion: true
+    lastAdvanceTime: 0,
+    stats: { meters: 535, totalMeters: 535, perfects: 87, maxCombo: 31, score: 184250 }
   };
 
-  const player = { x: W * 0.35, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'idle', facing: 1, noticeTimer: 0 };
+  const player = { x: W * 0.35, y: groundY - 78, w: 45, h: 78, legPhase: 0, state: 'idle', facing: 1 };
   const dog = { x: -120, y: groundY - 48, w: 75, h: 48, legPhase: 0, visible: true, sitting: false, happy: false, facing: 1 };
   let bowlPos = null;
   let heartAlpha = 0;
@@ -254,7 +233,6 @@
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     player.y = groundY - player.h; dog.y = groundY - dog.h;
-    if (!state.running) render();
   }
 
   function showBanner(text, sub = '', duration = 3500) {
@@ -264,8 +242,10 @@
   }
 
   function advanceScene(options = {}) {
-    const minTimer = 600;
-    if (options.manual && state.sceneTimer < minTimer) return;
+    const now = performance.now();
+    const minDelay = options.manual ? 500 : 0;
+    if (options.manual && now - state.lastAdvanceTime < minDelay) return;
+    state.lastAdvanceTime = now;
 
     if (!state.running || state.paused) return;
     
@@ -275,7 +255,6 @@
     }
     
     state.sceneIdx++;
-    state.sceneFadeAlpha = 1.0;
     initCurrentScene();
   }
 
@@ -286,27 +265,27 @@
     if (state.sceneIdx === 0) {
       dog.visible = false;
       playFanfare();
-      if (liveAnnouncer) liveAnnouncer.textContent = 'Retrospectiva de leitura das cinco rotas SEMAE.';
+      if (liveAnnouncer) liveAnnouncer.textContent = 'Cinco rotas concluídas. Encerramento da jornada SEMAE.';
     } else if (state.sceneIdx === 1) {
       player.x = -80; player.state = 'walking'; player.facing = 1; player.legPhase = 0;
       dog.visible = false; dog.x = -200; dog.sitting = false; dog.happy = false;
-      showBanner(`${state.stats.meters} LEITURAS CONCLUÍDAS`, 'Missão cumprida nas 5 rotas SEMAE', 3500);
+      showBanner(`${state.stats.meters} LEITURAS CONCLUÍDAS`, '5 rotas lidas com sucesso!', 3800);
       playCalmSound();
     } else if (state.sceneIdx === 2) {
-      player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0; player.noticeTimer = 300;
+      player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
       dog.visible = true; dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
-      showBanner('O CACHORRO DA ROTA VOLTOU.', 'Desta vez... ele parou.', 3800);
+      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 rotas, hora de descansar', 4200);
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
-      dog.visible = true; dog.x = W * 0.24; dog.sitting = true; dog.happy = false; dog.facing = 1;
+      dog.visible = true; dog.x = W * 0.26; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 3500);
+      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 4500);
     } else if (state.sceneIdx === 4) {
       bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
-      showBanner('JORNADA CONCLUÍDA', 'Missão cumprida no SEMAE Piracicaba', 800);
+      showBanner('BOM FIM DE SEMANA', 'Jornada cumprida com sucesso!', 4000);
       playFanfare();
     }
   }
@@ -315,7 +294,7 @@
     ensureAudio();
     state.running = true; state.paused = false;
     state.sceneIdx = initialScene; state.globalTime = 0; bgScroll = 0; bowlPos = null; heartAlpha = 0;
-    state.currentCameraScale = CUTSCENE_SCENES[initialScene].cameraScale; lastTs = 0;
+    state.lastAdvanceTime = performance.now() + 400; lastTs = 0;
     overlay.hidden = true;
     initCurrentScene();
     canvas.focus();
@@ -327,36 +306,25 @@
     clearAudioTimeouts();
     overlay.hidden = false; tapHint.classList.remove('visible');
     
-    modalTitle.textContent = '🏆 LEITURISTA MESTRE DA ROTA';
-    modalText.innerHTML = `PARABÉNS!<br>Você concluiu a leitura das 5 rotas (${state.stats.meters} hidrômetros) e conquistou a amizade do cão companheiro!`;
+    modalTitle.textContent = '🏆 CAMPANHA CONCLUÍDA — 5 ROTAS';
+    modalText.innerHTML = `PARABÉNS, LEITURISTA DO SEMAE!<br>Você cumpriu a leitura das 5 rotas (${state.stats.meters} hidrômetros) e agora vai aproveitar o fim de semana com seu novo companheiro de jornada!`;
     
-    statsBox.style.display = 'grid'; rewardsBox.style.display = 'flex';
-    rw1.classList.remove('visible'); rw2.classList.remove('visible'); rw3.classList.remove('visible');
-    
+    statsBox.style.display = 'grid'; unlockBox.style.display = 'block';
     startBtn.textContent = '♾️ JOGAR TURNO INFINITO ▶';
     replayBtn.style.display = 'block';
     
     render();
     requestAnimationFrame(() => startBtn.focus({ preventScroll: true }));
-
-    setTimeout(() => rw1.classList.add('visible'), 100);
-    setTimeout(() => rw2.classList.add('visible'), 300);
-    setTimeout(() => rw3.classList.add('visible'), 500);
   }
 
-  // API startGrandFinale V7 REFINADA (ACEITA DADOS DE CAMPANHA E PRESERVA VALORES REAIS)
-  window.startGrandFinale = function(context = {}) {
-    const playerStats = context.stats || context;
-    const totalMeters = Number.isFinite(context.totalMeters) ? Math.max(1, Math.round(context.totalMeters)) : 535;
-    const meters = Number.isFinite(playerStats.meters) ? Math.min(totalMeters, Math.max(0, Math.round(playerStats.meters))) : 0;
-    const perfects = Number.isFinite(playerStats.perfects) ? Math.max(0, Math.round(playerStats.perfects)) : 0;
-    const maxCombo = Number.isFinite(playerStats.maxCombo) ? Math.max(0, Math.round(playerStats.maxCombo)) : 0;
-    const score = Number.isFinite(playerStats.score) ? Math.max(0, Math.round(playerStats.score)) : 0;
+  window.startGrandFinale = function(playerStats = {}) {
+    const meters = Number.isFinite(playerStats.meters) ? Math.max(0, playerStats.meters) : 535;
+    const totalMeters = Number.isFinite(playerStats.totalMeters) ? Math.max(1, playerStats.totalMeters) : 535;
+    const perfects = Number.isFinite(playerStats.perfects) ? Math.max(0, playerStats.perfects) : 87;
+    const maxCombo = Number.isFinite(playerStats.maxCombo) ? Math.max(0, playerStats.maxCombo) : 31;
+    const score = Number.isFinite(playerStats.score) ? Math.max(0, playerStats.score) : 184250;
 
     state.stats = { meters, totalMeters, perfects, maxCombo, score };
-    state.routes = Array.isArray(context.routes) && context.routes.length ? context.routes : ROTAS_DEFAULT;
-    state.campaignCompleted = true;
-    state.firstCompletion = context.firstCompletion !== undefined ? context.firstCompletion : true;
 
     document.getElementById('stMeters').textContent = `${meters} / ${totalMeters}`;
     document.getElementById('stPerfects').textContent = perfects;
@@ -368,20 +336,13 @@
 
   function update(dt) {
     if (!state.running || state.paused) return;
-    const sec = dt / 1000;
-    state.globalTime += sec;
+    const step = Math.min(2.5, dt / 16.6667 || 1);
+    state.globalTime += step;
     state.sceneTimer += dt;
     if (state.bannerTimer > 0) state.bannerTimer -= dt;
-    if (state.sceneFadeAlpha > 0) state.sceneFadeAlpha = Math.max(0, state.sceneFadeAlpha - dt / 120);
 
-    // Easing de Escala da Câmera
-    const targetScale = prefersReducedMotion ? 1.0 : (CUTSCENE_SCENES[state.sceneIdx]?.cameraScale || 1.0);
-    state.currentCameraScale += (targetScale - state.currentCameraScale) * Math.min(1, dt / 180);
-
-    // Controle de Exibição do Hint de Toque
     if (state.running && state.sceneTimer >= 600) {
       tapHint.classList.add('visible');
-      tapHint.textContent = '👆 TOQUE PARA AVANÇAR';
     } else {
       tapHint.classList.remove('visible');
     }
@@ -393,53 +354,44 @@
     }
 
     if (state.sceneIdx === 1) {
-      if (player.x < W * 0.32) { player.x += 120 * sec; player.legPhase += 11 * sec; }
+      if (player.x < W * 0.32) { player.x += 1.5 * step; player.legPhase += 0.18 * step; }
       else { player.state = 'idle'; player.legPhase = 0; }
     } else if (state.sceneIdx === 2) {
-      if (player.noticeTimer > 0) player.noticeTimer -= dt;
-      if (dog.x < W * 0.24) { dog.x += 100 * sec; dog.legPhase += 10 * sec; }
+      if (dog.x < W * 0.28) { dog.x += 1.2 * step; dog.legPhase += 0.15 * step; }
       else { dog.sitting = true; dog.legPhase = 0; }
     } else if (state.sceneIdx === 3) {
       const t = state.sceneTimer;
       const targetBowlX = dog.x + dog.w + 10;
       const targetPlayerX = targetBowlX + 28 + 10;
       
-      if (t < 1200) {
-        if (player.x > targetPlayerX) { player.x -= 70 * sec; player.legPhase += 10 * sec; }
+      if (t < 1500) {
+        if (player.x > targetPlayerX) { player.x -= 0.9 * step; player.legPhase += 0.16 * step; }
         else { player.state = 'idle'; }
-      } else if (t < 1600) {
+      } else if (t < 1800) {
         player.state = 'kneeling';
       } else if (t < 2200) {
         player.state = 'placingBowl';
-        const progress = (t - 1600) / 600;
-        const handX = player.x + 32, handY = player.y + 28;
-        const groundBowlY = groundY - 14;
-        bowlPos = {
-          x: handX + (targetBowlX - handX) * progress,
-          y: handY + (groundBowlY - handY) * progress
-        };
-      } else if (t < 3000) {
+        const progress = (t - 1800) / 400;
+        bowlPos = { x: targetBowlX, y: (groundY - 35) + progress * 21 };
+      } else if (t < 4200) {
         player.state = 'kneeling';
         bowlPos = { x: targetBowlX, y: groundY - 14 };
-        if (dog.x < W * 0.26) { dog.x += 25 * sec; dog.sitting = false; dog.legPhase += 8 * sec; }
+        if (dog.x < W * 0.28) { dog.x += 0.3 * step; dog.sitting = false; dog.legPhase += 0.10 * step; }
         else { dog.sitting = true; }
-      } else if (t < 4500) {
-        player.state = 'petting'; dog.happy = true; dog.sitting = true;
-        bowlPos = { x: targetBowlX, y: groundY - 14 };
+        player.state = 'petting'; dog.happy = true;
       } else if (t < 5200) {
         if (heartAlpha === 0) playPettingChord();
-        heartAlpha = Math.min(1, heartAlpha + 2.0 * sec);
+        heartAlpha = Math.min(1, heartAlpha + 0.03 * step);
       } else {
-        heartAlpha = Math.max(0, heartAlpha - 2.0 * sec);
+        heartAlpha = Math.max(0, heartAlpha - 0.03 * step);
       }
     } else if (state.sceneIdx === 4) {
-      const speedMult = prefersReducedMotion ? 0.5 : 1.0;
-      bgScroll += 110 * sec * speedMult;
-      player.legPhase += 11 * sec; dog.legPhase += 13 * sec;
+      bgScroll += 1.4 * step;
+      player.legPhase += 0.18 * step; dog.legPhase += 0.20 * step;
     }
   }
 
-  function drawWrappedText(text, sub, y = H * 0.22, maxW = W * 0.86) {
+  function drawWrappedText(text, sub, y = H * 0.24, maxW = W * 0.86) {
     if (!text || state.bannerTimer <= 0) return;
     ctx.save();
     
@@ -488,17 +440,17 @@
 
   function drawMontageScene() {
     ctx.fillStyle = '#081c38'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center';
+    const phases = ['SÃO DIMAS', 'VILA REZENDE', 'BAIRRO DOS ALEMÃES', 'JARAGUÁ', 'RECANTO DO PIRACICAMIRIM'];
     const elapsed = state.sceneTimer;
     
     ctx.font = '900 16px system-ui'; ctx.fillStyle = '#5FDCF2';
-    ctx.fillText('RETROSPECTIVA DE LEITURA', W / 2, H * 0.22);
+    ctx.fillText('JORNADA DAS 5 ROTAS CONCLUÍDA', W / 2, H * 0.22);
     
     let y = H * 0.32;
-    for (let i = 0; i < state.routes.length; i++) {
+    for (let i = 0; i < phases.length; i++) {
       if (elapsed > i * 450) {
-        const name = typeof state.routes[i] === 'string' ? state.routes[i] : (state.routes[i].nome || `ROTA ${i+1}`);
         ctx.font = '900 15px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1} · ${name}`, W * 0.14, y);
+        ctx.fillText(`${i + 1} · ${phases[i]}`, W * 0.14, y);
         ctx.fillStyle = '#22c55e'; ctx.textAlign = 'right'; ctx.fillText('✓', W * 0.86, y);
       }
       y += 44;
@@ -506,7 +458,7 @@
 
     if (elapsed > 2400) {
       ctx.font = '900 22px system-ui'; ctx.fillStyle = '#22c55e'; ctx.textAlign = 'center';
-      ctx.fillText('5/5 ROTAS CONCLUÍDAS! 🏆', W / 2, H * 0.76);
+      ctx.fillText('5 ROTAS DA SEMANA CONCLUÍDAS! 🎉', W / 2, H * 0.76);
     }
   }
 
@@ -520,23 +472,11 @@
     }
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // CAMADA 1 PARALLAX: SILHUETAS DISTANTES (0.15x)
-    if (isDusk) {
-      ctx.fillStyle = 'rgba(30, 27, 75, 0.4)';
-      const distOffset = (bgScroll * 0.15) % 300;
-      for (let x = -distOffset; x < W + 300; x += 180) {
-        ctx.fillRect(x, groundY - 180, 70, 180);
-        ctx.fillRect(x + 80, groundY - 210, 50, 210);
-      }
-    }
-
-    // SOL NATURAL AMARELO SOLAR (#FFCD07 E #FDBA74 NO PÔR DO SOL)
-    const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 5000) * 80) : 140;
+    const sunY = isDusk ? 140 + Math.min(80, (state.sceneTimer / 5500) * 80) : 140;
     ctx.fillStyle = isDusk ? 'rgba(253, 186, 116, 0.35)' : 'rgba(255, 233, 168, 0.45)';
     ctx.beginPath(); ctx.arc(W * 0.78, sunY, 80, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = isDusk ? '#fdba74' : '#FFCD07'; ctx.beginPath(); ctx.arc(W * 0.78, sunY, 48, 0, Math.PI * 2); ctx.fill();
 
-    // CAMADA 2 PARALLAX: EDIFÍCIOS & KOMBI (0.4x)
     const kombiX = Math.min(W - 175, W * 0.62) - (isDusk ? (bgScroll * 0.3) % 400 : 0);
     drawKombi(kombiX, groundY - 82);
 
@@ -546,21 +486,16 @@
     ctx.fillStyle = '#ffffff'; ctx.font = '900 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SEMAE PIRACICABA', buildingX + 120, groundY - 128);
     rounded(buildingX + 95, groundY - 80, 50, 80, 4, '#1e293b');
 
-    // PISO & CALÇADA (1.0x)
     ctx.fillStyle = isDusk ? '#64748b' : '#dbe5eb'; ctx.fillRect(0, groundY - 14, W, 54);
     ctx.fillStyle = isDusk ? '#475569' : '#a6b7be'; ctx.fillRect(0, groundY + 31, W, 9);
     ctx.fillStyle = isDusk ? '#1e293b' : '#3a4750'; ctx.fillRect(0, groundY + 40, W, H - groundY - 40);
 
-    // ÁRVORES DIVERSAS E POSTES NO EPÍLOGO
     if (isDusk) {
       ctx.fillStyle = '#1e293b';
       const stride = 140;
       for (let x = - (bgScroll % stride); x < W + stride; x += stride) {
-        ctx.fillRect(x, groundY - 110, 6, 110);
-        ctx.beginPath(); ctx.arc(x + 3, groundY - 110, 26, 0, Math.PI * 2); ctx.fill();
-        // Poste sem copa intercalado
-        ctx.fillRect(x + 70, groundY - 95, 4, 95);
-        ctx.fillRect(x + 64, groundY - 95, 16, 4);
+        ctx.fillRect(x, groundY - 100, 6, 100);
+        ctx.beginPath(); ctx.arc(x + 3, groundY - 100, 24, 0, Math.PI * 2); ctx.fill();
       }
     }
   }
@@ -585,7 +520,6 @@
     ctx.restore();
   }
 
-  // DESENHO DO CACHORRO V7 (POSE SENTADA EXPRESSIVA COM PEITO VERTICAL E PATAS NO CHÃO)
   function drawDog() {
     if (!dog.visible) return;
     ctx.save();
@@ -598,29 +532,12 @@
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; ctx.beginPath(); ctx.ellipse(36, 46, 30, 6, 0, 0, Math.PI * 2); ctx.fill();
     
     if (dog.sitting) {
-      // Corpo com peito mais vertical e traseiro assentado
-      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(26, 30, 18, 16, -0.1, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(36, 20, 14, 20, 0.2, 0, Math.PI * 2); ctx.fill(); // Peito vertical
-      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(40, 24, 10, 14, 0.2, 0, Math.PI * 2); ctx.fill();
-      
-      // Duas Patas Dianteiras Firmes no Chão
-      ctx.strokeStyle = '#b86217'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(38, 28); ctx.lineTo(40, 46); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(44, 28); ctx.lineTo(46, 46); ctx.stroke();
-
-      // Cabeça Erguida Olhando o Leiturista
-      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(42, 10, 14, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(50, 13, 9, 6, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(55, 12, 3, 0, Math.PI * 2); ctx.fill(); // Olho
-      
-      // Orelhas Relaxadas se Feliz
-      const earY = dog.happy ? 0 : -4;
-      ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(34, 0); ctx.lineTo(36, -8 + earY); ctx.lineTo(44, 0); ctx.closePath(); ctx.fill();
-      
-      // Boca suavemente aberta quando feliz
-      if (dog.happy) {
-        ctx.fillStyle = '#ff85a1'; ctx.beginPath(); ctx.arc(52, 16, 2.5, 0, Math.PI); ctx.fill();
-      }
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(30, 26, 22, 20, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(38, 30, 14, 11, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.arc(42, 14, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(51, 18, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1e1b18'; ctx.beginPath(); ctx.arc(58, 16, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#b86217'; ctx.beginPath(); ctx.moveTo(34, 2); ctx.lineTo(38, -10); ctx.lineTo(48, 2); ctx.closePath(); ctx.fill();
     } else {
       ctx.fillStyle = '#d9822b'; ctx.beginPath(); ctx.ellipse(34, 25, 30, 18, -0.05, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f7e5c8'; ctx.beginPath(); ctx.ellipse(44, 29, 16, 11, 0.2, 0, Math.PI * 2); ctx.fill();
@@ -635,7 +552,7 @@
       ctx.beginPath(); ctx.moveTo(46, 34); ctx.lineTo(52 + leg1, 45); ctx.stroke();
     }
 
-    const tailWag = dog.happy ? Math.sin(state.globalTime * 14) * 8 : Math.sin(dog.legPhase * 1.5) * 4;
+    const tailWag = dog.happy ? Math.sin(state.globalTime * 0.12) * 8 : Math.sin(dog.legPhase * 1.5) * 4;
     ctx.strokeStyle = '#d9822b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(6, 18); ctx.quadraticCurveTo(-14, 2 + tailWag, -4, -6); ctx.stroke();
 
@@ -652,21 +569,11 @@
     ctx.restore();
   }
 
-  // DESENHO DO LEITURISTA V7 (COM BALANÇO DE TRONCO, POSE NOTICE DOG E REACH EXTENDIDO DO BRAÇO DE CARINHO)
   function drawPlayer() {
     ctx.save();
-    const w = player.w;
-    let x = player.x;
-    
-    // Pose noticeDog: pequeno recuo de 4px se recém avistou o cão
-    if (player.noticeTimer > 0) x -= 4;
-
+    const w = player.w, x = player.x;
     const isKneeling = player.state === 'kneeling' || player.state === 'petting' || player.state === 'placingBowl';
-    const isWalking = player.state === 'walking' || player.state === 'walkingWithDog';
-    
-    // Balanço Dinâmico na Caminhada (Torso Bobbing & Head Tilt)
-    const torsoBob = isWalking ? Math.sin(player.legPhase * 2) * 2.0 : 0;
-    const y = player.y + (isKneeling ? 18 : torsoBob);
+    const y = player.y + (isKneeling ? 18 : Math.sin(player.legPhase * 2) * 2.2);
 
     ctx.translate(x + w / 2, y);
     ctx.scale(player.facing, 1);
@@ -700,21 +607,19 @@
     ctx.beginPath(); ctx.moveTo(hipL.x, hipL.y); ctx.lineTo(legL.knee.x, legL.knee.y); ctx.lineTo(legL.foot.x, legL.foot.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(hipR.x, hipR.y); ctx.lineTo(legR.knee.x, legR.knee.y); ctx.lineTo(legR.foot.x, legR.foot.y); ctx.stroke();
 
-    // Uniforme azul do SEMAE com faixa verde institucional (#168821)
+    // Uniforme azul com faixa verde institucional (#168821)
     rounded(6, 20, 37, 42, 9, '#1351B4');
     ctx.fillStyle = '#168821'; ctx.fillRect(8, 38, 33, 5);
 
     if (player.state === 'petting') {
-      // Braço alongado alcançando perfeitamente a cabeça do cão sem sobrepor corpos
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7.5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 26); ctx.lineTo(64, 30); ctx.stroke();
     } else if (player.state === 'placingBowl') {
       ctx.strokeStyle = '#d5a579'; ctx.lineWidth = 7; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(32, 28); ctx.lineTo(46, 48); ctx.stroke();
     } else if (!isKneeling) {
-      // TELEFONE CELULAR (SMARTPHONE DE LEITURA NA MÃO COM LIGEIRO SWAY)
-      const phoneSway = isWalking ? Math.sin(player.legPhase) * 1.5 : 0;
-      const phoneX = 40, phoneY = 28 + phoneSway;
+      // TELEFONE CELULAR (SMARTPHONE DE LEITURA NA MÃO DO LEITURISTA)
+      const phoneX = 40, phoneY = 28;
       rounded(phoneX, phoneY, 13, 24, 4, '#0f172a');
       ctx.fillStyle = '#38bdf8'; ctx.fillRect(phoneX + 1.5, phoneY + 2.5, 10, 19);
       ctx.fillStyle = '#168821'; ctx.fillRect(phoneX + 3, phoneY + 5, 7, 3);
@@ -722,13 +627,9 @@
       ctx.fillStyle = '#0c326f'; ctx.fillRect(phoneX + 3, phoneY + 13, 5, 1.5);
     }
 
-    // Cabeça com ligeira inclinação em noticeDog
-    const headTilt = player.noticeTimer > 0 ? -0.15 : 0;
-    ctx.save(); ctx.translate(24, 10); ctx.rotate(headTilt);
-    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(-2, -4, 15, Math.PI, Math.PI * 2); ctx.fill();
-    ctx.fillRect(-4, -6, 24, 5);
-    ctx.restore();
+    ctx.fillStyle = '#d5a579'; ctx.beginPath(); ctx.arc(24, 10, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#083F73'; ctx.beginPath(); ctx.arc(22, 6, 15, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(20, 4, 24, 5);
 
     ctx.restore();
   }
@@ -754,7 +655,8 @@
       return;
     }
 
-    const scale = state.currentCameraScale || 1.0;
+    const currentScene = CUTSCENE_SCENES[state.sceneIdx] ?? CUTSCENE_SCENES[CUTSCENE_SCENES.length - 1];
+    const scale = currentScene.cameraScale || 1.0;
     
     ctx.save();
     if (scale !== 1.0) {
@@ -771,12 +673,6 @@
     ctx.restore();
     
     drawWrappedText(state.bannerText, state.bannerSub);
-
-    // Micro-fade Suave entre Transições de Cena
-    if (state.sceneFadeAlpha > 0) {
-      ctx.fillStyle = `rgba(8, 28, 56, ${state.sceneFadeAlpha})`;
-      ctx.fillRect(0, 0, W, H);
-    }
   }
 
   function loop(ts) {
@@ -814,7 +710,6 @@
     startCutscene(0);
   });
 
-  // VISIBILITY CHANGE REFINADO PARA RETORNO DE BACKGROUND SEGURAMENTE PAUSADO
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       if (state.running) {
@@ -822,12 +717,11 @@
         audioCtx?.suspend().catch(() => {});
       }
     } else {
-      if (state.running) {
-        state.paused = true; // Permanecer pausado ao voltar!
+      if (state.running && state.paused) {
+        state.paused = false;
         lastTs = 0;
-        tapHint.classList.add('visible');
-        tapHint.textContent = '👆 TOQUE PARA CONTINUAR';
-        render();
+        ensureAudio();
+        if (!rafId) rafId = requestAnimationFrame(loop);
       }
     }
   });
@@ -837,19 +731,17 @@
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (!overlay.hidden) startBtn.click();
-      else if (state.paused) {
-        state.paused = false;
-        ensureAudio();
-        if (!rafId) rafId = requestAnimationFrame(loop);
-      } else advanceScene({ manual: true });
+      else advanceScene({ manual: true });
     }
   });
 
   window.addEventListener('resize', () => {
     resizeCanvas();
+    if (state.running) render();
   });
 
   resizeCanvas();
+  render();
 })();
 </script>
 </body>
