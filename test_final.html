@@ -238,7 +238,7 @@
   function showBanner(text, sub = '', duration = 1500) {
     state.bannerText = text; state.bannerSub = sub;
     state.bannerTimer = duration; state.bannerDuration = duration;
-    if (liveAnnouncer) liveAnnouncer.textContent = `${text}. ${sub}`;
+    if (liveAnnouncer) liveAnnouncer.textContent = sub ? `${text}. ${sub}` : text;
   }
 
   function advanceScene(options = {}) {
@@ -274,18 +274,18 @@
     } else if (state.sceneIdx === 2) {
       player.x = W * 0.58; player.state = 'idle'; player.facing = -1; player.legPhase = 0;
       dog.visible = true; dog.x = -80; dog.sitting = false; dog.happy = false; dog.facing = 1; dog.legPhase = 0;
-      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 rotas percorridas, hora de descansar', 1500);
+      showBanner('CHEGOU O FIM DE SEMANA! 🎉', 'Depois de 5 rotas, hora de descansar', 1500);
       playCalmSound();
     } else if (state.sceneIdx === 3) {
       player.x = W * 0.58; player.state = 'walking'; player.facing = -1;
       dog.visible = true; dog.x = W * 0.26; dog.sitting = true; dog.happy = false; dog.facing = 1;
       bowlPos = null; heartAlpha = 0;
-      showBanner('UM NOVO COMPANHEIRO DE JORNADA', 'Carinho e recompensa no fim de semana', 1200);
+      showBanner('UM NOVO COMPANHEIRO DE JORNADA', '', 1200);
     } else if (state.sceneIdx === 4) {
       bowlPos = null; heartAlpha = 0;
       player.x = W * 0.35; player.state = 'walkingWithDog'; player.facing = 1; player.legPhase = 0;
       dog.visible = true; dog.x = player.x + player.w + 22; dog.sitting = false; dog.happy = true; dog.facing = 1; dog.legPhase = 0;
-      showBanner('BOM FIM DE SEMANA NO SEMAE PIRACICABA', 'Jornada cumprida com sucesso!', 900);
+      showBanner('BOM FIM DE SEMANA', 'Jornada cumprida com sucesso!', 900);
       playFanfare();
     }
   }
@@ -458,7 +458,7 @@
 
     if (elapsed > 1300) {
       ctx.font = '900 22px system-ui'; ctx.fillStyle = '#22c55e'; ctx.textAlign = 'center';
-      ctx.fillText('5 ROTAS CONCLUÍDAS! 🎉', W / 2, H * 0.76);
+      ctx.fillText('5 ROTAS DA SEMANA CONCLUÍDAS! 🎉', W / 2, H * 0.76);
     }
   }
 
