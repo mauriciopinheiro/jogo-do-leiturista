@@ -1,7 +1,7 @@
 # SPEC — Personagens ilustrados (sprites) e refino do vetorial
 
 **Spec ID:** SPEC-2026-004
-**Status:** DRAFT (implementada em 2026-09-29, evidência em `docs/evidencias/EVID-2026-004.md`; aguardando aprovação humana)
+**Status:** APPROVED (aprovada pelo demandante em 2026-09-29, ver §8; implementada, evidência em `docs/evidencias/EVID-2026-004.md`)
 **Owner:** CTI SEMAE Piracicaba (demandante: Maurício Pinheiro)
 **Created:** 2026-09-29
 **Risco:** moderado (arte e desenho; sem alteração de regras, save ou integração com o Hub)
@@ -71,9 +71,9 @@ As imagens são estáticas, embutidas como `data:` URI no HTML gerado; nenhuma r
 
 ## 7. Questões em aberto
 
-- [ ] Q-201: Política institucional para uso de imagens geradas por IA e crédito exigido (CTI Anexo A item 17). Decisão do demandante/coordenação.
-- [ ] Q-202: Manter `imagens/` (10 MB de PNG originais) fora do Git ou versionar? Padrão adotado: fora do Git; somente os recortes otimizados entram.
+- [x] Q-201: Política para uso de imagens geradas por IA (CTI Anexo A item 17). **Resolvida em 2026-09-29** pelo demandante, em conversa com o agente: "pode colocar imagens de ia no git, sem problemas". Nenhuma restrição adicional; o crédito segue no README. (Não há registro de política institucional da coordenação além dessa decisão.)
+- [x] Q-202: Manter `imagens/` (11 MB de PNG originais) fora do Git ou versionar? **Resolvida em 2026-09-29**: versionar. A pasta `imagens/` e o `cao-galope.png` avulso da raiz (outra versão da mesma ilustração) entram no repositório.
 
 ## 8. Aprovação
 
-**Approved by:** (pendente — não preenchido pelo agente)
+**Approved by:** Maurício Pinheiro (demandante), em conversa com o agente, 2026-09-29: "aprovo, pode colocar imagens de ia no git, sem problemas, pode publicar no site e no git". Registro feito pelo agente a partir dessa mensagem; a aprovação cobre o resultado visto (personagens ilustrados, uniforme único no azul do logotipo, vetorial com contorno) e autoriza a publicação no site e no GitHub. A aprovação formal da SPEC-2026-003 (v4.0.0) não foi dada nesta mensagem e segue sem registro.

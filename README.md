@@ -75,9 +75,9 @@ versoes-preservadas/   v3.4.0 que estava no ar (com SHA-256) e o README antigo
 
 O leiturista e o cão usam ilustrações **geradas por inteligência artificial (ChatGPT) a pedido do
 demandante** (CTI/SEMAE), a partir de um roteiro de instruções de arte. Os originais (PNG com fundo
-magenta) ficam em `imagens/`, **fora do Git** (SPEC-2026-004, Q-202); o jogo usa só os recortes
-otimizados em `src/assets/*.webp` (5 atlas, ~457 KB, cada um ≤300 KB), embutidos no `index.html`.
-Pendência: política institucional sobre uso e crédito de imagens geradas por IA (Q-201).
+magenta) estão versionados em `imagens/` (decisão do demandante em 2026-09-29, SPEC-2026-004 Q-201/Q-202,
+sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os recortes otimizados em
+`src/assets/*.webp` (5 atlas, ~457 KB, cada um ≤300 KB), embutidos no `index.html`.
 
 - Para regerar os atlas: `python scripts/preparar_sprites.py` (lê `imagens/`, remove o fundo, alinha os pés,
   escreve `src/assets/` e `src/js/config/quadros-sprites.js`), depois `npm run verificar:sprites`.
