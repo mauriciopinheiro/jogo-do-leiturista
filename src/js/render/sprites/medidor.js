@@ -6,6 +6,8 @@
 import { arredondado, circulo, poligono } from '../primitivas.js';
 import { obterSprite, pintarSprite } from './cache.js';
 
+const CONTORNO = 1.7;
+
 export const RAIO_VISUAL = 22;
 const CAIXA = { w: 76, h: 76, ox: 38, oy: 38 };
 const CORES = {
@@ -23,17 +25,20 @@ function estrela(ctx, x, y, r, cor) {
   poligono(ctx, pontos, cor);
 }
 
-export function desenharBaseMedidor(ctx, tipo) {
+function halo(ctx, tipo) {
+  const g = ctx.createRadialGradient(0, 0, RAIO_VISUAL * 0.6, 0, 0, 36);
+  g.addColorStop(0, CORES[tipo].brilho);
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  circulo(ctx, 0, 0, 36, g);
+}
+
+function corpo(ctx, tipo) {
   const c = CORES[tipo];
-  const halo = ctx.createRadialGradient(0, 0, RAIO_VISUAL * 0.6, 0, 0, 36);
-  halo.addColorStop(0, c.brilho);
-  halo.addColorStop(1, 'rgba(255,255,255,0)');
-  circulo(ctx, 0, 0, 36, halo);
-  const corpo = ctx.createLinearGradient(0, -RAIO_VISUAL, 0, RAIO_VISUAL);
-  corpo.addColorStop(0, c.corpo[0]);
-  corpo.addColorStop(1, c.corpo[1]);
+  const g = ctx.createLinearGradient(0, -RAIO_VISUAL, 0, RAIO_VISUAL);
+  g.addColorStop(0, c.corpo[0]);
+  g.addColorStop(1, c.corpo[1]);
   circulo(ctx, 0, 0, RAIO_VISUAL + 3, c.anel);
-  circulo(ctx, 0, 0, RAIO_VISUAL, corpo);
+  circulo(ctx, 0, 0, RAIO_VISUAL, g);
   circulo(ctx, 0, 0, RAIO_VISUAL - 4, '#f4fbff');
   ctx.strokeStyle = 'rgba(12,50,111,0.5)';
   ctx.lineWidth = 1.1;
@@ -52,6 +57,12 @@ export function desenharBaseMedidor(ctx, tipo) {
   if (tipo === 'ouro') estrela(ctx, 14, -16, 7, '#fff3a3');
 }
 
+/** Halo (sem contorno) e corpo (com contorno) do medidor, guardados em cache. Origem = centro. */
+export function pintarBaseMedidor(ctx, tipo, k, escala = 1) {
+  pintarSprite(ctx, obterSprite(`medidor-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0, escala);
+  pintarSprite(ctx, obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => corpo(c, tipo), CONTORNO), 0, 0, escala);
+}
+
 const ROTULO = "700 8.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
 
 /**
@@ -60,9 +71,11 @@ const ROTULO = "700 8.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
  */
 export function desenharMedidor(ctx, m, y, k, relogio) {
   const tipo = m.tipo === 'ouro' ? 'ouro' : 'comum';
-  const sprite = obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => desenharBaseMedidor(c, tipo));
   const pulso = 1 + Math.sin(relogio * 5 + m.girar) * 0.045;
-  pintarSprite(ctx, sprite, m.x, y, pulso);
+  ctx.save();
+  ctx.translate(m.x, y);
+  pintarBaseMedidor(ctx, tipo, k, pulso);
+  ctx.restore();
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffffff';
   ctx.font = ROTULO;

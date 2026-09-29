@@ -1,10 +1,17 @@
 /**
  * @file kombi.js
  * @description A Kombi Branca do SEMAE (caixa 170x104, rodas em y=104, virada para a direita).
+ * A carroceria (com contorno escuro, como os personagens) é guardada em cache; só as rodas e o
+ * balanço são desenhados a cada quadro.
  */
 import { arredondado, circulo, elipse, poligono } from '../primitivas.js';
+import { COR_CONTORNO, obterSprite, pintarSprite } from './cache.js';
+
+const CAIXA = { w: 190, h: 118, ox: 10, oy: 10 };
+const CONTORNO = 2.2;
 
 function roda(ctx, x, y, giro) {
+  circulo(ctx, x, y, 17.4, COR_CONTORNO);
   circulo(ctx, x, y, 15, '#111827');
   circulo(ctx, x, y, 9.5, '#cbd5e1');
   circulo(ctx, x, y, 5.5, '#64748b');
@@ -19,14 +26,7 @@ function roda(ctx, x, y, giro) {
   }
 }
 
-/**
- * @param {object} o { portaAberta, giro (rad das rodas), balanco (px de oscilação) }
- */
-export function desenharKombi(ctx, o) {
-  const b = o.balanco || 0;
-  elipse(ctx, 86, 102, 82, 8, 'rgba(0,0,0,0.25)');
-  ctx.save();
-  ctx.translate(0, b);
+function carroceria(ctx, portaAberta) {
   arredondado(ctx, 2, 22, 164, 72, 20, '#f4f7fb');
   arredondado(ctx, 8, 6, 148, 34, 16, '#ffffff');
   ctx.fillStyle = '#1351B4';
@@ -49,7 +49,7 @@ export function desenharKombi(ctx, o) {
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.fillRect(21, 19, 6, 24);
   ctx.fillRect(63, 19, 6, 24);
-  if (o.portaAberta) {
+  if (portaAberta) {
     arredondado(ctx, 96, 14, 16, 68, 4, '#1b2a3c');
     ctx.fillStyle = '#f4f7fb';
     ctx.fillRect(100, 18, 4, 62);
@@ -57,9 +57,16 @@ export function desenharKombi(ctx, o) {
   circulo(ctx, 162, 56, 5.5, '#fff3b0');
   arredondado(ctx, 160, 78, 9, 10, 3, '#94a3b8');
   arredondado(ctx, 0, 64, 6, 10, 2, '#94a3b8');
-  ctx.restore();
-  ctx.save();
+}
+
+/**
+ * @param {object} o { portaAberta, giro (rad das rodas), balanco (u de oscilação) }
+ * @param {number} k pixels por unidade (para o cache da carroceria)
+ */
+export function desenharKombi(ctx, o, k) {
+  elipse(ctx, 86, 102, 82, 8, 'rgba(0,0,0,0.25)');
+  const sprite = obterSprite(`kombi-${o.portaAberta ? 'aberta' : 'fechada'}`, k, CAIXA, (c) => carroceria(c, o.portaAberta), CONTORNO);
+  pintarSprite(ctx, sprite, 0, o.balanco || 0);
   roda(ctx, 38, 90, o.giro || 0);
   roda(ctx, 132, 90, o.giro || 0);
-  ctx.restore();
 }

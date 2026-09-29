@@ -1,6 +1,6 @@
 {
   "name": "jogo-do-leiturista",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "type": "module",
   "description": "Jogo do Leiturista - SEMAE Piracicaba. Fontes modulares em src/ geram o index.html unico.",
@@ -8,7 +8,8 @@
     "construir": "node scripts/construir.mjs",
     "test": "node --test tests/unidade/*.test.js",
     "testar:e2e": "node tests/e2e/executar.mjs",
-    "verificar:linhas": "python scripts/verificar_limite_200_linhas.py"
+    "verificar:linhas": "python scripts/verificar_limite_200_linhas.py",
+    "verificar:sprites": "python scripts/verificar_sprites.py"
   },
   "devDependencies": {
     "esbuild": "0.25.12"

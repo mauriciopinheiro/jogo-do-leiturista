@@ -92,5 +92,30 @@ export const MUTACOES = [
     id: 'cao-sem-limite', tipo: 'unidade', testes: ['campanha.test.js'], arquivo: 'src/js/simulacao/cao.js',
     de: 'return sim.ameaca >= AMEACA.limite;', para: 'return false;',
     descricao: 'o cão nunca alcançaria o jogador (ninguém perderia)'
+  },
+  {
+    id: 'sprite-subida-e-descida-trocadas', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: 'o.vy > 240 ? L_ACAO.subindo : L_ACAO.descendo', para: 'o.vy > 240 ? L_ACAO.descendo : L_ACAO.subindo',
+    descricao: 'o leiturista subiria com a pose de queda e cairia com a pose de pulo'
+  },
+  {
+    id: 'sprite-nao-espelha', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadro.js',
+    de: 'if (espelhar) ctx.scale(-1, 1);', para: '',
+    descricao: 'na cena final o leiturista andaria de costas (sem virar para a esquerda)'
+  },
+  {
+    id: 'uniforme-classico-recolorido', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/recolorir.js',
+    de: 'if (!u || u === classico) return null;', para: 'if (!u) return null;',
+    descricao: 'o uniforme azul clássico seria recolorido e perderia as cores da arte original'
+  },
+  {
+    id: 'uniforme-bone-nao-muda', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/recolorir.js',
+    de: "if (yRel < 0.36) return v >= 0.45 ? 'bone' : null;", para: "if (yRel < 0) return v >= 0.45 ? 'bone' : null;",
+    descricao: 'o boné ficaria sempre azul, mesmo no Boné Vermelho ETE e no Refletivo Noturno'
+  },
+  {
+    id: 'ilustracao-com-falha-derruba-o-jogo', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/js/render/ilustracoes/atlas.js',
+    de: '.catch(() => { estado.falhou = true; });', para: ".catch(() => { throw new Error('imagem'); });",
+    descricao: 'se a imagem não carregar (rede, memória), o jogo acusaria erro em vez de usar o desenho vetorial'
   }
 ];

@@ -7,6 +7,7 @@ import { arredondado, circulo, elipse, poligono, linha } from '../primitivas.js'
 import { obterSprite, pintarSprite } from './cache.js';
 
 const MARGEM = 12;
+const CONTORNO = 1.7;
 
 function cone(ctx, w, h) {
   arredondado(ctx, -3, h - 9, w + 6, 9, 3, '#1f2937');
@@ -97,19 +98,19 @@ function caixote(ctx, w, h) {
 
 const FORMAS = { cone, mangueira, lixeira, poca, barreira, caixote };
 
-/** Desenho sem cache, usado pela legenda da ajuda. */
-export function desenharFormaCrua(ctx, forma, w, h) {
+/** Obstáculo com sombra e contorno, guardado em cache (usado no jogo e na legenda da ajuda). */
+export function pintarObstaculoBase(ctx, forma, w, h, k) {
+  const caixa = { w: w + MARGEM * 2, h: h + MARGEM * 2, ox: MARGEM, oy: MARGEM };
   elipse(ctx, w / 2, h + 1, Math.max(16, w * 0.5), 4.5, 'rgba(0,0,0,0.26)');
-  FORMAS[forma](ctx, w, h);
+  pintarSprite(ctx, obterSprite(`obst-${forma}-${w}x${h}`, k, caixa, (c) => FORMAS[forma](c, w, h), CONTORNO), 0, 0);
 }
 
 /** @param {number} y topo do obstáculo em unidades de tela */
 export function desenharObstaculo(ctx, o, y, k, relogio) {
-  const caixa = { w: o.w + MARGEM * 2, h: o.h + MARGEM * 2, ox: MARGEM, oy: MARGEM };
-  const sprite = obterSprite(`obst-${o.forma}`, k, caixa, (c) => {
-    desenharFormaCrua(c, o.forma, o.w, o.h);
-  });
-  pintarSprite(ctx, sprite, o.x, y);
+  ctx.save();
+  ctx.translate(o.x, y);
+  pintarObstaculoBase(ctx, o.forma, o.w, o.h, k);
+  ctx.restore();
   if (o.forma === 'barreira') {
     const acesa = Math.floor(relogio * 4) % 2 === 0;
     circulo(ctx, o.x + o.w / 2, y + 6, 5, acesa ? '#fde047' : '#a16207');

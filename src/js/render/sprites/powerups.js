@@ -6,6 +6,9 @@
 import { arredondado, circulo, poligono, linha } from '../primitivas.js';
 import { obterSprite, pintarSprite } from './cache.js';
 
+const CAIXA = { w: 64, h: 64, ox: 32, oy: 32 };
+const CONTORNO = 1.6;
+
 const CORES = {
   turbo: { fundo: '#FFCD07', borda: '#b58a00', halo: 'rgba(255,205,7,0.5)' },
   escudo: { fundo: '#2f6fe0', borda: '#0c326f', halo: 'rgba(95,160,255,0.55)' },
@@ -39,12 +42,15 @@ function icone(ctx, tipo) {
   }
 }
 
-export function desenharBasePowerup(ctx, tipo) {
+function halo(ctx, tipo) {
+  const g = ctx.createRadialGradient(0, 0, 10, 0, 0, 30);
+  g.addColorStop(0, CORES[tipo].halo);
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  circulo(ctx, 0, 0, 30, g);
+}
+
+function emblema(ctx, tipo) {
   const c = CORES[tipo];
-  const halo = ctx.createRadialGradient(0, 0, 10, 0, 0, 30);
-  halo.addColorStop(0, c.halo);
-  halo.addColorStop(1, 'rgba(255,255,255,0)');
-  circulo(ctx, 0, 0, 30, halo);
   circulo(ctx, 0, 0, 19, c.borda);
   circulo(ctx, 0, 0, 16.5, c.fundo);
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -54,10 +60,18 @@ export function desenharBasePowerup(ctx, tipo) {
   icone(ctx, tipo);
 }
 
+/** Halo (sem contorno) e emblema (com contorno) do power-up, guardados em cache. Origem = centro. */
+export function pintarBasePowerup(ctx, tipo, k, escala = 1) {
+  pintarSprite(ctx, obterSprite(`power-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0, escala);
+  pintarSprite(ctx, obterSprite(`power-${tipo}`, k, CAIXA, (c) => emblema(c, tipo), CONTORNO), 0, 0, escala);
+}
+
 export function desenharPowerup(ctx, p, y, k, relogio) {
-  const sprite = obterSprite(`power-${p.tipo}`, k, { w: 64, h: 64, ox: 32, oy: 32 }, (c) => desenharBasePowerup(c, p.tipo));
   const balanco = Math.sin(relogio * 4 + p.x * 0.01) * 3;
-  pintarSprite(ctx, sprite, p.x, y + balanco, 1 + Math.sin(relogio * 6) * 0.05);
+  ctx.save();
+  ctx.translate(p.x, y + balanco);
+  pintarBasePowerup(ctx, p.tipo, k, 1 + Math.sin(relogio * 6) * 0.05);
+  ctx.restore();
 }
 
 /** Placa de rua azul com o nome; guardada em cache por nome. */

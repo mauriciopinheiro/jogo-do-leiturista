@@ -13,6 +13,7 @@ import { criarAudio } from './audio/motor.js';
 import { criarMusica } from './audio/musica.js';
 import { criarRenderizador } from './render/renderizador.js';
 import { perfilLeve } from './render/camera.js';
+import { carregarIlustracoes, ilustracoesProntas } from './render/ilustracoes/atlas.js';
 import { obterElementos } from './interface/dom.js';
 import { criarHud } from './interface/hud.js';
 import { criarMensagens } from './interface/mensagens.js';
@@ -86,13 +87,19 @@ function iniciarAplicacao(janela) {
     aoOcultar: () => controlador.aoOcultar(), aoMostrar: () => controlador.aoMostrar()
   });
 
-  montarAjuda(el);
+  const redesenharAjuda = montarAjuda(el);
   el.versao.textContent = `v${VERSAO_APP} · SEMAE Piracicaba`;
   controlador.atualizarMenu();
   if (gestor.recusado) mensagens.aviso('O progresso salvo estava inválido e foi ignorado; uma cópia foi guardada.', 'erro', 3500);
+  carregarIlustracoes(janela, () => {
+    renderizador.prepararPersonagens();
+    redesenharAjuda();
+    controlador.atualizarMenu();
+    laco.acordar();
+  });
   laco.acordar();
   el.btnIniciar.focus({ preventScroll: true });
-  janela.__leiturista = { sim, gestor, controlador, renderizador, audio };
+  janela.__leiturista = { sim, gestor, controlador, renderizador, audio, ilustracoesProntas };
 }
 
 iniciarAplicacao(window);

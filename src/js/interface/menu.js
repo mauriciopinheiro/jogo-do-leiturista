@@ -7,6 +7,7 @@ import { ROTAS_SEMAE } from '../config/rotas.js';
 import { UNIFORMES } from '../config/uniformes.js';
 import { formatarInteiro } from '../nucleo/util.js';
 import { desenharLeiturista } from '../render/sprites/leiturista.js';
+import { pintarLeituristaIlustrado } from '../render/ilustracoes/pintura.js';
 
 const SVG = (id) => `<svg class="icone cadeado" aria-hidden="true"><use href="#${id}"/></svg>`;
 
@@ -14,6 +15,9 @@ function desenharPrevia(canvas, uniformeIdx) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const k = canvas.height / 100;
+  ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height - 3 * k);
+  if (pintarLeituristaIlustrado(ctx, k, { x: 0, y: 0, uniforme: uniformeIdx, pose: 'parado', fase: 0, tempo: 0 })) return;
   const escala = canvas.height / 88;
   ctx.setTransform(escala, 0, 0, escala, (canvas.width - 45 * escala) / 2, 5 * escala);
   desenharLeiturista(ctx, { uniforme: UNIFORMES[uniformeIdx], fase: 0, noAr: false, vy: 0, pose: 'parado' });

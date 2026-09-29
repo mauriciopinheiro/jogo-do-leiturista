@@ -18,7 +18,7 @@ export default {
     const externos = (html.match(/https?:\/\/[^\s"'<>)]+/g) || []).filter((u) => u !== 'http://www.w3.org/2000/svg');
     ctx.verificar(externos.length === 0, `endereços externos no arquivo: ${externos.slice(0, 5).join(', ')}`);
     ctx.verificar(!/\beval\s*\(|new Function\s*\(/.test(html), 'uso de eval/new Function');
-    ctx.verificar(/v4\.0\.0/.test(html), 'a versão 4.0.0 deve estar no arquivo');
+    ctx.verificar(/v4\.1\.0/.test(html), 'a versão 4.1.0 deve estar no arquivo');
 
     const nav = await ctx.abrir({ largura: 844, altura: 390, dpr: 2, celular: true, url: ctx.url });
     try {

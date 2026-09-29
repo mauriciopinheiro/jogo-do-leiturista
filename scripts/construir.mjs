@@ -1,7 +1,8 @@
 /**
  * Constrói o index.html único e autônomo a partir de src/.
  * 1. verifica o limite de 200 linhas dos fontes manuais;
- * 2. empacota os módulos ES (src/js) em um único script (esbuild, IIFE, ES2020, sem minificar);
+ * 2. empacota os módulos ES (src/js) em um único script (esbuild, IIFE, ES2020, sem minificar),
+ *    embutindo os atlas de sprites (src/assets/*.webp) como data URI;
  * 3. embute o CSS e o script no modelo src/index.html.
  * O resultado é determinístico: a mesma entrada gera exatamente o mesmo arquivo.
  */
@@ -29,6 +30,7 @@ const resultado = await build({
   format: 'iife',
   target: 'es2020',
   legalComments: 'none',
+  loader: { '.webp': 'dataurl' },
   write: false,
   outfile: join(raiz, 'saida-em-memoria.js'),
   logLevel: 'warning'

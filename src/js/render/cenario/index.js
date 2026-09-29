@@ -40,17 +40,22 @@ export function criarCenario(faseIdx, layout) {
   };
 }
 
-/** Copia um bitmap: 1:1 em pixels do dispositivo, ou em unidades quando há zoom de câmera. */
-function pintar(ctx, tela, xPx, yPx, k, emUnidades) {
-  if (emUnidades) ctx.drawImage(tela, xPx / k, yPx / k, tela.width / k, tela.height / k);
-  else ctx.drawImage(tela, xPx, yPx);
+/**
+ * Copia um bitmap: 1:1 em pixels do dispositivo, ou em unidades quando há zoom de câmera.
+ * Com zoom as bordas dos tiles caem entre pixels e deixariam uma linha fina de fundo; por isso
+ * cada tile repetido avança 1,5 px sobre o vizinho (`sobreposicao`, só no caminho com zoom).
+ */
+function pintar(ctx, tela, xPx, yPx, k, emUnidades, sobreposicao = false) {
+  if (!emUnidades) { ctx.drawImage(tela, xPx, yPx); return; }
+  const sobra = sobreposicao ? 1.5 / ctx.getTransform().a : 0;
+  ctx.drawImage(tela, xPx / k, yPx / k, tela.width / k + sobra, tela.height / k);
 }
 
 /** Repete o tile na horizontal; o período é a largura real do bitmap em pixels. */
 function repetir(ctx, tela, deslocamentoPx, xExtra, yPx, larguraPx, k, emUnidades) {
   const periodo = tela.width;
   const inicio = -(Math.round(deslocamentoPx) % periodo) + xExtra;
-  for (let x = inicio; x < larguraPx; x += periodo) pintar(ctx, tela, x, yPx, k, emUnidades);
+  for (let x = inicio; x < larguraPx; x += periodo) pintar(ctx, tela, x, yPx, k, emUnidades, true);
 }
 
 function desenharNuvens(ctx, c, layout, rolagem, relogio, movimento, k, emUnidades) {

@@ -2,11 +2,8 @@
  * @file desenho.js
  * @description Desenho das cenas finais reutilizando cenário e personagens do jogo.
  */
-import { UNIFORMES } from '../config/uniformes.js';
 import { ROTAS_SEMAE } from '../config/rotas.js';
-import { desenharLeiturista } from '../render/sprites/leiturista.js';
-import { desenharCao } from '../render/sprites/cao.js';
-import { arredondado, circulo, elipse } from '../render/primitivas.js';
+import { arredondado, circulo } from '../render/primitivas.js';
 import { TEXTOS } from './roteiro.js';
 
 function coracao(ctx, x, y, tamanho, alfa) {
@@ -62,27 +59,10 @@ export function desenharRetrospectiva(ctx, layout, tempo) {
   }
 }
 
-/** Leiturista com espelhamento opcional; (x, y) é o canto superior esquerdo da caixa. */
-export function pintarLeiturista(ctx, p, uniformeIdx) {
-  ctx.save();
-  ctx.translate(p.x + 22.5, p.y);
-  ctx.scale(p.olhando, 1);
-  ctx.translate(-22.5, 0);
-  desenharLeiturista(ctx, { uniforme: UNIFORMES[uniformeIdx] || UNIFORMES[0], fase: p.fase, noAr: false, vy: 0, pose: p.pose, inclinacao: p.inclinacao || 0 });
-  ctx.restore();
-}
-
-export function pintarCao(ctx, c, tempo) {
-  ctx.save();
-  elipse(ctx, c.x + 37, c.y + 50, 30, 5, 'rgba(0,0,0,0.25)');
-  ctx.translate(c.x + 37.5, c.y);
-  ctx.scale(c.olhando, 1);
-  ctx.translate(-37.5, 0);
-  desenharCao(ctx, { fase: c.fase, sentado: c.sentado, feliz: c.feliz, tempo, boca: c.feliz });
-  ctx.restore();
-}
-
-export function pintarTigelaECoracoes(ctx, cena) {
+/** Tigela (só no desenho vetorial: nas ilustrações ela já faz parte da pose) e corações sobre o cão. */
+export function pintarTigelaECoracoes(ctx, cena, chaoY) {
   if (cena.tigela) tigela(ctx, cena.tigela.x, cena.tigela.y);
-  if (cena.coracoes > 0) coracao(ctx, cena.cao.x + 44, cena.cao.y - 10 - (1 - cena.coracoes) * 14, 26, cena.coracoes);
+  if (cena.coracoes <= 0) return;
+  const y = cena.ilustrado ? chaoY - 104 : cena.cao.y - 10;
+  coracao(ctx, cena.cao.x + (cena.ilustrado ? 40 : 44), y - (1 - cena.coracoes) * 14, 26, cena.coracoes);
 }

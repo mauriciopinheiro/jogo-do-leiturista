@@ -4,9 +4,10 @@
  * desenhados com as mesmas funções do jogo, então nunca ficam diferentes do que aparece na corrida.
  */
 import { desenharCao } from '../render/sprites/cao.js';
-import { desenharBaseMedidor } from '../render/sprites/medidor.js';
-import { desenharBasePowerup } from '../render/sprites/powerups.js';
-import { desenharFormaCrua } from '../render/sprites/obstaculos.js';
+import { pintarBaseMedidor } from '../render/sprites/medidor.js';
+import { pintarBasePowerup } from '../render/sprites/powerups.js';
+import { pintarObstaculoBase } from '../render/sprites/obstaculos.js';
+import { pintarCaoIlustrado } from '../render/ilustracoes/pintura.js';
 import { LIMITE_ANOMALIA } from '../config/constantes.js';
 
 const REGRAS = [
@@ -33,6 +34,17 @@ const LEGENDA = [
   ['cao', 'O cão', 'Cada batida o aproxima. Na barra, leia: Seguro, Alerta, Perigo, Investida.']
 ];
 
+/** O cão da legenda: ilustração quando pronta, senão o desenho vetorial. */
+function desenharCaoDaLegenda(c) {
+  const ctx = c.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.setTransform(1.15, 0, 0, 1.15, 62, 88);
+  if (pintarCaoIlustrado(ctx, 1.15, { x: 0, y: 0, fase: 0, tempo: 0 })) return;
+  ctx.setTransform(1.3, 0, 0, 1.3, 14, 20);
+  desenharCao(ctx, { fase: 0.6, boca: false, tempo: 0 });
+}
+
 function icone(doc, tipo, dados) {
   const c = doc.createElement('canvas');
   c.width = 128;
@@ -41,22 +53,23 @@ function icone(doc, tipo, dados) {
   const ctx = c.getContext('2d');
   if (tipo === 'medidor') {
     ctx.setTransform(1.4, 0, 0, 1.4, 64, 48);
-    desenharBaseMedidor(ctx, dados[3]);
+    pintarBaseMedidor(ctx, dados[3], 1.4);
   } else if (tipo === 'power') {
     ctx.setTransform(1.5, 0, 0, 1.5, 64, 48);
-    desenharBasePowerup(ctx, dados[3]);
+    pintarBasePowerup(ctx, dados[3], 1.5);
   } else if (tipo === 'obst') {
     const [, , , forma, w, h] = dados;
     const escala = Math.min(100 / w, 70 / h, 1.6);
     ctx.setTransform(escala, 0, 0, escala, 64 - (w * escala) / 2, 52 - (h * escala) / 2);
-    desenharFormaCrua(ctx, forma, w, h);
+    pintarObstaculoBase(ctx, forma, w, h, escala);
   } else {
-    ctx.setTransform(1.3, 0, 0, 1.3, 14, 20);
-    desenharCao(ctx, { fase: 0.6, boca: false, tempo: 0 });
+    desenharCaoDaLegenda(c);
+    c.dataset.cao = '1';
   }
   return c;
 }
 
+/** @returns {()=>void} redesenha o cão da legenda (chamado quando as ilustrações terminam de carregar) */
 export function montarAjuda(el) {
   const doc = el.ajudaRegras.ownerDocument;
   el.ajudaRegras.replaceChildren(...REGRAS.map(([titulo, texto]) => {
@@ -77,4 +90,5 @@ export function montarAjuda(el) {
     li.append(icone(doc, dados[0], dados), info);
     return li;
   }));
+  return () => el.ajudaLegenda.querySelectorAll('canvas[data-cao]').forEach(desenharCaoDaLegenda);
 }

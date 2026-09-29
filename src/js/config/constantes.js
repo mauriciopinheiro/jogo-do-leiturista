@@ -7,7 +7,7 @@
 
 /** Identificador histórico da v3: mantê-lo preserva os saves já gravados nos aparelhos. */
 export const ID_APP = 'jogo-do-leiturista-3';
-export const VERSAO_APP = '4.0.0';
+export const VERSAO_APP = '4.1.0';
 export const ESQUEMA_SAVE = 2;
 export const CHAVE_SAVE = `semae.${ID_APP}.v${ESQUEMA_SAVE}`;
 export const CHAVE_SAVE_V1 = `semae.${ID_APP}.v1`;

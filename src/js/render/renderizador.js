@@ -7,6 +7,7 @@ import { calcularLayout } from './camera.js';
 import { criarCenario, desenharCenario, chaveDoCenario } from './cenario/index.js';
 import { criarEfeitos, efeitoDoEvento } from './efeitos.js';
 import { limparSprites } from './sprites/cache.js';
+import { limparAtlasEscalados, prepararUniforme } from './ilustracoes/atlas.js';
 import { criarTela } from './primitivas.js';
 import { desenharCarga, desenharKombiDaCena, desenharCaoDaCena, desenharJogador } from './entidades.js';
 
@@ -48,7 +49,12 @@ export function criarRenderizador({ canvas, sim, obterUniforme, reduzirMovimento
       cenario = null;
       vinheta = null;
       limparSprites();
+      limparAtlasEscalados();
       return layout;
+    },
+    /** Gera antes da corrida as variantes do uniforme em uso (evita engasgo ao começar). */
+    prepararPersonagens() {
+      if (layout) prepararUniforme(obterUniforme(), layout.escala * layout.pxRatio);
     },
     atualizar(dt) {
       relogio += dt;
@@ -74,12 +80,12 @@ export function criarRenderizador({ canvas, sim, obterUniforme, reduzirMovimento
       ctx.translate(tremor.x / k, tremor.y / k);
       const { chaoY } = layout;
       if (noMenu) {
-        desenharKombiDaCena(ctx, { x: layout.L * 0.62, portaAberta: false }, chaoY, relogio, false);
+        desenharKombiDaCena(ctx, { x: layout.L * 0.62, portaAberta: false }, chaoY, relogio, false, k);
       } else {
-        if (sim.kombi.visivel) desenharKombiDaCena(ctx, sim.kombi, chaoY, relogio, sim.subestagio !== 'embarque');
+        if (sim.kombi.visivel) desenharKombiDaCena(ctx, sim.kombi, chaoY, relogio, sim.subestagio !== 'embarque', k);
         desenharCarga(ctx, sim, chaoY, k, relogio);
-        if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio);
-        desenharJogador(ctx, sim, chaoY, obterUniforme(), relogio);
+        if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio, k);
+        desenharJogador(ctx, sim, chaoY, obterUniforme(), relogio, k);
       }
       efeitos.desenhar(ctx);
       ctx.restore();
