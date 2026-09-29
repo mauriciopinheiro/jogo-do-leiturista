@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08202F">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2317a8cf' d='M12 2.5c3.2 4.2 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 2.8-6.8 6-11z'/%3E%3C/svg%3E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Jogo do Leiturista — SEMAE Piracicaba</title>
+  <meta name="description" content="Jogo educativo do SEMAE Piracicaba: corra pelas rotas reais, leia os hidrômetros e fuja do cachorro até a Kombi Branca chegar.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Jogo do Leiturista SEMAE — Desafio de Leitura Urbana">
+  <meta property="og:description" content="Percorra as rotas reais de Piracicaba lendo hidrômetros e embarcando na Kombi Branca SEMAE! Jogo educativo oficial CTI/SEMAE.">
+  <meta property="og:image" content="og_preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Jogo do Leiturista SEMAE — Piracicaba">
+  <meta name="twitter:image" content="og_preview.jpg">
+  <!--CSS-->
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-gota" viewBox="0 0 24 24"><path d="M12 2.5c3.2 4.2 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 2.8-6.8 6-11z"/></symbol>
+  <symbol id="i-prancheta" viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2V4a1 1 0 0 1 1-1zm1 2v1h4V5zM8 10h8v1.6H8zm0 3.5h8v1.6H8zM8 17h5v1.6H8z"/></symbol>
+  <symbol id="i-pata" viewBox="0 0 24 24"><path d="M12 12.5c-2.6 0-5.2 2.3-5.2 4.6 0 1.9 1.7 2.6 3.2 2.6.9 0 1.4-.3 2-.3s1.1.3 2 .3c1.5 0 3.2-.7 3.2-2.6 0-2.3-2.6-4.6-5.2-4.6z"/><circle cx="5.6" cy="10" r="2"/><circle cx="9.6" cy="5.8" r="2.1"/><circle cx="14.4" cy="5.8" r="2.1"/><circle cx="18.4" cy="10" r="2"/></symbol>
+  <symbol id="i-pausa" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/></symbol>
+  <symbol id="i-musica" viewBox="0 0 24 24"><path d="M19 3v12.5a3 3 0 1 1-2-2.8V7.3L10 8.7v9.8a3 3 0 1 1-2-2.8V5z"/></symbol>
+  <symbol id="i-som" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-cadeado" viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></symbol>
+  <symbol id="i-ajuda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.2 9.4a2.9 2.9 0 1 1 4.3 2.5c-.9.5-1.5 1-1.5 2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2"/></symbol>
+</svg>
+
+<main id="app" class="app">
+  <canvas id="palco" tabindex="-1" role="img" aria-label="Área de jogo. Toque, clique ou pressione Espaço para pular."></canvas>
+
+  <header id="hud" class="hud" hidden aria-hidden="true">
+    <div class="hud-rota">
+      <span class="selo" id="hudSelo">Fase 1</span>
+      <div class="hud-textos">
+        <span class="hud-rua" id="hudRua">Rua</span>
+        <span class="hud-bairro" id="hudBairro">Bairro</span>
+      </div>
+    </div>
+    <div class="hud-pontos"><b class="dados" id="hudPontos">0</b><small>pontos</small></div>
+    <div class="hud-contagem">
+      <span class="dado"><svg class="icone"><use href="#i-gota"/></svg><b class="dados" id="hudRuaContagem">0/0</b><small>na rua</small></span>
+      <span class="dado"><svg class="icone"><use href="#i-prancheta"/></svg><b class="dados" id="hudRotaContagem">0/0</b><small>na rota</small></span>
+      <span class="hud-combo dados" id="hudCombo"></span>
+    </div>
+    <div class="hud-ameaca">
+      <svg class="icone"><use href="#i-pata"/></svg>
+      <div class="barra" id="hudAmeacaBarra"><span id="hudAmeaca"></span></div>
+      <strong id="hudAmeacaTexto">Seguro</strong>
+    </div>
+    <div class="hud-flow" id="hudFlow"><strong>FLOW</strong><div class="barra"><span id="hudFlowBarra"></span></div></div>
+  </header>
+
+  <div class="controles" id="controles" hidden>
+    <button class="btn-canto" id="btnPausa" type="button" aria-label="Pausar (tecla P)"><svg class="icone"><use href="#i-pausa"/></svg></button>
+  </div>
+
+  <div class="faixa" id="faixa" aria-hidden="true"><strong id="faixaTitulo"></strong><span id="faixaSub"></span></div>
+  <div class="dica" id="dica" hidden>Toque curto: pulo baixo · Segure: pulo alto</div>
+
+  <section id="telaMenu" class="tela" role="dialog" aria-modal="true" aria-labelledby="menuTitulo">
+    <div class="painel painel-menu">
+      <div class="col">
+        <p class="selo-marca"><svg class="icone"><use href="#i-gota"/></svg> SEMAE Piracicaba · Semana de Leiturista</p>
+        <h1 id="menuTitulo">Jogo do Leiturista</h1>
+        <p class="lead">Corra pelas ruas reais de Piracicaba, leia os hidrômetros e fuja do cachorro até a Kombi Branca chegar.</p>
+        <h2 class="rotulo" id="rotuloRotas">Escolha a rota</h2>
+        <div class="chips" id="rotasChips" role="group" aria-labelledby="rotuloRotas"></div>
+        <div class="rota-detalhe" id="rotaDetalhe" aria-live="polite"></div>
+      </div>
+      <div class="col col-acoes">
+        <button class="btn btn-verde" id="btnContinuar" type="button" hidden>Continuar partida ▶</button>
+        <button class="btn btn-primario" id="btnIniciar" type="button">Iniciar rota ▶</button>
+        <button class="btn btn-agua" id="btnInfinito" type="button" hidden>Modo infinito ∞</button>
+        <div class="linha-icones">
+          <button class="btn-icone" id="btnMusica" type="button" aria-pressed="true"><svg class="icone"><use href="#i-musica"/></svg><span>Música</span></button>
+          <button class="btn-icone" id="btnEfeitos" type="button" aria-pressed="true"><svg class="icone"><use href="#i-som"/></svg><span>Efeitos</span></button>
+          <button class="btn-icone" id="btnUniforme" type="button"><canvas id="prevUniforme" width="68" height="68" aria-hidden="true"></canvas><span id="uniformeNome">Uniforme</span></button>
+          <button class="btn-icone" id="btnAjuda" type="button"><svg class="icone"><use href="#i-ajuda"/></svg><span>Como jogar</span></button>
+        </div>
+        <button class="btn btn-contorno" id="btnRever" type="button" hidden>Rever o encerramento da jornada</button>
+        <details class="mais">
+          <summary>Salvar ou carregar progresso</summary>
+          <div class="conteudo">
+            <button class="btn btn-contorno" id="btnExportar" type="button">Baixar progresso</button>
+            <button class="btn btn-contorno" id="btnImportar" type="button">Carregar arquivo</button>
+            <p class="nota">O progresso fica salvo neste aparelho. Baixe o arquivo para levar para outro computador ou celular.</p>
+          </div>
+        </details>
+        <input id="inputImportar" type="file" accept="application/json,.json" hidden>
+        <p class="versao" id="versao">v4.0.0 · SEMAE Piracicaba</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="telaPausa" class="tela" role="dialog" aria-modal="true" aria-labelledby="pausaTitulo" hidden>
+    <div class="painel painel-estreito">
+      <h2 id="pausaTitulo">Jogo pausado</h2>
+      <div class="pilha">
+        <button class="btn btn-primario" id="btnRetomar" type="button">Continuar ▶</button>
+        <button class="btn btn-contorno" id="btnReiniciar" type="button">Recomeçar a rota</button>
+        <button class="btn btn-contorno" id="btnPausaAjuda" type="button">Como jogar</button>
+        <button class="btn btn-contorno" id="btnPausaMenu" type="button">Sair para o menu</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="telaResultado" class="tela" role="dialog" aria-modal="true" aria-labelledby="resTitulo" hidden>
+    <div class="painel painel-estreito painel-resultado">
+      <div class="res-info">
+        <h2 id="resTitulo"></h2>
+        <p class="lead" id="resSub"></p>
+        <div class="resumo" id="resResumo"></div>
+        <div class="medalhas" id="resMedalhas"></div>
+        <p class="dica-final" id="resDica" hidden></p>
+        <ul class="premios" id="resPremios" hidden></ul>
+      </div>
+      <div class="pilha res-acoes">
+        <button class="btn btn-primario" id="btnResPrimario" type="button"></button>
+        <button class="btn btn-contorno" id="btnResSecundario" type="button"></button>
+        <button class="btn btn-contorno" id="btnResMenu" type="button">Voltar ao menu</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="telaAjuda" class="tela" role="dialog" aria-modal="true" aria-labelledby="ajudaTitulo" hidden>
+    <div class="painel painel-ajuda">
+      <div class="topo"><h2 id="ajudaTitulo">Como jogar</h2><button class="btn btn-primario" id="btnAjudaFechar" type="button">Entendi</button></div>
+      <ul class="regras" id="ajudaRegras"></ul>
+      <h3 class="rotulo">Legenda</h3>
+      <ul class="legenda" id="ajudaLegenda"></ul>
+    </div>
+  </section>
+
+  <div class="avisos" id="avisos" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="anuncio" aria-live="polite"></div>
+</main>
+<!--JS-->
+</body>
+</html>

@@ -15,3 +15,5 @@ __pycache__/
 # IDEs
 .vscode/
 .idea/
+node_modules/
+tests/e2e/saida/

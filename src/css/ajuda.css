@@ -1,0 +1,12 @@
+/* Tela "Como jogar" e legenda de símbolos. */
+.painel-ajuda { width: min(100%, 860px); }
+.painel-ajuda .topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.painel-ajuda .topo .btn { width: auto; min-width: 120px; }
+.regras { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 10px 0 4px; padding: 0; }
+.regras li { list-style: none; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--borda); font-size: 0.9rem; line-height: 1.4; }
+.regras li b { display: block; color: var(--agua-clara); font-family: var(--fonte-titulo); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+.legenda { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 0; padding: 0; }
+.legenda li { list-style: none; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--borda); }
+.legenda canvas { width: 64px; height: 48px; display: block; }
+.legenda b { display: block; font-size: 0.84rem; }
+.legenda span { display: block; color: var(--texto-suave); font-size: 0.74rem; line-height: 1.3; }

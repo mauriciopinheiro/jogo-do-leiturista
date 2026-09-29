@@ -1,0 +1,155 @@
+/* Telas sobrepostas ao jogo (menu, pausa, resultado, ajuda) e componentes comuns. */
+.tela {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: calc(14px + var(--topo)) calc(14px + var(--direita)) calc(14px + var(--base)) calc(14px + var(--esquerda));
+  background: rgba(4, 16, 24, 0.55);
+  overflow-y: auto;
+}
+
+.painel {
+  width: min(100%, 1000px);
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(16px, 3.6vw, 30px);
+  border: 1px solid var(--borda);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(15, 50, 71, 0.985), rgba(8, 32, 47, 0.99));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  animation: painel-entra 0.22s ease-out;
+}
+@keyframes painel-entra { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+.painel h1, .painel h2, .painel h3 { margin: 0; font-family: var(--fonte-titulo); letter-spacing: 0.02em; }
+.painel h1 { font-size: clamp(1.7rem, 6vw, 2.7rem); line-height: 1.02; font-weight: 900; text-transform: uppercase; }
+.painel h2 { font-size: clamp(1.3rem, 4.6vw, 1.9rem); font-weight: 900; text-transform: uppercase; }
+.painel p { margin: 0; line-height: 1.4; }
+.lead { color: var(--texto-suave); font-size: clamp(0.92rem, 2.8vw, 1.05rem); margin-top: 8px !important; }
+.painel .rotulo { margin: 14px 0 8px; color: var(--agua-clara); font-family: var(--fonte-titulo); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.painel .selo-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  background: rgba(23, 168, 207, 0.16);
+  border: 1px solid var(--borda);
+  color: var(--agua-clara);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Botões grandes de jogo (alvo mínimo 48 px). */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 14px;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1rem, 3.4vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.12s ease;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: translateY(3px); }
+.btn-primario { background: var(--amarelo); color: #2a2000; box-shadow: 0 4px 0 #b58a00; }
+.btn-primario:active { box-shadow: 0 1px 0 #b58a00; }
+.btn-verde { background: var(--verde); color: #fff; box-shadow: 0 4px 0 #0c5314; }
+.btn-verde:active { box-shadow: 0 1px 0 #0c5314; }
+.btn-agua { background: var(--agua); color: #04212c; box-shadow: 0 4px 0 #0d6f8a; }
+.btn-agua:active { box-shadow: 0 1px 0 #0d6f8a; }
+.btn-contorno { background: transparent; color: var(--texto); border: 2px solid var(--borda); min-height: 48px; font-size: 0.95rem; box-shadow: none; }
+.btn-contorno:active { transform: none; background: rgba(255, 255, 255, 0.06); }
+
+.btn-icone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--texto);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btn-icone:hover { background: rgba(255, 255, 255, 0.09); }
+.btn-icone .icone { width: 22px; height: 22px; }
+.btn-icone[aria-pressed="false"] { color: var(--texto-suave); }
+.btn-icone[aria-pressed="false"] .icone { opacity: 0.55; }
+
+.linha-icones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.pilha { display: grid; gap: 10px; }
+
+/* Resultado. */
+.resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 14px 0; }
+.resumo div { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--borda); }
+.resumo b { display: block; font-size: 1.35rem; color: var(--amarelo); line-height: 1.1; }
+.resumo small { color: var(--texto-suave); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.medalhas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.medalha { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px dashed var(--borda); text-align: center; font-size: 0.78rem; font-weight: 700; }
+.medalha .disco { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 0.95rem; color: #2a2000; background: #6b7f8a; }
+.medalha.ouro .disco { background: linear-gradient(135deg, #ffe680, #f0b429); }
+.medalha.prata .disco { background: linear-gradient(135deg, #f4f7fa, #a9b7c2); }
+.medalha.bronze .disco { background: linear-gradient(135deg, #f0b98a, #b26a37); }
+.medalha.nenhuma { opacity: 0.6; }
+.painel-resultado .res-acoes { margin-top: 16px; }
+.dica-final { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: rgba(23, 168, 207, 0.12); border: 1px solid var(--borda); font-size: 0.92rem; font-weight: 600; }
+.premios { display: grid; gap: 6px; margin: 12px 0; }
+.premios li { list-style: none; padding: 8px 12px; border-radius: 12px; background: rgba(69, 207, 138, 0.14); border: 1px solid rgba(69, 207, 138, 0.5); font-weight: 800; font-size: 0.86rem; opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.premios li.visivel { opacity: 1; transform: none; }
+.premios { padding: 0; }
+
+/* Avisos curtos e não bloqueantes (máx. 3,5 s). */
+.avisos {
+  position: absolute;
+  z-index: 30;
+  left: 50%;
+  bottom: calc(20px + var(--base));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  width: min(92vw, 460px);
+  pointer-events: none;
+}
+.aviso {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: rgba(8, 32, 47, 0.96);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  animation: aviso-entra 0.2s ease-out;
+}
+.aviso.erro { border-color: var(--erro); }
+.aviso.ok { border-color: var(--sucesso); }
+@keyframes aviso-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

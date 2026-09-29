@@ -1,0 +1,48 @@
+/* Tela inicial e seleção de rota. */
+.painel-menu { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(16px, 3vw, 34px); align-items: start; }
+.col { min-width: 0; }
+.col-acoes { display: grid; gap: 10px; align-content: start; }
+
+.chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 62px;
+  padding: 6px 2px;
+  border: 2px solid var(--borda);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--texto);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.chip b { font-family: var(--fonte-titulo); font-size: 1.5rem; line-height: 1; }
+.chip small { font-size: 0.62rem; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.04em; }
+.chip[aria-pressed="true"] { background: var(--agua); border-color: var(--agua-clara); color: #04212c; }
+.chip[aria-pressed="true"] small { color: #04212c; }
+.chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.chip .concluida { position: absolute; top: 3px; right: 5px; font-size: 0.75rem; color: var(--sucesso); font-weight: 900; }
+.chip[aria-pressed="true"] .concluida { color: #04361c; }
+.chip .cadeado { width: 14px; height: 14px; }
+
+.rota-detalhe { margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--borda); display: grid; gap: 4px; }
+.rota-detalhe h3 { font-size: 1.15rem; font-weight: 900; text-transform: uppercase; }
+.rota-detalhe .meta { color: var(--texto-suave); font-size: 0.86rem; font-weight: 600; }
+.rota-detalhe .ruas { color: var(--texto); font-size: 0.8rem; margin-top: 2px; overflow-wrap: anywhere; }
+.rota-detalhe .recorde { color: var(--amarelo); font-size: 0.9rem; font-weight: 800; }
+
+.btn-icone canvas { width: 34px; height: 34px; display: block; }
+.mais { margin-top: 4px; border-radius: 12px; border: 1px solid var(--borda); background: rgba(255, 255, 255, 0.03); }
+.mais summary { min-height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 0.86rem; font-weight: 700; color: var(--texto-suave); cursor: pointer; list-style: none; }
+.mais summary::-webkit-details-marker { display: none; }
+.mais[open] summary { color: var(--texto); }
+.mais .conteudo { padding: 0 12px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mais .nota { grid-column: 1 / -1; font-size: 0.76rem; color: var(--texto-suave); }
+.versao { color: var(--texto-suave); font-family: var(--fonte-dados); font-size: 0.72rem; text-align: center; margin-top: 2px !important; }
+
+.painel-estreito { width: min(100%, 520px); }
+.painel-estreito .pilha { margin-top: 16px; }

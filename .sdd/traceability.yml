@@ -33,3 +33,507 @@ change_sets:
     evidence:
       - "Validação automatizada scripts/validate_sdd.py"
       - "Repositório GitHub publicamente acessível"
+
+  - id: "CS-2026-002"
+    title: "Correção dos 17 Problemas Críticos do Jogo do Leiturista SEMAE (Save, Assinatura SHA-256, Progresso, Física e Desempenho)"
+    spec: "docs/sdd/especificacao-fonte-v1.1.md"
+    requirements:
+      - "REQ-01: 5 Fases progressivas com dados reais de rotas do SCI SEMAE Piracicaba"
+      - "REQ-03: Exibição de nomes de ruas reais e hidrômetros da rota na HUD com transição dinâmica de ruas"
+      - "REQ-05: Arquitetura de arquivo único HTML5 offline, responsivo e salvamento assinado criptograficamente via SHA-256"
+    acceptance_criteria:
+      - "Importação de save v1 realiza migração pura sem ler o localStorage"
+      - "Salvamento e validação de saves usam resumo criptográfico SHA-256 e campo assinatura"
+      - "Sincronização de UI (syncProgressUI) é acionada unificadamente após load/import"
+      - "Contagem de conclusão de ruas usa Set individual por índice de rua"
+      - "Recorde da fase só é gravado em vitória oficial (phaseVictoryModal)"
+      - "Partida em andamento é persistida com checkpoint semântico no save"
+      - "Métrica de pulo renomeada para Coleta Aérea / Técnica Aérea e pontuação é não-consumitiva"
+      - "Randomização de gameplay utiliza PRNG determinístico por partida (criarPrng)"
+      - "Motor de física usa fixed timestep de 1/60s acumulado"
+      - "Padrões usam fallback LRU para evitar repetição do mesmo padrão"
+      - "Modo leve e pool de partículas para otimização mobile"
+      - "Gerenciamento centralizado do ciclo de vida de visibilidade (visibilitychange)"
+    tasks:
+      - "TASK-01: Implementar assinatura criptográfica SHA-256 e migração pura v1"
+      - "TASK-02: Criar syncProgressUI, checkpoint por Set e salvamento de partida em andamento"
+      - "TASK-03: Refatorar métrica de leitura e pontuação não-consumitiva com bônus de anomalia"
+      - "TASK-04: Implementar PRNG determinístico, fixed timestep, LRU de padrões e pool de partículas"
+      - "TASK-05: Adicionar handler de visibilitychange e throttling no HUD da ameaça"
+    files:
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 2890
+    evidence:
+      - "Validação automatizada scripts/validate_sdd.py"
+      - "Validação automatizada scripts/verificar_limite_200_linhas.py"
+
+  - id: "CS-2026-003"
+    title: "Jogo do Leiturista v4.0.0 — reescrita modular, nova arte, desempenho, responsividade e correção de defeitos"
+    spec: "docs/specs/SPEC-2026-003-leiturista-v4-redesenho.md"
+    requirements:
+      - "REQ-101: Preservação da v3.4.0 e compatibilidade de saves"
+      - "REQ-102: Desempenho (orçamento de pixels, laço por tempo, camadas pré-renderizadas)"
+      - "REQ-103: Responsividade em retrato, paisagem e pontos de quebra"
+      - "REQ-104: Identidade visual (arte, HUD, telas) com paleta e tipografia da CTI"
+      - "REQ-105: Jogabilidade preservada"
+      - "REQ-106: Correção de defeitos da v3.4.0"
+      - "REQ-107: Persistência segura (validação, migração, exportação/importação)"
+      - "REQ-108: Acessibilidade e ajuda com legenda"
+      - "REQ-109: Aviso ao Hub na vitória"
+      - "REQ-110: Áudio (gesto, compressor, teto de vozes, suspensão)"
+      - "REQ-111: Modularidade (200 linhas) e arquivo único autônomo"
+      - "REQ-112: Verificabilidade (simulação sem DOM, e2e, mutação)"
+    acceptance_criteria:
+      - "AC-101: Saves da v3.4.0, v1 e exportados aceitos; adulterados e grandes recusados"
+      - "AC-102: Custo por quadro e orçamento de pixels nas 5 telas de referência"
+      - "AC-103: Layout íntegro, sem rolagem horizontal, alvos >=44 px em 12 telas"
+      - "AC-104: Giro de tela no meio da partida não encerra a partida"
+      - "AC-105: Robô conclui as 5 fases; sem entrada perde"
+      - "AC-106: Retomada consistente da partida salva"
+      - "AC-107: total_hidrometros igual à soma das ruas"
+      - "AC-108: Nenhum alert; aviso não bloqueante"
+      - "AC-109: Console sem erros em campanha completa"
+      - "AC-110: Mensagem SEMAE_FIM_PARTIDA apenas na vitória e para a origem da página"
+      - "AC-111: Fontes <=200 linhas e index.html sem requisições externas"
+      - "AC-112: Teclado, foco visível e áudio somente após gesto"
+    tasks:
+      - "TASK-2026-003: Reescrita modular do Jogo do Leiturista (v4.0.0)"
+    files:
+      - path: "README.md"
+        ranges:
+          - start: 1
+            end: 124
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 5148
+      - path: "package.json"
+        ranges:
+          - start: 1
+            end: 16
+      - path: "scripts/construir.mjs"
+        ranges:
+          - start: 1
+            end: 51
+      - path: "scripts/limite-linhas.mjs"
+        ranges:
+          - start: 1
+            end: 48
+      - path: "scripts/verificar_limite_200_linhas.py"
+        ranges:
+          - start: 1
+            end: 65
+      - path: "src/css/ajuda.css"
+        ranges:
+          - start: 1
+            end: 12
+      - path: "src/css/base.css"
+        ranges:
+          - start: 1
+            end: 88
+      - path: "src/css/hud.css"
+        ranges:
+          - start: 1
+            end: 132
+      - path: "src/css/menu.css"
+        ranges:
+          - start: 1
+            end: 48
+      - path: "src/css/responsivo.css"
+        ranges:
+          - start: 1
+            end: 104
+      - path: "src/css/telas.css"
+        ranges:
+          - start: 1
+            end: 155
+      - path: "src/index.html"
+        ranges:
+          - start: 1
+            end: 147
+      - path: "src/js/app/botoes.js"
+        ranges:
+          - start: 1
+            end: 61
+      - path: "src/js/app/controlador.js"
+        ranges:
+          - start: 1
+            end: 152
+      - path: "src/js/app/eventos.js"
+        ranges:
+          - start: 1
+            end: 46
+      - path: "src/js/app/fluxo-resultado.js"
+        ranges:
+          - start: 1
+            end: 75
+      - path: "src/js/app/janela.js"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "src/js/audio/efeitos-sonoros.js"
+        ranges:
+          - start: 1
+            end: 37
+      - path: "src/js/audio/motor.js"
+        ranges:
+          - start: 1
+            end: 81
+      - path: "src/js/audio/musica.js"
+        ranges:
+          - start: 1
+            end: 30
+      - path: "src/js/cena-final/cena.js"
+        ranges:
+          - start: 1
+            end: 154
+      - path: "src/js/cena-final/desenho.js"
+        ranges:
+          - start: 1
+            end: 88
+      - path: "src/js/cena-final/roteiro.js"
+        ranges:
+          - start: 1
+            end: 37
+      - path: "src/js/config/constantes.js"
+        ranges:
+          - start: 1
+            end: 66
+      - path: "src/js/config/padroes.js"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "src/js/config/rotas.js"
+        ranges:
+          - start: 1
+            end: 79
+      - path: "src/js/config/temas.js"
+        ranges:
+          - start: 1
+            end: 90
+      - path: "src/js/config/uniformes.js"
+        ranges:
+          - start: 1
+            end: 17
+      - path: "src/js/entrada/entrada.js"
+        ranges:
+          - start: 1
+            end: 54
+      - path: "src/js/integracao/portal.js"
+        ranges:
+          - start: 1
+            end: 56
+      - path: "src/js/interface/ajuda.js"
+        ranges:
+          - start: 1
+            end: 80
+      - path: "src/js/interface/dom.js"
+        ranges:
+          - start: 1
+            end: 26
+      - path: "src/js/interface/hud.js"
+        ranges:
+          - start: 1
+            end: 61
+      - path: "src/js/interface/medalhas.js"
+        ranges:
+          - start: 1
+            end: 43
+      - path: "src/js/interface/mensagens.js"
+        ranges:
+          - start: 1
+            end: 54
+      - path: "src/js/interface/menu.js"
+        ranges:
+          - start: 1
+            end: 77
+      - path: "src/js/interface/resultado.js"
+        ranges:
+          - start: 1
+            end: 99
+      - path: "src/js/interface/telas.js"
+        ranges:
+          - start: 1
+            end: 35
+      - path: "src/js/nucleo/laco.js"
+        ranges:
+          - start: 1
+            end: 46
+      - path: "src/js/nucleo/prng.js"
+        ranges:
+          - start: 1
+            end: 28
+      - path: "src/js/nucleo/util.js"
+        ranges:
+          - start: 1
+            end: 33
+      - path: "src/js/persistencia/armazenamento.js"
+        ranges:
+          - start: 1
+            end: 61
+      - path: "src/js/persistencia/assinatura-legado.js"
+        ranges:
+          - start: 1
+            end: 50
+      - path: "src/js/persistencia/assinatura.js"
+        ranges:
+          - start: 1
+            end: 69
+      - path: "src/js/persistencia/gestor.js"
+        ranges:
+          - start: 1
+            end: 86
+      - path: "src/js/persistencia/leitura.js"
+        ranges:
+          - start: 1
+            end: 90
+      - path: "src/js/persistencia/progresso.js"
+        ranges:
+          - start: 1
+            end: 105
+      - path: "src/js/persistencia/salvamento.js"
+        ranges:
+          - start: 1
+            end: 78
+      - path: "src/js/principal.js"
+        ranges:
+          - start: 1
+            end: 98
+      - path: "src/js/render/camera.js"
+        ranges:
+          - start: 1
+            end: 54
+      - path: "src/js/render/cenario/casas.js"
+        ranges:
+          - start: 1
+            end: 156
+      - path: "src/js/render/cenario/ceu.js"
+        ranges:
+          - start: 1
+            end: 57
+      - path: "src/js/render/cenario/chao.js"
+        ranges:
+          - start: 1
+            end: 56
+      - path: "src/js/render/cenario/index.js"
+        ranges:
+          - start: 1
+            end: 103
+      - path: "src/js/render/cenario/silhuetas.js"
+        ranges:
+          - start: 1
+            end: 82
+      - path: "src/js/render/efeitos.js"
+        ranges:
+          - start: 1
+            end: 105
+      - path: "src/js/render/entidades.js"
+        ranges:
+          - start: 1
+            end: 88
+      - path: "src/js/render/primitivas.js"
+        ranges:
+          - start: 1
+            end: 93
+      - path: "src/js/render/renderizador.js"
+        ranges:
+          - start: 1
+            end: 95
+      - path: "src/js/render/sprites/cache.js"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "src/js/render/sprites/cao.js"
+        ranges:
+          - start: 1
+            end: 83
+      - path: "src/js/render/sprites/kombi.js"
+        ranges:
+          - start: 1
+            end: 65
+      - path: "src/js/render/sprites/leiturista.js"
+        ranges:
+          - start: 1
+            end: 118
+      - path: "src/js/render/sprites/medidor.js"
+        ranges:
+          - start: 1
+            end: 79
+      - path: "src/js/render/sprites/membros.js"
+        ranges:
+          - start: 1
+            end: 43
+      - path: "src/js/render/sprites/obstaculos.js"
+        ranges:
+          - start: 1
+            end: 118
+      - path: "src/js/render/sprites/powerups.js"
+        ranges:
+          - start: 1
+            end: 81
+      - path: "src/js/simulacao/cao.js"
+        ranges:
+          - start: 1
+            end: 50
+      - path: "src/js/simulacao/colisoes.js"
+        ranges:
+          - start: 1
+            end: 101
+      - path: "src/js/simulacao/criar.js"
+        ranges:
+          - start: 1
+            end: 117
+      - path: "src/js/simulacao/eventos.js"
+        ranges:
+          - start: 1
+            end: 17
+      - path: "src/js/simulacao/fases.js"
+        ranges:
+          - start: 1
+            end: 65
+      - path: "src/js/simulacao/fisica-jogador.js"
+        ranges:
+          - start: 1
+            end: 48
+      - path: "src/js/simulacao/geracao.js"
+        ranges:
+          - start: 1
+            end: 80
+      - path: "src/js/simulacao/kombi.js"
+        ranges:
+          - start: 1
+            end: 97
+      - path: "src/js/simulacao/medidores.js"
+        ranges:
+          - start: 1
+            end: 58
+      - path: "src/js/simulacao/passo.js"
+        ranges:
+          - start: 1
+            end: 109
+      - path: "src/js/simulacao/pontuacao.js"
+        ranges:
+          - start: 1
+            end: 69
+      - path: "src/js/simulacao/retomada.js"
+        ranges:
+          - start: 1
+            end: 77
+      - path: "src/js/simulacao/ruas.js"
+        ranges:
+          - start: 1
+            end: 53
+      - path: "tests/e2e/auxiliar/entrada-robo.js"
+        ranges:
+          - start: 1
+            end: 28
+      - path: "tests/e2e/cenarios/01-layout.mjs"
+        ranges:
+          - start: 1
+            end: 78
+      - path: "tests/e2e/cenarios/02-campanha.mjs"
+        ranges:
+          - start: 1
+            end: 62
+      - path: "tests/e2e/cenarios/03-hub.mjs"
+        ranges:
+          - start: 1
+            end: 55
+      - path: "tests/e2e/cenarios/04-giro-e-aba.mjs"
+        ranges:
+          - start: 1
+            end: 53
+      - path: "tests/e2e/cenarios/05-armazenamento.mjs"
+        ranges:
+          - start: 1
+            end: 69
+      - path: "tests/e2e/cenarios/06-teclado-audio.mjs"
+        ranges:
+          - start: 1
+            end: 85
+      - path: "tests/e2e/cenarios/07-offline.mjs"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "tests/e2e/cenarios/08-custo-quadro.mjs"
+        ranges:
+          - start: 1
+            end: 49
+      - path: "tests/e2e/cenarios/09-compat-v3.mjs"
+        ranges:
+          - start: 1
+            end: 44
+      - path: "tests/e2e/cenarios/10-retomada.mjs"
+        ranges:
+          - start: 1
+            end: 43
+      - path: "tests/e2e/executar.mjs"
+        ranges:
+          - start: 1
+            end: 58
+      - path: "tests/e2e/lib/navegador.mjs"
+        ranges:
+          - start: 1
+            end: 123
+      - path: "tests/e2e/lib/piloto-na-pagina.mjs"
+        ranges:
+          - start: 1
+            end: 23
+      - path: "tests/e2e/lib/servidor.mjs"
+        ranges:
+          - start: 1
+            end: 31
+      - path: "tests/mutacao/executar.mjs"
+        ranges:
+          - start: 1
+            end: 53
+      - path: "tests/mutacao/mutacoes.mjs"
+        ranges:
+          - start: 1
+            end: 96
+      - path: "tests/unidade/auxiliar/piloto.js"
+        ranges:
+          - start: 1
+            end: 59
+      - path: "tests/unidade/auxiliar/planejador.js"
+        ranges:
+          - start: 1
+            end: 93
+      - path: "tests/unidade/auxiliar/robo.js"
+        ranges:
+          - start: 1
+            end: 31
+      - path: "tests/unidade/camera.test.js"
+        ranges:
+          - start: 1
+            end: 41
+      - path: "tests/unidade/campanha.test.js"
+        ranges:
+          - start: 1
+            end: 59
+      - path: "tests/unidade/fisica.test.js"
+        ranges:
+          - start: 1
+            end: 109
+      - path: "tests/unidade/interface.test.js"
+        ranges:
+          - start: 1
+            end: 83
+      - path: "tests/unidade/persistencia.test.js"
+        ranges:
+          - start: 1
+            end: 133
+      - path: "tests/unidade/retomada.test.js"
+        ranges:
+          - start: 1
+            end: 83
+      - path: "tests/unidade/rotas.test.js"
+        ranges:
+          - start: 1
+            end: 42
+    evidence:
+      - "docs/evidencias/EVID-2026-003.md"
+      - "npm test: 42 testes aprovados; npm run testar:e2e: 10 cenários aprovados; tests/mutacao: 18 defeitos detectados"
+      - "python scripts/verificar_limite_200_linhas.py: PASS (107 arquivos)"
