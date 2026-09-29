@@ -9,7 +9,6 @@ import { passo } from '../simulacao/passo.js';
 import { pressionar, soltar } from '../simulacao/fisica-jogador.js';
 import { pularAbertura } from '../simulacao/kombi.js';
 import { fotografarPartida, restaurarPartida } from '../simulacao/retomada.js';
-import { UNIFORMES } from '../config/uniformes.js';
 import { criarDistribuidor } from './eventos.js';
 import { criarFluxoDeResultado } from './fluxo-resultado.js';
 
@@ -108,11 +107,6 @@ export function criarControlador(d) {
       gestor.alternarOpcao(campo);
       audio.garantir();
       audio.sincronizar();
-      atualizarMenu();
-    },
-    trocarUniforme() {
-      const idx = gestor.proximoUniforme();
-      mensagens.aviso(`Uniforme: ${UNIFORMES[idx].nome}`, 'ok', 2200);
       atualizarMenu();
     },
     animando: () => cena.ativa || estado.tela === 'menu' || (estado.tela === 'jogo' && !sim.pausado),

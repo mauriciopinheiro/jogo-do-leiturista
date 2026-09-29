@@ -18,6 +18,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sprites.recorte import ancora_x, chave_magenta, separar_quadros  # noqa: E402
+from sprites.uniforme import aplicar_azul_oficial  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parents[1]
 ORIGEM = RAIZ / "imagens"
@@ -44,6 +45,8 @@ UNIDADES_ALVO = {"leiturista": 92.0, "cao": 96.0}
 def carregar_quadros(folha: dict) -> list[dict]:
     rgb = np.asarray(Image.open(ORIGEM / folha["arquivo"]).convert("RGB"))
     quadros = separar_quadros(chave_magenta(rgb), folha["colunas"], folha["linhas"])
+    if folha["grupo"] != "cao":   # uniforme único na cor oficial do SEMAE (o cão não tem azul)
+        quadros = [aplicar_azul_oficial(q) for q in quadros]
     return [dict(img=q, px=ancora_x(q, folha["ancora"])) for q in quadros]
 
 

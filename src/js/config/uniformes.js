@@ -1,17 +1,18 @@
 /**
  * @file uniformes.js
- * @description Uniformes do leiturista, liberados pelo total de leituras vitalícias.
+ * @description Uniforme único do leiturista, na cor oficial do SEMAE: o azul do logotipo
+ * (#005E9F, mediana dos pixels azuis de Logo_completo.png). As ilustrações já trazem essa cor
+ * (scripts/sprites/uniforme.py); os valores abaixo servem ao desenho vetorial de reserva.
  */
+export const AZUL_SEMAE = '#005E9F';
 
-export const UNIFORMES = [
-  { nome: 'Azul SEMAE Clássico', exige: 0, camisa: '#1351B4', calca: '#0C326F', bone: '#083F73', faixa: '#FFCD07', rastro: '#37a8e8' },
-  { nome: 'Colete Amarelo Operacional', exige: 25, camisa: '#f0b429', calca: '#0C326F', bone: '#1351B4', faixa: '#ffffff', rastro: '#ffe36d' },
-  { nome: 'Boné Vermelho ETE', exige: 60, camisa: '#147a5b', calca: '#0e4a37', bone: '#d84242', faixa: '#ffffff', rastro: '#ff7a69' },
-  { nome: 'Equipe Verde Meio Ambiente', exige: 120, camisa: '#2a9d58', calca: '#17324d', bone: '#1351B4', faixa: '#FFCD07', rastro: '#69db8b' },
-  { nome: 'Refletivo Noturno SEMAE', exige: 250, camisa: '#263a50', calca: '#111b27', bone: '#f4d35e', faixa: '#5FDCF2', rastro: '#d8f3ff' }
-];
+export const UNIFORME = {
+  nome: 'Uniforme SEMAE',
+  camisa: AZUL_SEMAE,
+  calca: '#00385F',
+  bone: '#004A7C',
+  faixa: '#FFCD07'
+};
 
-/** Índices dos uniformes já liberados para o total de leituras informado. */
-export function uniformesLiberados(leituras) {
-  return UNIFORMES.map((u, i) => (leituras >= u.exige ? i : -1)).filter((i) => i >= 0);
-}
+/** A v3.4.0 gravava o índice de 5 uniformes no save (`selectedSkin`, 0 a 4); hoje só é aceito e ignorado. */
+export const UNIFORMES_DA_V3 = 5;

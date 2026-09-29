@@ -105,7 +105,7 @@
 .btn-icone[aria-pressed="false"] { color: var(--texto-suave); }
 .btn-icone[aria-pressed="false"] .icone { opacity: 0.55; }
 
-.linha-icones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.linha-icones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .pilha { display: grid; gap: 10px; }
 
 /* Resultado. */

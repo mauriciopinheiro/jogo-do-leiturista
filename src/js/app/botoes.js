@@ -24,7 +24,6 @@ export function ligarBotoes({ el, controlador, gestor, mensagens, menu, telas, j
   ao(el.btnInfinito, () => controlador.iniciar(4, true));
   ao(el.btnMusica, () => controlador.alternar('musica'));
   ao(el.btnEfeitos, () => controlador.alternar('efeitos'));
-  ao(el.btnUniforme, () => controlador.trocarUniforme());
   ao(el.btnRever, () => controlador.iniciarFinal(true));
   ao(el.btnAjuda, () => telas.mostrar('ajuda'));
   ao(el.btnPausaAjuda, () => telas.mostrar('ajuda'));

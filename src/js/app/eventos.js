@@ -4,7 +4,6 @@
  * A simulação só emite; quem reage é decidido aqui.
  */
 import { tocarEvento } from '../audio/efeitos-sonoros.js';
-import { UNIFORMES } from '../config/uniformes.js';
 
 /**
  * @param {object} d { sim, audio, renderizador, mensagens, gestor, aoVitoria, aoDerrota, aoPulos }
@@ -22,8 +21,7 @@ export function criarDistribuidor(d) {
         d.mensagens.anunciar(e.sub ? `${e.titulo}. ${e.sub}` : e.titulo);
         break;
       case 'leitura': {
-        const novo = d.gestor.registrarLeitura();
-        if (novo !== null) d.mensagens.aviso(`Novo uniforme liberado: ${UNIFORMES[novo].nome}!`, 'ok', 3400);
+        d.gestor.registrarLeitura();
         if (e.perfeita) vibrar(20);
         break;
       }

@@ -4,7 +4,7 @@
  * power-ups, placas, cão e leiturista, com auras de Flow/escudo.
  */
 import { JOGADOR, CAO } from '../config/constantes.js';
-import { UNIFORMES } from '../config/uniformes.js';
+import { UNIFORME } from '../config/uniformes.js';
 import { elipse } from './primitivas.js';
 import { desenharLeiturista } from './sprites/leiturista.js';
 import { desenharCao } from './sprites/cao.js';
@@ -73,7 +73,7 @@ function auras(ctx, sim, cx, cy, relogio) {
 }
 
 /** @param {object} pose { pose, fase } sobrescreve a pose da corrida (usado no menu e na cena final) */
-export function desenharJogador(ctx, sim, chaoY, uniformeIdx, relogio, k, pose = null) {
+export function desenharJogador(ctx, sim, chaoY, relogio, k, pose = null) {
   const j = sim.jogador;
   if (!j.visivel) return;
   const escala = Math.max(0.25, 1 - j.alt / 200);
@@ -82,14 +82,14 @@ export function desenharJogador(ctx, sim, chaoY, uniformeIdx, relogio, k, pose =
   ctx.save();
   if (j.machucado > 0 && Math.floor(j.machucado / 0.07) % 2 === 0) ctx.globalAlpha = 0.4;
   const dados = {
-    uniforme: uniformeIdx, fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, pose: pose?.pose || 'corre',
+    fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, pose: pose?.pose || 'corre',
     machucado: j.machucado > 0, amassando: j.amassar > 0.06, tempo: relogio
   };
   ctx.translate(j.x + 22.5, chaoY - j.alt);
   if (!pintarLeituristaIlustrado(ctx, k, { ...dados, x: 0, y: 0 })) {
     ctx.scale(1 + amassado, 1 - amassado);
     ctx.translate(-22.5, -JOGADOR.altura + (j.noChao ? Math.abs(Math.sin(j.fasePerna)) * -1.6 : 0));
-    desenharLeiturista(ctx, { ...dados, uniforme: UNIFORMES[uniformeIdx] || UNIFORMES[0], olhoFechado: j.machucado > 0 });
+    desenharLeiturista(ctx, { ...dados, uniforme: UNIFORME, olhoFechado: j.machucado > 0 });
   }
   ctx.restore();
   auras(ctx, sim, j.x + 24, chaoY - j.alt - 38, relogio);

@@ -5,10 +5,7 @@ import {
   escolherQuadroLeiturista, escolherQuadroCao
 } from '../../src/js/render/ilustracoes/quadros.js';
 import { pintarQuadro } from '../../src/js/render/ilustracoes/quadro.js';
-import {
-  hexParaHsv, rgbParaHsv, hsvParaRgb, receitaDoUniforme, recolorirAtlas
-} from '../../src/js/render/ilustracoes/recolorir.js';
-import { UNIFORMES } from '../../src/js/config/uniformes.js';
+import { UNIFORME, AZUL_SEMAE, UNIFORMES_DA_V3 } from '../../src/js/config/uniformes.js';
 import { SPRITES } from '../../src/js/config/quadros-sprites.js';
 
 const base = { pose: 'corre', fase: 0, noAr: false, vy: 0, machucado: false, amassando: false, tempo: 0 };
@@ -98,73 +95,9 @@ test('AC-201: espelhar vira o personagem em torno do pé; sem espelhar, não', (
   assert.ok(!chamadas.some((c) => Array.isArray(c) && c[0] === 'scale'));
 });
 
-/** Célula sintética com as regiões do uniforme clássico da arte (tons medidos nos quadros reais). */
-function celulaSintetica() {
-  const largura = 40;
-  const altura = 100;
-  const dados = new Uint8ClampedArray(largura * altura * 4);
-  const faixas = {
-    bone: [[7, 72, 161], 6, 24], pele: [[224, 160, 90], 28, 36], camisa: [[11, 91, 206], 40, 48],
-    faixa: [[255, 205, 7], 50, 54], camisaSombra: [[5, 57, 132], 56, 62], calca: [[9, 49, 107], 70, 90],
-    contorno: [[6, 15, 43], 92, 96], telefone: [[110, 200, 235], 64, 68]
-  };
-  for (const [, [cor, y0, y1]] of Object.entries(faixas)) {
-    for (let y = y0; y < y1; y++) for (let x = 5; x < 35; x++) {
-      const i = (y * largura + x) * 4;
-      dados.set([...cor, 255], i);
-    }
-  }
-  const pixel = (dados2, nome, x = 20) => { const [, y0] = faixas[nome]; const i = (y0 * largura + x) * 4; return Array.from(dados2.slice(i, i + 3)); };
-  return { dados, largura, altura, pixel };
-}
-
-test('AC-203: o uniforme clássico não altera nada e os outros trocam só o azul', () => {
-  assert.equal(receitaDoUniforme(UNIFORMES[0], UNIFORMES[0]), null);
-  const c = celulaSintetica();
-  const original = Uint8ClampedArray.from(c.dados);
-  const amarelo = receitaDoUniforme(UNIFORMES[1], UNIFORMES[0]);
-  recolorirAtlas(c.dados, c.largura, c.altura, [c.largura, c.altura], amarelo);
-  for (const intocado of ['pele', 'contorno', 'telefone']) {
-    assert.deepEqual(c.pixel(c.dados, intocado), c.pixel(original, intocado), `${intocado} não deve mudar`);
-  }
-  const camisa = rgbParaHsv(...c.pixel(c.dados, 'camisa'));
-  assert.ok(camisa.h > 35 && camisa.h < 52, `camisa amarela, matiz ${camisa.h}`);
-  const faixa = c.pixel(c.dados, 'faixa');
-  assert.ok(faixa.every((v) => v > 235), `a faixa do colete amarelo é branca: ${faixa}`);
-  assert.notDeepEqual(c.pixel(c.dados, 'camisa'), c.pixel(original, 'camisa'));
-});
-
-test('AC-203: os cinco uniformes geram imagens distintas entre si', () => {
-  const resultados = UNIFORMES.map((u) => {
-    const c = celulaSintetica();
-    const receita = receitaDoUniforme(u, UNIFORMES[0]);
-    if (receita) recolorirAtlas(c.dados, c.largura, c.altura, [c.largura, c.altura], receita);
-    return c.dados;
-  });
-  for (let a = 0; a < resultados.length; a++) for (let b = a + 1; b < resultados.length; b++) {
-    let soma = 0;
-    for (let i = 0; i < resultados[a].length; i++) soma += Math.abs(resultados[a][i] - resultados[b][i]);
-    const media = soma / resultados[a].length;
-    assert.ok(media > 4, `uniformes ${a} e ${b} muito parecidos (diferença média ${media.toFixed(2)})`);
-  }
-});
-
-test('a recolorização usa o boné só no alto da figura e a calça só embaixo', () => {
-  const c = celulaSintetica();
-  recolorirAtlas(c.dados, c.largura, c.altura, [c.largura, c.altura], receitaDoUniforme(UNIFORMES[4], UNIFORMES[0]));
-  const bone = rgbParaHsv(...c.pixel(c.dados, 'bone'));
-  const calca = rgbParaHsv(...c.pixel(c.dados, 'calca'));
-  assert.ok(bone.h > 40 && bone.h < 55 && bone.v > 0.6, `boné amarelo no uniforme noturno: ${JSON.stringify(bone)}`);
-  assert.ok(calca.v < 0.25, `calça escura no uniforme noturno: ${JSON.stringify(calca)}`);
-});
-
-test('conversões HSV são consistentes (ida e volta) e hex é lido corretamente', () => {
-  const saida = [0, 0, 0];
-  for (const rgb of [[255, 0, 0], [12, 200, 90], [30, 60, 200], [128, 128, 128], [255, 205, 7]]) {
-    const { h, s, v } = rgbParaHsv(...rgb);
-    hsvParaRgb(h, s, v, saida);
-    assert.deepEqual(saida, rgb);
-  }
-  const { h, s, v } = hexParaHsv('#ffcd07');
-  assert.ok(Math.abs(h - 48) < 1 && s > 0.97 && v === 1);
+test('REQ-209: o uniforme é um só e usa o azul oficial do SEMAE (logotipo, #005E9F)', () => {
+  assert.equal(AZUL_SEMAE, '#005E9F');
+  assert.equal(UNIFORME.camisa, AZUL_SEMAE);
+  assert.ok(!Array.isArray(UNIFORME), 'não há lista de uniformes para escolher');
+  assert.equal(UNIFORMES_DA_V3, 5, 'saves da v3 podem trazer selectedSkin de 0 a 4 e continuam aceitos');
 });

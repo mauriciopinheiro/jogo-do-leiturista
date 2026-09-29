@@ -5,7 +5,7 @@
  */
 import { ID_APP, VERSAO_APP, ESQUEMA_SAVE } from '../config/constantes.js';
 import { ROTAS_SEMAE } from '../config/rotas.js';
-import { UNIFORMES } from '../config/uniformes.js';
+import { UNIFORMES_DA_V3 } from '../config/uniformes.js';
 import { ehNumeroFinito } from '../nucleo/util.js';
 import { sha256, fnv1a } from './assinatura.js';
 import { sha256LegadoV3 } from './assinatura-legado.js';
@@ -49,7 +49,7 @@ function partidaValida(p) {
 
 function estadoValido(e) {
   return naoNegativo(e.lifetimeReadings) && naoNegativo(e.best) && naoNegativo(e.endlessBest) &&
-    Number.isInteger(e.selectedSkin) && e.selectedSkin >= 0 && e.selectedSkin < UNIFORMES.length &&
+    Number.isInteger(e.selectedSkin) && e.selectedSkin >= 0 && e.selectedSkin < UNIFORMES_DA_V3 &&
     Number.isInteger(e.maxUnlockedFase) && e.maxUnlockedFase >= 1 && e.maxUnlockedFase <= QTD_ROTAS &&
     Array.isArray(e.bestByPhase) && e.bestByPhase.length === QTD_ROTAS && e.bestByPhase.every(naoNegativo) &&
     Array.isArray(e.phaseResults) && e.phaseResults.length === QTD_ROTAS && e.phaseResults.every(resultadoDeFaseValido) &&

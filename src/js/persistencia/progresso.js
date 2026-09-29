@@ -5,7 +5,6 @@
  */
 import { limitar } from '../nucleo/util.js';
 import { ROTAS_SEMAE } from '../config/rotas.js';
-import { UNIFORMES } from '../config/uniformes.js';
 
 const QTD_ROTAS = ROTAS_SEMAE.length;
 
@@ -19,7 +18,6 @@ export function progressoInicial() {
     finalVisto: false,
     ultimasEstatisticas: null,
     resultadosFases: Array(QTD_ROTAS).fill(null),
-    uniforme: 0,
     faseMaxLiberada: 1,
     musica: true,
     efeitos: true,
@@ -38,7 +36,7 @@ export function paraEstado(p) {
     grandFinaleSeen: p.finalVisto,
     lastCampaignStats: p.ultimasEstatisticas,
     phaseResults: p.resultadosFases,
-    selectedSkin: p.uniforme,
+    selectedSkin: 0,
     maxUnlockedFase: limitar(p.faseMaxLiberada, 1, QTD_ROTAS),
     musicOn: p.musica,
     sfxOn: p.efeitos,
@@ -57,7 +55,6 @@ export function deEstado(e) {
     finalVisto: e.grandFinaleSeen,
     ultimasEstatisticas: e.lastCampaignStats,
     resultadosFases: e.phaseResults.map((r) => (r ? { ...r } : null)),
-    uniforme: limitar(e.selectedSkin, 0, UNIFORMES.length - 1),
     faseMaxLiberada: limitar(e.maxUnlockedFase, 1, QTD_ROTAS),
     musica: e.musicOn,
     efeitos: e.sfxOn,

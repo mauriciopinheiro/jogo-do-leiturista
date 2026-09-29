@@ -33,7 +33,7 @@ export default {
       await nav.navegar(ctx.url);
       await ctx.esperar(800);
       const v4 = await nav.avaliar(`(() => { const g = window.__leiturista.gestor; return { origem: g.origem, recusado: g.recusado,
-        melhor: g.progresso.melhor, leituras: g.progresso.leiturasVitalicias, uniforme: g.progresso.uniforme, liberada: g.progresso.faseMaxLiberada }; })()`);
+        melhor: g.progresso.melhor, leituras: g.progresso.leiturasVitalicias, liberada: g.progresso.faseMaxLiberada }; })()`);
       ctx.verificar(v4.origem === 'v2' && v4.recusado === null, `a v4 recusou o save da v3: ${JSON.stringify(v4)}`);
       ctx.verificar(v4.melhor === salvo.estado.best, `melhor pontuação ${v4.melhor} != ${salvo.estado.best}`);
       ctx.verificar(v4.leituras === salvo.estado.lifetimeReadings, `leituras ${v4.leituras} != ${salvo.estado.lifetimeReadings}`);

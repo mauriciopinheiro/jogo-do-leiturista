@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { ROTAS_SEMAE, TOTAL_CAMPANHA } from '../../src/js/config/rotas.js';
 import { PADROES } from '../../src/js/config/padroes.js';
 import { montarLista } from '../../src/js/simulacao/medidores.js';
-import { uniformesLiberados } from '../../src/js/config/uniformes.js';
 
 test('AC-107: o total de cada rota é a soma das suas ruas', () => {
   for (const rota of ROTAS_SEMAE) {
@@ -33,10 +32,4 @@ test('os padrões têm ids únicos e medidas coerentes', () => {
     for (const item of p.itens) assert.ok(item.dx >= 0 && item.dx < p.fim, `${p.id} dx`);
   }
   assert.ok(PADROES.some((p) => p.nivel === 0 && p.itens.some((i) => i.tipo === 'medidor')));
-});
-
-test('uniformes são liberados por leituras vitalícias', () => {
-  assert.deepEqual(uniformesLiberados(0), [0]);
-  assert.deepEqual(uniformesLiberados(60), [0, 1, 2]);
-  assert.deepEqual(uniformesLiberados(999), [0, 1, 2, 3, 4]);
 });

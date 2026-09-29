@@ -7,7 +7,7 @@ import { calcularLayout } from './camera.js';
 import { criarCenario, desenharCenario, chaveDoCenario } from './cenario/index.js';
 import { criarEfeitos, efeitoDoEvento } from './efeitos.js';
 import { limparSprites } from './sprites/cache.js';
-import { limparAtlasEscalados, prepararUniforme } from './ilustracoes/atlas.js';
+import { limparAtlasEscalados, prepararAtlas } from './ilustracoes/atlas.js';
 import { criarTela } from './primitivas.js';
 import { desenharCarga, desenharKombiDaCena, desenharCaoDaCena, desenharJogador } from './entidades.js';
 
@@ -26,10 +26,10 @@ function criarVinheta(layout) {
 }
 
 /**
- * @param {{canvas:HTMLCanvasElement, sim:object, obterUniforme:()=>number,
+ * @param {{canvas:HTMLCanvasElement, sim:object,
  *   reduzirMovimento:boolean, leve:boolean}} deps
  */
-export function criarRenderizador({ canvas, sim, obterUniforme, reduzirMovimento, leve }) {
+export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
   const ctx = canvas.getContext('2d', { alpha: false });
   const efeitos = criarEfeitos({ reduzirMovimento, leve });
   let layout = null;
@@ -52,9 +52,9 @@ export function criarRenderizador({ canvas, sim, obterUniforme, reduzirMovimento
       limparAtlasEscalados();
       return layout;
     },
-    /** Gera antes da corrida as variantes do uniforme em uso (evita engasgo ao começar). */
+    /** Gera antes da corrida os atlas na resolução da tela (evita engasgo ao começar). */
     prepararPersonagens() {
-      if (layout) prepararUniforme(obterUniforme(), layout.escala * layout.pxRatio);
+      if (layout) prepararAtlas(layout.escala * layout.pxRatio);
     },
     atualizar(dt) {
       relogio += dt;
@@ -85,7 +85,7 @@ export function criarRenderizador({ canvas, sim, obterUniforme, reduzirMovimento
         if (sim.kombi.visivel) desenharKombiDaCena(ctx, sim.kombi, chaoY, relogio, sim.subestagio !== 'embarque', k);
         desenharCarga(ctx, sim, chaoY, k, relogio);
         if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio, k);
-        desenharJogador(ctx, sim, chaoY, obterUniforme(), relogio, k);
+        desenharJogador(ctx, sim, chaoY, relogio, k);
       }
       efeitos.desenhar(ctx);
       ctx.restore();

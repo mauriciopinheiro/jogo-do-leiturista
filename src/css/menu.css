@@ -35,7 +35,6 @@
 .rota-detalhe .ruas { color: var(--texto); font-size: 0.8rem; margin-top: 2px; overflow-wrap: anywhere; }
 .rota-detalhe .recorde { color: var(--amarelo); font-size: 0.9rem; font-weight: 800; }
 
-.btn-icone canvas { width: 34px; height: 34px; display: block; }
 .mais { margin-top: 4px; border-radius: 12px; border: 1px solid var(--borda); background: rgba(255, 255, 255, 0.03); }
 .mais summary { min-height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 0.86rem; font-weight: 700; color: var(--texto-suave); cursor: pointer; list-style: none; }
 .mais summary::-webkit-details-marker { display: none; }

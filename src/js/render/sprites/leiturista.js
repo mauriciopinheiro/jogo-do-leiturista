@@ -4,6 +4,7 @@
  * Poses: corrida, parado, ajoelhado, afagando, colocando a tigela, andando (com ou sem cão).
  */
 import { arredondado, circulo, linha, elipse, misturarCor } from '../primitivas.js';
+import { UNIFORME } from '../../config/uniformes.js';
 import { braco, pernaAjoelhada, pernaDeCorrida, pernaNoAr } from './membros.js';
 
 const PELE = '#d9a877';
@@ -82,7 +83,7 @@ function cabeca(ctx, u, inclinacao, olhoFechado) {
  * @param {object} o { uniforme, fase, noAr, vy, pose, inclinacao, olhoFechado }
  */
 export function desenharLeiturista(ctx, o) {
-  const u = o.uniforme;
+  const u = o.uniforme || UNIFORME;
   const ajoelhado = o.pose === 'ajoelhado' || o.pose === 'afaga' || o.pose === 'tigela';
   const quadrilY = ajoelhado ? 58 : 57;
   const traseiro = { x: 18, y: quadrilY };

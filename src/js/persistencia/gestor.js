@@ -5,7 +5,6 @@
  * máximo uma gravação pendente, para nunca causar engasgo no laço.
  */
 import { CHAVE_SAVE, LIMITE_SAVE_BYTES } from '../config/constantes.js';
-import { uniformesLiberados, UNIFORMES } from '../config/uniformes.js';
 import { carregarProgresso, interpretarSalvamento } from './leitura.js';
 import { registrarResultado } from './progresso.js';
 import { deEstado } from './progresso.js';
@@ -40,13 +39,11 @@ export function criarGestor(armazenamento, relogio = {}) {
       if (pendente !== null) return;
       pendente = agendar(() => { pendente = null; gestor.salvarAgora(); }, ms);
     },
-    /** Conta uma leitura vitalícia. @returns {number|null} índice do uniforme recém-liberado */
+    /** Conta uma leitura vitalícia (o total continua no save por compatibilidade com a v3.4.0). */
     registrarLeitura() {
       const p = gestor.progresso;
       p.leiturasVitalicias += 1;
       if (p.leiturasVitalicias % 5 === 0) gestor.agendarSalvamento();
-      const novo = UNIFORMES.findIndex((u) => u.exige === p.leiturasVitalicias && u.exige > 0);
-      return novo >= 0 ? novo : null;
     },
     registrarFimDeRota(resumo) {
       const r = registrarResultado(gestor.progresso, resumo);
@@ -60,13 +57,6 @@ export function criarGestor(armazenamento, relogio = {}) {
       gestor.progresso[campo] = !gestor.progresso[campo];
       gestor.agendarSalvamento(100);
       return gestor.progresso[campo];
-    },
-    proximoUniforme() {
-      const liberados = uniformesLiberados(gestor.progresso.leiturasVitalicias);
-      const pos = liberados.indexOf(gestor.progresso.uniforme);
-      gestor.progresso.uniforme = liberados[(pos + 1) % liberados.length];
-      gestor.agendarSalvamento(100);
-      return gestor.progresso.uniforme;
     },
     exportarTexto() {
       const partida = gestor.fotografarPartida();

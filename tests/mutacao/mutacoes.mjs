@@ -104,14 +104,14 @@ export const MUTACOES = [
     descricao: 'na cena final o leiturista andaria de costas (sem virar para a esquerda)'
   },
   {
-    id: 'uniforme-classico-recolorido', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/recolorir.js',
-    de: 'if (!u || u === classico) return null;', para: 'if (!u) return null;',
-    descricao: 'o uniforme azul clássico seria recolorido e perderia as cores da arte original'
+    id: 'save-com-uniforme-da-v3-recusado', tipo: 'unidade', testes: ['persistencia.test.js'], arquivo: 'src/js/persistencia/salvamento.js',
+    de: 'e.selectedSkin < UNIFORMES_DA_V3', para: 'e.selectedSkin < 1',
+    descricao: 'quem jogou a v3 com outro uniforme perderia o progresso ao abrir a v4'
   },
   {
-    id: 'uniforme-bone-nao-muda', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/recolorir.js',
-    de: "if (yRel < 0.36) return v >= 0.45 ? 'bone' : null;", para: "if (yRel < 0) return v >= 0.45 ? 'bone' : null;",
-    descricao: 'o boné ficaria sempre azul, mesmo no Boné Vermelho ETE e no Refletivo Noturno'
+    id: 'menu-ainda-troca-uniforme', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/index.html',
+    de: '<button class="btn-icone" id="btnAjuda"', para: '<button class="btn-icone" id="btnUniforme" type="button"><span>Uniforme</span></button><button class="btn-icone" id="btnAjuda"',
+    descricao: 'o botão de trocar uniforme voltaria ao menu (o uniforme deve ser um só)'
   },
   {
     id: 'ilustracao-com-falha-derruba-o-jogo', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/js/render/ilustracoes/atlas.js',

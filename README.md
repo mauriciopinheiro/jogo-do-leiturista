@@ -53,11 +53,11 @@ Estrutura (todo arquivo manual tem no máximo 200 linhas):
 ```
 src/index.html         modelo da página (marcadores <!--CSS--> e <!--JS-->)
 src/css/               base, hud, telas, menu, ajuda, responsivo
-src/js/config/         constantes, rotas, padrões de percurso, temas, uniformes
+src/js/config/         constantes, rotas, padrões de percurso, temas, uniforme (cor oficial)
 src/js/simulacao/      regras do jogo SEM DOM: física, cão, geração, colisões, ruas, Kombi, retomada
 src/js/persistencia/   assinatura, armazenamento, save v2, migração v1, gestor
 src/js/render/         câmera responsiva, cenário em camadas pré-renderizadas, sprites vetoriais, efeitos
-src/js/render/ilustracoes/  personagens ilustrados: escolha de quadro, recolorização dos uniformes, atlas
+src/js/render/ilustracoes/  personagens ilustrados: escolha de quadro, espelhamento, atlas
 src/assets/            atlas WebP dos personagens (embutidos no HTML como data URI pelo build)
 src/js/cena-final/     retrospectiva e encerramento narrativo
 src/js/audio/          motor Web Audio, efeitos, música procedural
@@ -76,13 +76,17 @@ versoes-preservadas/   v3.4.0 que estava no ar (com SHA-256) e o README antigo
 O leiturista e o cão usam ilustrações **geradas por inteligência artificial (ChatGPT) a pedido do
 demandante** (CTI/SEMAE), a partir de um roteiro de instruções de arte. Os originais (PNG com fundo
 magenta) ficam em `imagens/`, **fora do Git** (SPEC-2026-004, Q-202); o jogo usa só os recortes
-otimizados em `src/assets/*.webp` (5 atlas, ~460 KB, cada um ≤300 KB), embutidos no `index.html`.
+otimizados em `src/assets/*.webp` (5 atlas, ~457 KB, cada um ≤300 KB), embutidos no `index.html`.
 Pendência: política institucional sobre uso e crédito de imagens geradas por IA (Q-201).
 
 - Para regerar os atlas: `python scripts/preparar_sprites.py` (lê `imagens/`, remove o fundo, alinha os pés,
   escreve `src/assets/` e `src/js/config/quadros-sprites.js`), depois `npm run verificar:sprites`.
-- Os 5 uniformes usam a mesma arte: o azul (boné, camisa, calça/mochila) e a faixa refletiva são
-  recoloridos uma vez por uniforme em tempo de execução (`render/ilustracoes/recolorir.js`).
+- **Uniforme único** na cor oficial do SEMAE: a camisa é o azul do logotipo (`#005E9F`, medido em
+  `Logo_completo.png`). A cor é aplicada na própria arte durante a preparação dos sprites
+  (`scripts/sprites/uniforme.py`: uma transformação de matiz/brilho para todo o azul da arte, o que mantém
+  boné e calça mais escuros que a camisa, sombras e contornos); a faixa refletiva continua amarela. Não há
+  mais troca nem desbloqueio de uniformes; saves antigos com outro uniforme continuam aceitos e o valor é
+  ignorado. Para mudar a cor: `AZUL_OFICIAL` em `uniforme.py` e `AZUL_SEMAE` em `config/uniformes.js`.
 - Reserva: se as imagens não carregarem, o jogo continua com o desenho vetorial (testado com as imagens
   bloqueadas). Kombi, hidrômetros, obstáculos e power-ups (vetoriais) ganharam contorno escuro para
   combinar com as ilustrações.
@@ -120,8 +124,8 @@ enviava nada). Derrota, modo infinito e execução fora de `iframe` não enviam.
 - O cenário é pré-renderizado em camadas e copiado 1:1 em pixels do dispositivo (cerca de 0,1 ms por
   camada, até sem GPU). A simulação avança por tempo decorrido em passos de no máximo 1/60 s.
 - Medido sem GPU (pior caso), custo médio por quadro (varia até ~30% entre execuções nesta máquina):
-  v4.1.0: desktop 1920×1080 3,8–5,3 ms; notebook ≈2,1 ms; celular em pé ≈2,3 ms; celular deitado ≈2,9 ms;
-  tablet ≈3,4 ms (limite do teste: 4,5 ms). A v3.4.0, na mesma medição: 2,4 / 2,3 / 2,5 / 7,2 / 5,3 ms
+  v4.1.0: desktop 1920×1080 3,8–5,3 ms; notebook ≈2,2 ms; celular em pé ≈2,3 ms; celular deitado ≈3,0 ms;
+  tablet ≈3,9 ms (limite do teste: 4,5 ms). A v3.4.0, na mesma medição: 2,4 / 2,3 / 2,5 / 7,2 / 5,3 ms
   (desktop, notebook, em pé, deitado, tablet).
 - Pontos de quebra verificados: 1600, 1280, 1080, 960, 700, 430 e 360 px, em pé e deitado.
 
@@ -131,7 +135,7 @@ headless com rasterização por CPU como aproximação do pior caso.
 ## Histórico de versões
 
 - **4.1.0 (2026-09-29)** — personagens ilustrados (leiturista e cão animados por quadros, poses da cena
-  final), uniformes recoloridos em tempo de execução, contorno escuro no vetorial (Kombi, hidrômetros,
+  final), uniforme único na cor oficial do SEMAE (sem troca de uniformes), contorno escuro no vetorial (Kombi, hidrômetros,
   obstáculos, power-ups), coreografia da cena final centrada na tela e sem emendas no chão com zoom.
   Ver `docs/specs/SPEC-2026-004…` e `docs/evidencias/EVID-2026-004.md`.
 - **4.0.0 (2026-09-29)** — reescrita modular; arte nova; HUD compacto; canvas proporcional à tela; layout

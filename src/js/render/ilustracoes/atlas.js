@@ -1,17 +1,14 @@
 /**
  * @file atlas.js
- * @description Carrega os atlas ilustrados, gera as variantes de uniforme (recolorização única por
- * uniforme) e as versões pré-escaladas para a resolução da tela. Enquanto as imagens não estiverem
- * prontas — ou se falharem — `obterQuadro` devolve null e o jogo usa o desenho vetorial.
+ * @description Carrega os atlas ilustrados (já na cor oficial do uniforme) e os pré-escala para a
+ * resolução da tela. Enquanto as imagens não estiverem prontas — ou se falharem — `obterQuadro`
+ * devolve null e o jogo usa o desenho vetorial de reserva.
  */
 import { SPRITES } from '../../config/quadros-sprites.js';
-import { UNIFORMES } from '../../config/uniformes.js';
 import { criarTela } from '../primitivas.js';
 import { ARQUIVOS } from './arquivos.js';
-import { receitaDoUniforme, recolorirAtlas } from './recolorir.js';
 
-const GRUPOS_COM_UNIFORME = new Set(['leiturista', 'final']);
-const estado = { imagens: new Map(), pronta: false, falhou: false, variantes: new Map(), escalados: new Map() };
+const estado = { imagens: new Map(), pronta: false, falhou: false, escalados: new Map() };
 
 function carregarImagem(janela, url) {
   return new Promise((resolver, rejeitar) => {
@@ -34,29 +31,9 @@ export function ilustracoesProntas() {
   return estado.pronta;
 }
 
-/** Fonte de pixels da folha para o uniforme: imagem original ou variante recolorida. */
-function fonteDaFolha(nome, uniforme) {
-  const meta = SPRITES.folhas[nome];
-  const imagem = estado.imagens.get(nome);
-  const receita = GRUPOS_COM_UNIFORME.has(meta.grupo) ? receitaDoUniforme(UNIFORMES[uniforme], UNIFORMES[0]) : null;
-  if (!receita) return imagem;
-  const chave = `${nome}|${uniforme}`;
-  let tela = estado.variantes.get(chave);
-  if (!tela) {
-    tela = criarTela(imagem.naturalWidth, imagem.naturalHeight);
-    const ctx = tela.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(imagem, 0, 0);
-    const dados = ctx.getImageData(0, 0, tela.width, tela.height);
-    recolorirAtlas(dados.data, tela.width, tela.height, meta.celula, receita);
-    ctx.putImageData(dados, 0, 0);
-    estado.variantes.set(chave, tela);
-  }
-  return tela;
-}
-
 /** Atlas reduzido para `k` pixels por unidade, com células de tamanho inteiro (cópia 1:1 depois). */
-function atlasEscalado(nome, uniforme, k) {
-  const chave = `${nome}|${uniforme}|${k.toFixed(3)}`;
+function atlasEscalado(nome, k) {
+  const chave = `${nome}|${k.toFixed(3)}`;
   let atlas = estado.escalados.get(chave);
   if (atlas) return atlas;
   const meta = SPRITES.folhas[nome];
@@ -69,7 +46,7 @@ function atlasEscalado(nome, uniforme, k) {
   const tela = criarTela(cw * meta.colunas, ch * linhas);
   const ctx = tela.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
-  const fonte = fonteDaFolha(nome, uniforme);
+  const fonte = estado.imagens.get(nome);
   for (let i = 0; i < meta.quadros; i++) {
     const c = i % meta.colunas;
     const l = Math.floor(i / meta.colunas);
@@ -84,20 +61,20 @@ function atlasEscalado(nome, uniforme, k) {
  * @returns {{tela, sx, sy, cw, ch, u, px, py}|null} `u` = unidades do jogo por pixel do quadro;
  * o pivô (pé) está em (px, py) pixels do quadro.
  */
-export function obterQuadro(nome, quadro, uniforme, k) {
+export function obterQuadro(nome, quadro, k) {
   if (!estado.pronta) return null;
-  const a = atlasEscalado(nome, uniforme, k);
+  const a = atlasEscalado(nome, k);
   const colunas = SPRITES.folhas[nome].colunas;
   return { tela: a.tela, sx: (quadro % colunas) * a.cw, sy: Math.floor(quadro / colunas) * a.ch, cw: a.cw, ch: a.ch, u: a.u, px: a.px, py: a.py };
 }
 
-/** Prepara (fora do quadro de jogo) as variantes do uniforme, para não travar ao começar a correr. */
-export function prepararUniforme(uniforme, k) {
+/** Prepara (fora do quadro de jogo) os atlas do leiturista e da cena final na resolução da tela. */
+export function prepararAtlas(k) {
   if (!estado.pronta) return;
-  for (const nome of ['leiturista-corrida', 'leiturista-acoes', 'cena-final']) atlasEscalado(nome, uniforme, k);
+  for (const nome of ['leiturista-corrida', 'leiturista-acoes', 'cao-galope', 'cao-acoes']) atlasEscalado(nome, k);
 }
 
-/** Descarta as versões pré-escaladas (mudou o tamanho da tela); mantém imagens e recolorizações. */
+/** Descarta as versões pré-escaladas (mudou o tamanho da tela); mantém as imagens. */
 export function limparAtlasEscalados() {
   estado.escalados.clear();
 }

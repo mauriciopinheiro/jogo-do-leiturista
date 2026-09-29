@@ -16,10 +16,10 @@ const VELOCIDADE_CAO = 130;
 const ZOOM_MEDIO = 1.25;
 
 /**
- * @param {{obterLayout:()=>object, obterCtx:()=>CanvasRenderingContext2D, obterUniforme:()=>number,
+ * @param {{obterLayout:()=>object, obterCtx:()=>CanvasRenderingContext2D,
  *   mensagens:object, audio:object, aoTerminar:(stats:object)=>void, movimento:boolean}} deps
  */
-export function criarCenaFinal({ obterLayout, obterCtx, obterUniforme, mensagens, audio, aoTerminar, movimento }) {
+export function criarCenaFinal({ obterLayout, obterCtx, mensagens, audio, aoTerminar, movimento }) {
   const cena = {
     ativa: false, indice: 0, tempoCena: 0, tempo: 0, zoom: 1, stats: null, cenario: null, rolagem: 0,
     jogador: { x: 0, y: 0, fase: 0, pose: 'parado', olhando: 1 },
@@ -126,7 +126,7 @@ export function criarCenaFinal({ obterLayout, obterCtx, obterUniforme, mensagens
       ctx.translate(-layout.L / 2, -layout.chaoY);
       desenharCenario(ctx, cena.cenario, { rolagem: cena.rolagem, travessia: 0, velocidadeEfetiva: 0 }, layout, cena.tempo, movimento, { emUnidades: true });
       pintarTigelaECoracoes(ctx, cena, layout.chaoY);
-      pintarPersonagens(ctx, cena, obterUniforme(), k * ZOOM_MEDIO, layout.chaoY, cena.tempo);
+      pintarPersonagens(ctx, cena, k * ZOOM_MEDIO, layout.chaoY, cena.tempo);
       ctx.restore();
     }
   };

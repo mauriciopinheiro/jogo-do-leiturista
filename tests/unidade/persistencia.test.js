@@ -104,14 +104,12 @@ test('save ilegível não é apagado: fica uma cópia em .invalido', () => {
   assert.equal(mem.get(`${CHAVE_SAVE}.invalido`), '{"quebrado":');
 });
 
-test('gestor: gravações em lote se fundem numa só e registram uniforme liberado', () => {
+test('gestor: gravações em lote se fundem numa só (a cada 5 leituras) e contam as leituras vitalícias', () => {
   const gravacoes = [];
   const tarefas = [];
   const arm = criarArmazenamento({ getItem: () => null, setItem: (k, v) => gravacoes.push(v) });
   const gestor = criarGestor(arm, { agendar: (fn) => { tarefas.push(fn); return tarefas.length; }, cancelar() {} });
-  let liberado = null;
-  for (let i = 0; i < 25; i++) liberado = gestor.registrarLeitura() ?? liberado;
-  assert.equal(liberado, 1, 'uniforme 1 exige 25 leituras');
+  for (let i = 0; i < 25; i++) gestor.registrarLeitura();
   assert.equal(tarefas.length, 1, 'um único salvamento pendente');
   tarefas[0]();
   assert.equal(gravacoes.length, 1);
@@ -130,4 +128,17 @@ test('exportar e importar fecham o ciclo; importar lixo não altera o progresso'
   assert.equal(r.ok, false);
   assert.match(r.mensagem, /versão incompatível|inválido|alterado/);
   assert.equal(outro.progresso.leiturasVitalicias, 77);
+});
+
+test('REQ-209: saves com qualquer uniforme da v3 (0 a 4) são aceitos e gravados de volta como uniforme 0', () => {
+  for (const skin of [0, 1, 2, 3, 4]) {
+    const r = interpretarSalvamento(JSON.stringify(saveDaV3({ ...estadoDaV3(), selectedSkin: skin })));
+    assert.equal(r.ok, true, `selectedSkin ${skin} deveria ser aceito`);
+  }
+  const recusado = interpretarSalvamento(JSON.stringify(saveDaV3({ ...estadoDaV3(), selectedSkin: 5 })));
+  assert.equal(recusado.ok, false, 'índice fora dos 5 uniformes da v3 continua inválido');
+  const arm = criarArmazenamento({ getItem: () => JSON.stringify(saveDaV3({ ...estadoDaV3(), selectedSkin: 3 })), setItem() {} });
+  const gestor = criarGestor(arm);
+  assert.equal('uniforme' in gestor.progresso, false, 'o progresso não guarda mais escolha de uniforme');
+  assert.equal(JSON.parse(gestor.exportarTexto()).estado.selectedSkin, 0);
 });

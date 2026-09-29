@@ -44,7 +44,7 @@ function iniciarAplicacao(janela) {
   };
   const audio = criarAudio(preferencias, { leve });
   const renderizador = criarRenderizador({
-    canvas: el.palco, sim, leve, reduzirMovimento, obterUniforme: () => gestor.progresso.uniforme
+    canvas: el.palco, sim, leve, reduzirMovimento
   });
   const telas = criarTelas(el);
   let controlador = null;
@@ -54,7 +54,6 @@ function iniciarAplicacao(janela) {
   const cena = criarCenaFinal({
     obterLayout: () => renderizador.layout,
     obterCtx: () => el.palco.getContext('2d'),
-    obterUniforme: () => gestor.progresso.uniforme,
     mensagens, audio, movimento: !reduzirMovimento,
     aoTerminar: (stats) => controlador.aoTerminarFinal(stats)
   });
