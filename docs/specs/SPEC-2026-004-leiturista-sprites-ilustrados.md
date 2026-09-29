@@ -1,7 +1,7 @@
 # SPEC — Personagens ilustrados (sprites) e refino do vetorial
 
 **Spec ID:** SPEC-2026-004
-**Status:** DRAFT
+**Status:** DRAFT (implementada em 2026-09-29, evidência em `docs/evidencias/EVID-2026-004.md`; aguardando aprovação humana)
 **Owner:** CTI SEMAE Piracicaba (demandante: Maurício Pinheiro)
 **Created:** 2026-09-29
 **Risco:** moderado (arte e desenho; sem alteração de regras, save ou integração com o Hub)

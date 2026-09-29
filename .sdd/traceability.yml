@@ -537,3 +537,177 @@ change_sets:
       - "docs/evidencias/EVID-2026-003.md"
       - "npm test: 42 testes aprovados; npm run testar:e2e: 10 cenários aprovados; tests/mutacao: 18 defeitos detectados"
       - "python scripts/verificar_limite_200_linhas.py: PASS (107 arquivos)"
+
+  - id: "CS-2026-004"
+    title: "Jogo do Leiturista v4.1.0 — personagens ilustrados, uniformes recoloridos, vetorial com contorno e cena final centrada"
+    spec: "docs/specs/SPEC-2026-004-leiturista-sprites-ilustrados.md"
+    requirements:
+      - "REQ-201: Animação com as ilustrações (quadro por estado, espelhamento)"
+      - "REQ-202: Recorte limpo dos quadros (sem fundo magenta, pés na linha de chão)"
+      - "REQ-203: Cinco uniformes por recolorização em tempo de execução"
+      - "REQ-204: Cena final com as poses ilustradas"
+      - "REQ-205: Peso (cada atlas <=300 KB, HTML <=2 MB) e custo por quadro <=4,5 ms"
+      - "REQ-206: Reserva vetorial se a imagem não carregar"
+      - "REQ-207: Proveniência e créditos das imagens no README"
+      - "REQ-208: Vetorial coerente (contorno escuro) sem aumentar o custo"
+    acceptance_criteria:
+      - "AC-201: Teste unitário da escolha de quadro e do espelhamento"
+      - "AC-202: Verificação automática do recorte e do alinhamento dos pés"
+      - "AC-203: Cinco uniformes distintos; uniforme clássico idêntico à arte original"
+      - "AC-204: Cena final percorre as 5 cenas com as ilustrações"
+      - "AC-205: e2e de custo e de peso dentro dos limites"
+      - "AC-206: e2e com imagens bloqueadas joga uma rota completa com console limpo"
+      - "AC-207: README e evidência contêm a proveniência"
+      - "AC-208: Capturas do vetorial revisadas; custo dentro do limite"
+    tasks:
+      - "TASK-2026-004: Integrar sprites ilustrados e refinar o vetorial"
+    files:
+      - path: "README.md"
+        ranges:
+          - start: 1
+            end: 149
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 5586
+      - path: "package.json"
+        ranges:
+          - start: 1
+            end: 17
+      - path: "scripts/construir.mjs"
+        ranges:
+          - start: 1
+            end: 53
+      - path: "scripts/preparar_sprites.py"
+        ranges:
+          - start: 1
+            end: 128
+      - path: "scripts/sprites/recorte.py"
+        ranges:
+          - start: 1
+            end: 95
+      - path: "scripts/verificar_sprites.py"
+        ranges:
+          - start: 1
+            end: 85
+      - path: "src/index.html"
+        ranges:
+          - start: 1
+            end: 147
+      - path: "src/js/cena-final/cena.js"
+        ranges:
+          - start: 1
+            end: 134
+      - path: "src/js/cena-final/coreografia.js"
+        ranges:
+          - start: 1
+            end: 67
+      - path: "src/js/cena-final/desenho.js"
+        ranges:
+          - start: 1
+            end: 68
+      - path: "src/js/cena-final/personagens.js"
+        ranges:
+          - start: 1
+            end: 65
+      - path: "src/js/config/constantes.js"
+        ranges:
+          - start: 1
+            end: 66
+      - path: "src/js/config/quadros-sprites.js"
+        ranges:
+          - start: 1
+            end: 15
+      - path: "src/js/interface/ajuda.js"
+        ranges:
+          - start: 1
+            end: 94
+      - path: "src/js/interface/menu.js"
+        ranges:
+          - start: 1
+            end: 81
+      - path: "src/js/principal.js"
+        ranges:
+          - start: 1
+            end: 105
+      - path: "src/js/render/cenario/index.js"
+        ranges:
+          - start: 1
+            end: 108
+      - path: "src/js/render/entidades.js"
+        ranges:
+          - start: 1
+            end: 96
+      - path: "src/js/render/ilustracoes/arquivos.js"
+        ranges:
+          - start: 1
+            end: 18
+      - path: "src/js/render/ilustracoes/atlas.js"
+        ranges:
+          - start: 1
+            end: 103
+      - path: "src/js/render/ilustracoes/pintura.js"
+        ranges:
+          - start: 1
+            end: 31
+      - path: "src/js/render/ilustracoes/quadro.js"
+        ranges:
+          - start: 1
+            end: 18
+      - path: "src/js/render/ilustracoes/quadros.js"
+        ranges:
+          - start: 1
+            end: 81
+      - path: "src/js/render/ilustracoes/recolorir.js"
+        ranges:
+          - start: 1
+            end: 119
+      - path: "src/js/render/renderizador.js"
+        ranges:
+          - start: 1
+            end: 101
+      - path: "src/js/render/sprites/cache.js"
+        ranges:
+          - start: 1
+            end: 60
+      - path: "src/js/render/sprites/kombi.js"
+        ranges:
+          - start: 1
+            end: 72
+      - path: "src/js/render/sprites/medidor.js"
+        ranges:
+          - start: 1
+            end: 92
+      - path: "src/js/render/sprites/obstaculos.js"
+        ranges:
+          - start: 1
+            end: 119
+      - path: "src/js/render/sprites/powerups.js"
+        ranges:
+          - start: 1
+            end: 95
+      - path: "tests/e2e/cenarios/07-offline.mjs"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "tests/e2e/cenarios/08-custo-quadro.mjs"
+        ranges:
+          - start: 1
+            end: 62
+      - path: "tests/e2e/cenarios/11-ilustracoes.mjs"
+        ranges:
+          - start: 1
+            end: 88
+      - path: "tests/mutacao/mutacoes.mjs"
+        ranges:
+          - start: 1
+            end: 121
+      - path: "tests/unidade/ilustracoes.test.js"
+        ranges:
+          - start: 1
+            end: 170
+    evidence:
+      - "docs/evidencias/EVID-2026-004.md"
+      - "npm test: 53 testes aprovados; npm run testar:e2e: 11 cenários aprovados; tests/mutacao: 23 defeitos injetados, 23 detectados"
+      - "python scripts/verificar_limite_200_linhas.py: PASS (121 arquivos); npm run verificar:sprites: OK"
+      - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cena-final.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-corrida.webp"
