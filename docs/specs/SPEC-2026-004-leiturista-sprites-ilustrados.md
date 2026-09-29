@@ -13,7 +13,7 @@ Depois da v4.0.0 o demandante avaliou que os personagens (leiturista e cão), de
 ## 2. Goals
 
 - G-201: Usar as ilustrações como personagens do jogo (corrida, pulo, tropeço, parado, vitória, aterrissagem; cão galopando, sentado, investindo) e na cena final.
-- G-202: Preservar uniformes por leituras vitalícias (5 variações) e toda a jogabilidade.
+- G-202: Preservar toda a jogabilidade. O uniforme passa a ser **único**, na cor oficial do SEMAE (decisão do demandante em 2026-09-29, que substitui os 5 uniformes por leituras vitalícias da v3.4.0).
 - G-203: Manter arquivo único, offline, ≤2 MB, com cada imagem embutida ≤300 KB (CTI §5).
 - G-204: Manter o desenho vetorial como reserva quando a imagem não carregar e refinar o vetorial dos demais elementos (Kombi, hidrômetros, obstáculos, power-ups) para combinar com o novo estilo (contorno escuro, sombreado simples).
 - G-205: Registrar a proveniência e os créditos das imagens (Anexo A, item 17 da CTI).
@@ -32,8 +32,8 @@ O sistema MUST escolher o quadro do leiturista e do cão pelo estado da simulaç
 ### REQ-202 — Recorte limpo
 Os quadros MUST estar sem fundo magenta e sem franjas visíveis sobre fundos claros e escuros; os pés MUST ficar na mesma linha de chão em todos os quadros de um ciclo.
 
-### REQ-203 — Uniformes
-Os 5 uniformes MUST continuar selecionáveis e visualmente distintos (recolorização do azul das ilustrações em tempo de execução, sem ilustrações extras).
+### REQ-203 — (substituído por REQ-209)
+Previa 5 uniformes por recolorização em tempo de execução; foi abandonado a pedido do demandante.
 
 ### REQ-204 — Cena final
 A cena final MUST usar as poses ilustradas (mão estendida, tigela, carinho) e as animações de corrida/galope para a caminhada final, mantendo os textos aprovados.
@@ -50,16 +50,20 @@ O README MUST informar que as imagens foram geradas por IA (ChatGPT) a pedido do
 ### REQ-208 — Vetorial coerente
 Kombi, hidrômetros, obstáculos e power-ups MUST ganhar contorno escuro e sombreado simples compatíveis com as ilustrações, sem aumentar o custo por quadro além de REQ-205.
 
+### REQ-209 — Uniforme único na cor oficial do SEMAE
+O leiturista MUST usar um único uniforme, cuja camisa é o azul do logotipo do SEMAE (`#005E9F`, mediana dos pixels azuis de `Logo_completo.png`). A troca de uniformes e o desbloqueio por leituras vitalícias MUST deixar de existir; boné e calça são tons mais escuros do mesmo azul (relação de tons da arte preservada) e a faixa refletiva permanece amarela. Saves da v3.4.0 com `selectedSkin` de 0 a 4 MUST continuar aceitos (o valor é ignorado e regravado como 0); o total de leituras vitalícias continua sendo contado e salvo.
+
 ## 5. Critérios de aceite
 
 - AC-201: teste unitário da escolha de quadro (todos os estados) e de espelhamento.
 - AC-202: verificação automática do recorte: nenhum pixel com matiz magenta opaco; contorno preservado; pés alinhados (±2 px) em cada ciclo.
-- AC-203: 5 uniformes geram imagens distintas (diferença média de cor entre variantes acima de um limite) e a variante 0 é idêntica à original.
+- AC-203: (substituído por AC-209)
 - AC-204: cena final percorre as 5 cenas sem erro e mostra as poses ilustradas (captura de tela revisada).
 - AC-205: e2e de custo e de peso passam com os limites de REQ-205.
 - AC-206: e2e com as imagens bloqueadas (`Image` falhando) joga uma rota completa com console limpo.
 - AC-207: README e evidência contêm a proveniência.
 - AC-208: capturas de tela dos objetos vetoriais revisadas; e2e de custo continua passando.
+- AC-209: `verificar_sprites.py` mede a cor da camisa nos atlas (±10 por canal de rgb(0,94,159)) e reprova a arte original; teste unitário: saves da v3 com `selectedSkin` 0–4 são aceitos, o 5 é recusado, e o save regravado traz 0; e2e: o menu não tem o botão de uniforme; a captura de tela é revisada.
 
 ## 6. Dados e segurança
 

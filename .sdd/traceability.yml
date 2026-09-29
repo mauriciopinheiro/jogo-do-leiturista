@@ -544,32 +544,34 @@ change_sets:
     requirements:
       - "REQ-201: Animação com as ilustrações (quadro por estado, espelhamento)"
       - "REQ-202: Recorte limpo dos quadros (sem fundo magenta, pés na linha de chão)"
-      - "REQ-203: Cinco uniformes por recolorização em tempo de execução"
+      - "REQ-203: (substituído por REQ-209)"
       - "REQ-204: Cena final com as poses ilustradas"
       - "REQ-205: Peso (cada atlas <=300 KB, HTML <=2 MB) e custo por quadro <=4,5 ms"
       - "REQ-206: Reserva vetorial se a imagem não carregar"
       - "REQ-207: Proveniência e créditos das imagens no README"
       - "REQ-208: Vetorial coerente (contorno escuro) sem aumentar o custo"
+      - "REQ-209: Uniforme único na cor oficial do SEMAE (azul do logotipo, #005E9F); saves da v3 com outro uniforme continuam aceitos"
     acceptance_criteria:
       - "AC-201: Teste unitário da escolha de quadro e do espelhamento"
       - "AC-202: Verificação automática do recorte e do alinhamento dos pés"
-      - "AC-203: Cinco uniformes distintos; uniforme clássico idêntico à arte original"
+      - "AC-203: (substituído por AC-209)"
       - "AC-204: Cena final percorre as 5 cenas com as ilustrações"
       - "AC-205: e2e de custo e de peso dentro dos limites"
       - "AC-206: e2e com imagens bloqueadas joga uma rota completa com console limpo"
       - "AC-207: README e evidência contêm a proveniência"
       - "AC-208: Capturas do vetorial revisadas; custo dentro do limite"
+      - "AC-209: Cor da camisa medida nos atlas (±10 por canal de rgb(0,94,159)); saves da v3 com selectedSkin 0-4 aceitos; menu sem botão de uniforme"
     tasks:
       - "TASK-2026-004: Integrar sprites ilustrados e refinar o vetorial"
     files:
       - path: "README.md"
         ranges:
           - start: 1
-            end: 149
+            end: 153
       - path: "index.html"
         ranges:
           - start: 1
-            end: 5586
+            end: 5430
       - path: "package.json"
         ranges:
           - start: 1
@@ -581,19 +583,43 @@ change_sets:
       - path: "scripts/preparar_sprites.py"
         ranges:
           - start: 1
-            end: 128
+            end: 131
       - path: "scripts/sprites/recorte.py"
         ranges:
           - start: 1
             end: 95
+      - path: "scripts/sprites/uniforme.py"
+        ranges:
+          - start: 1
+            end: 73
       - path: "scripts/verificar_sprites.py"
         ranges:
           - start: 1
-            end: 85
+            end: 106
+      - path: "src/css/menu.css"
+        ranges:
+          - start: 1
+            end: 47
+      - path: "src/css/telas.css"
+        ranges:
+          - start: 1
+            end: 155
       - path: "src/index.html"
         ranges:
           - start: 1
-            end: 147
+            end: 146
+      - path: "src/js/app/botoes.js"
+        ranges:
+          - start: 1
+            end: 60
+      - path: "src/js/app/controlador.js"
+        ranges:
+          - start: 1
+            end: 146
+      - path: "src/js/app/eventos.js"
+        ranges:
+          - start: 1
+            end: 44
       - path: "src/js/cena-final/cena.js"
         ranges:
           - start: 1
@@ -618,18 +644,38 @@ change_sets:
         ranges:
           - start: 1
             end: 15
+      - path: "src/js/config/uniformes.js"
+        ranges:
+          - start: 1
+            end: 18
       - path: "src/js/interface/ajuda.js"
         ranges:
           - start: 1
             end: 94
+      - path: "src/js/interface/dom.js"
+        ranges:
+          - start: 1
+            end: 26
       - path: "src/js/interface/menu.js"
         ranges:
           - start: 1
-            end: 81
+            end: 63
+      - path: "src/js/persistencia/gestor.js"
+        ranges:
+          - start: 1
+            end: 76
+      - path: "src/js/persistencia/progresso.js"
+        ranges:
+          - start: 1
+            end: 102
+      - path: "src/js/persistencia/salvamento.js"
+        ranges:
+          - start: 1
+            end: 78
       - path: "src/js/principal.js"
         ranges:
           - start: 1
-            end: 105
+            end: 104
       - path: "src/js/render/cenario/index.js"
         ranges:
           - start: 1
@@ -645,7 +691,7 @@ change_sets:
       - path: "src/js/render/ilustracoes/atlas.js"
         ranges:
           - start: 1
-            end: 103
+            end: 80
       - path: "src/js/render/ilustracoes/pintura.js"
         ranges:
           - start: 1
@@ -658,10 +704,6 @@ change_sets:
         ranges:
           - start: 1
             end: 81
-      - path: "src/js/render/ilustracoes/recolorir.js"
-        ranges:
-          - start: 1
-            end: 119
       - path: "src/js/render/renderizador.js"
         ranges:
           - start: 1
@@ -674,6 +716,10 @@ change_sets:
         ranges:
           - start: 1
             end: 72
+      - path: "src/js/render/sprites/leiturista.js"
+        ranges:
+          - start: 1
+            end: 119
       - path: "src/js/render/sprites/medidor.js"
         ranges:
           - start: 1
@@ -694,10 +740,14 @@ change_sets:
         ranges:
           - start: 1
             end: 62
+      - path: "tests/e2e/cenarios/09-compat-v3.mjs"
+        ranges:
+          - start: 1
+            end: 44
       - path: "tests/e2e/cenarios/11-ilustracoes.mjs"
         ranges:
           - start: 1
-            end: 88
+            end: 62
       - path: "tests/mutacao/mutacoes.mjs"
         ranges:
           - start: 1
@@ -705,9 +755,17 @@ change_sets:
       - path: "tests/unidade/ilustracoes.test.js"
         ranges:
           - start: 1
-            end: 170
+            end: 103
+      - path: "tests/unidade/persistencia.test.js"
+        ranges:
+          - start: 1
+            end: 144
+      - path: "tests/unidade/rotas.test.js"
+        ranges:
+          - start: 1
+            end: 35
     evidence:
       - "docs/evidencias/EVID-2026-004.md"
-      - "npm test: 53 testes aprovados; npm run testar:e2e: 11 cenários aprovados; tests/mutacao: 23 defeitos injetados, 23 detectados"
+      - "npm test: 50 testes aprovados; npm run testar:e2e: 11 cenários aprovados; tests/mutacao: 23 defeitos injetados, 23 detectados"
       - "python scripts/verificar_limite_200_linhas.py: PASS (121 arquivos); npm run verificar:sprites: OK"
       - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cena-final.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-corrida.webp"
