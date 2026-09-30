@@ -785,6 +785,7 @@ change_sets:
       - "REQ-309: Evento de power-up com o campo qual (som e faíscas)"
       - "REQ-310: Peso (atlas <=300 KB, HTML <=2 MB), custo <=4,5 ms e recorte limpo com azul oficial"
       - "REQ-311: Nova capa pronta para o Hub"
+      - "REQ-312: Gestos do leiturista, poses de estágio e cão esperando no fim da rota"
     acceptance_criteria:
       - "AC-301: Abertura na ordem certa, saída de 1,2 s, Kombi para no ponto certo, pular funciona em qualquer subestágio"
       - "AC-302: Encerramento chegada, embarque, entrando (1,0 s), saída"
@@ -793,20 +794,21 @@ change_sets:
       - "AC-305: Escolha de quadros (pulo em ordem, caminhada, latido, osso, Kombi, sequências)"
       - "AC-306: Cadência 0,22 rad/u no desembarque"
       - "AC-307: Evento powerup com qual"
-      - "AC-308: 12 atlas verificados (recorte, alinhamento, peso, cor)"
+      - "AC-308: 13 atlas verificados (recorte, alinhamento, peso, cor)"
       - "AC-309: Custo e peso dentro dos limites"
       - "AC-310: Capa 1376x774 em docs/arte/capa-jogo.jpg"
+      - "AC-311: Gestos: mapeamento evento-gesto, durações curtas, regras no ar/tropeço, poses de estágio, cão esperando"
     tasks:
       - "TASK-2026-005: Integrar os sprites da fase 2"
     files:
       - path: "README.md"
         ranges:
           - start: 1
-            end: 165
+            end: 168
       - path: "index.html"
         ranges:
           - start: 1
-            end: 5605
+            end: 5652
       - path: "package.json"
         ranges:
           - start: 1
@@ -822,7 +824,7 @@ change_sets:
       - path: "scripts/sprites/folhas.py"
         ranges:
           - start: 1
-            end: 36
+            end: 37
       - path: "scripts/sprites/recorte.py"
         ranges:
           - start: 1
@@ -846,7 +848,7 @@ change_sets:
       - path: "src/js/config/quadros-sprites.js"
         ranges:
           - start: 1
-            end: 22
+            end: 23
       - path: "src/js/render/cenas.js"
         ranges:
           - start: 1
@@ -854,11 +856,11 @@ change_sets:
       - path: "src/js/render/entidades.js"
         ranges:
           - start: 1
-            end: 96
+            end: 104
       - path: "src/js/render/ilustracoes/arquivos.js"
         ranges:
           - start: 1
-            end: 32
+            end: 34
       - path: "src/js/render/ilustracoes/atlas.js"
         ranges:
           - start: 1
@@ -870,11 +872,11 @@ change_sets:
       - path: "src/js/render/ilustracoes/quadros.js"
         ranges:
           - start: 1
-            end: 145
+            end: 189
       - path: "src/js/render/renderizador.js"
         ranges:
           - start: 1
-            end: 111
+            end: 115
       - path: "src/js/simulacao/colisoes.js"
         ranges:
           - start: 1
@@ -898,11 +900,11 @@ change_sets:
       - path: "tests/mutacao/mutacoes.mjs"
         ranges:
           - start: 1
-            end: 151
+            end: 171
       - path: "tests/unidade/ilustracoes-cenas.test.js"
         ranges:
           - start: 1
-            end: 48
+            end: 107
       - path: "tests/unidade/ilustracoes.test.js"
         ranges:
           - start: 1
@@ -913,6 +915,6 @@ change_sets:
             end: 112
     evidence:
       - "docs/evidencias/EVID-2026-005.md"
-      - "npm test: 65 testes aprovados; npm run testar:e2e: 12 cenários aprovados; tests/mutacao: 29 defeitos injetados, 29 detectados"
-      - "python scripts/verificar_limite_200_linhas.py: PASS (127 arquivos); npm run verificar:sprites: OK (12 atlas)"
-      - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cao-latido.webp, src/assets/cena-final.webp, src/assets/derrota.webp, src/assets/kombi-descer.webp, src/assets/kombi-entrar.webp, src/assets/kombi.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-caminhada.webp, src/assets/leiturista-corrida.webp, src/assets/leiturista-pulo.webp"
+      - "npm test: 70 testes aprovados; npm run testar:e2e: 12 cenários aprovados; tests/mutacao: 33 defeitos injetados, 33 detectados"
+      - "python scripts/verificar_limite_200_linhas.py: PASS (127 arquivos); npm run verificar:sprites: OK (13 atlas)"
+      - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cao-latido.webp, src/assets/cena-final.webp, src/assets/derrota.webp, src/assets/kombi-descer.webp, src/assets/kombi-entrar.webp, src/assets/kombi.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-caminhada.webp, src/assets/leiturista-corrida.webp, src/assets/leiturista-gestos.webp, src/assets/leiturista-pulo.webp"
