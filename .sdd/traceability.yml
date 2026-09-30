@@ -769,3 +769,150 @@ change_sets:
       - "npm test: 50 testes aprovados; npm run testar:e2e: 11 cenários aprovados; tests/mutacao: 23 defeitos injetados, 23 detectados"
       - "python scripts/verificar_limite_200_linhas.py: PASS (121 arquivos); npm run verificar:sprites: OK"
       - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cena-final.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-corrida.webp"
+
+  - id: "CS-2026-005"
+    title: "Jogo do Leiturista v4.2.0 — sprites da fase 2: pulo, caminhada, cão, Kombi ilustrada e sequências (descer, entrar, derrota)"
+    spec: "docs/specs/SPEC-2026-005-leiturista-sprites-fase-2.md"
+    requirements:
+      - "REQ-301: Pulo completo escolhido pela velocidade vertical e pela altura"
+      - "REQ-302: Caminhada de 8 quadros com cadência por distância"
+      - "REQ-303: Cão latindo correndo, investindo e com o osso"
+      - "REQ-304: Kombi ilustrada (parada, porta aberta, andando) com reserva vetorial"
+      - "REQ-305: Sequência de descer da Kombi na abertura (subestágio saindo)"
+      - "REQ-306: Sequência de entrar na Kombi no encerramento (subestágio entrando)"
+      - "REQ-307: Derrota ilustrada (cão alcança o menino, tom amigável)"
+      - "REQ-308: Cadência das pernas proporcional à distância nos trechos da Kombi"
+      - "REQ-309: Evento de power-up com o campo qual (som e faíscas)"
+      - "REQ-310: Peso (atlas <=300 KB, HTML <=2 MB), custo <=4,5 ms e recorte limpo com azul oficial"
+      - "REQ-311: Nova capa pronta para o Hub"
+    acceptance_criteria:
+      - "AC-301: Abertura na ordem certa, saída de 1,2 s, Kombi para no ponto certo, pular funciona em qualquer subestágio"
+      - "AC-302: Encerramento chegada, embarque, entrando (1,0 s), saída"
+      - "AC-303: Respiro da derrota cobre a sequência; a tela muda durante ela"
+      - "AC-304: Reserva vetorial completa sem erro de console"
+      - "AC-305: Escolha de quadros (pulo em ordem, caminhada, latido, osso, Kombi, sequências)"
+      - "AC-306: Cadência 0,22 rad/u no desembarque"
+      - "AC-307: Evento powerup com qual"
+      - "AC-308: 12 atlas verificados (recorte, alinhamento, peso, cor)"
+      - "AC-309: Custo e peso dentro dos limites"
+      - "AC-310: Capa 1376x774 em docs/arte/capa-jogo.jpg"
+    tasks:
+      - "TASK-2026-005: Integrar os sprites da fase 2"
+    files:
+      - path: "README.md"
+        ranges:
+          - start: 1
+            end: 165
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 5605
+      - path: "package.json"
+        ranges:
+          - start: 1
+            end: 17
+      - path: "scripts/preparar_sprites.py"
+        ranges:
+          - start: 1
+            end: 101
+      - path: "scripts/sprites/atlas.py"
+        ranges:
+          - start: 1
+            end: 61
+      - path: "scripts/sprites/folhas.py"
+        ranges:
+          - start: 1
+            end: 36
+      - path: "scripts/sprites/recorte.py"
+        ranges:
+          - start: 1
+            end: 97
+      - path: "scripts/verificar_sprites.py"
+        ranges:
+          - start: 1
+            end: 110
+      - path: "src/index.html"
+        ranges:
+          - start: 1
+            end: 146
+      - path: "src/js/cena-final/coreografia.js"
+        ranges:
+          - start: 1
+            end: 69
+      - path: "src/js/config/constantes.js"
+        ranges:
+          - start: 1
+            end: 79
+      - path: "src/js/config/quadros-sprites.js"
+        ranges:
+          - start: 1
+            end: 22
+      - path: "src/js/render/cenas.js"
+        ranges:
+          - start: 1
+            end: 70
+      - path: "src/js/render/entidades.js"
+        ranges:
+          - start: 1
+            end: 96
+      - path: "src/js/render/ilustracoes/arquivos.js"
+        ranges:
+          - start: 1
+            end: 32
+      - path: "src/js/render/ilustracoes/atlas.js"
+        ranges:
+          - start: 1
+            end: 83
+      - path: "src/js/render/ilustracoes/pintura.js"
+        ranges:
+          - start: 1
+            end: 52
+      - path: "src/js/render/ilustracoes/quadros.js"
+        ranges:
+          - start: 1
+            end: 145
+      - path: "src/js/render/renderizador.js"
+        ranges:
+          - start: 1
+            end: 111
+      - path: "src/js/simulacao/colisoes.js"
+        ranges:
+          - start: 1
+            end: 101
+      - path: "src/js/simulacao/criar.js"
+        ranges:
+          - start: 1
+            end: 118
+      - path: "src/js/simulacao/kombi.js"
+        ranges:
+          - start: 1
+            end: 122
+      - path: "tests/e2e/cenarios/07-offline.mjs"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "tests/e2e/cenarios/12-sequencias.mjs"
+        ranges:
+          - start: 1
+            end: 103
+      - path: "tests/mutacao/mutacoes.mjs"
+        ranges:
+          - start: 1
+            end: 151
+      - path: "tests/unidade/ilustracoes-cenas.test.js"
+        ranges:
+          - start: 1
+            end: 48
+      - path: "tests/unidade/ilustracoes.test.js"
+        ranges:
+          - start: 1
+            end: 156
+      - path: "tests/unidade/kombi.test.js"
+        ranges:
+          - start: 1
+            end: 112
+    evidence:
+      - "docs/evidencias/EVID-2026-005.md"
+      - "npm test: 65 testes aprovados; npm run testar:e2e: 12 cenários aprovados; tests/mutacao: 29 defeitos injetados, 29 detectados"
+      - "python scripts/verificar_limite_200_linhas.py: PASS (127 arquivos); npm run verificar:sprites: OK (12 atlas)"
+      - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cao-latido.webp, src/assets/cena-final.webp, src/assets/derrota.webp, src/assets/kombi-descer.webp, src/assets/kombi-entrar.webp, src/assets/kombi.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-caminhada.webp, src/assets/leiturista-corrida.webp, src/assets/leiturista-pulo.webp"
