@@ -1,7 +1,7 @@
 # SPEC — Nitidez e leitura nas fases avançadas
 
 **Spec ID:** SPEC-2026-006
-**Status:** IMPLEMENTED (demanda do usuário em conversa, 2026-09-30; **publicação não autorizada**, ver §8; evidência em `docs/evidencias/EVID-2026-006.md`)
+**Status:** IMPLEMENTED (demanda do usuário em conversa, 2026-09-30; publicada em 2026-09-30 por autorização do demandante, ver §8; evidência em `docs/evidencias/EVID-2026-006.md`)
 **Owner:** CTI SEMAE Piracicaba (demandante: Maurício Pinheiro)
 **Created:** 2026-09-30
 **Risco:** baixo a moderado (só desenho e posição de avisos; a simulação ganha apenas a escolha de quais placas de rua entram na tela)
@@ -87,4 +87,4 @@ Sem dados novos, sem rede, sem persistência. Nenhuma mudança em save, Hub ou p
 ## 8. Aprovação
 
 **Requested by:** Maurício Pinheiro (demandante), em conversa com o agente, 2026-09-30, na mensagem que descreve o problema.
-Este documento registra o pedido; **não há aprovação de publicação**. Publicar no site e enviar ao GitHub depende de autorização explícita do demandante.
+Este documento registra o pedido. A publicação no site e no GitHub foi autorizada pelo demandante em conversa, em 2026-09-30 ("sim, publique", em resposta à pergunta sobre publicar); ver `docs/evidencias/EVID-2026-006.md`.

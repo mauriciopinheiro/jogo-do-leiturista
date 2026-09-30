@@ -1,6 +1,6 @@
 # TASK — Nitidez e leitura nas fases avançadas
 
-**Task ID:** TASK-2026-006 · **Plan:** PLAN-2026-006 · **Spec:** SPEC-2026-006 · **Status:** DONE (implementação e evidências em 2026-09-30; publicação pendente de autorização do demandante)
+**Task ID:** TASK-2026-006 · **Plan:** PLAN-2026-006 · **Spec:** SPEC-2026-006 · **Status:** DONE (implementação e evidências em 2026-09-30; publicada em 2026-09-30 com autorização do demandante)
 
 Cobertura: REQ-401 a REQ-407; AC-401 a AC-407.
 
@@ -16,4 +16,4 @@ Parar se: for preciso mudar regra de jogo/pontuação/colisão, ou se o HTML pas
 
 - Change Set ID: CS-2026-006 (`.sdd/traceability.yml`)
 - Tests: ver `docs/evidencias/EVID-2026-006.md`
-- Notes: a publicação (site e GitHub) NÃO foi autorizada; depende de pedido explícito do demandante.
+- Notes: publicada no site (deploy `779e3c75`) e no GitHub (`main` = `11d0f89`) com autorização do demandante; ver EVID-2026-006, seção Publicação.
