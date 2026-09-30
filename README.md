@@ -78,7 +78,7 @@ O leiturista e o cão usam ilustrações **geradas por inteligência artificial 
 demandante** (CTI/SEMAE), a partir de um roteiro de instruções de arte. Os originais (PNG com fundo
 magenta) estão versionados em `imagens/` (decisão do demandante em 2026-09-29, SPEC-2026-004 Q-201/Q-202,
 sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os recortes otimizados em
-`src/assets/*.webp` (12 atlas, ~970 KB, cada um ≤300 KB), embutidos no `index.html` (1,5 MB; limite 2 MB).
+`src/assets/*.webp` (13 atlas, ~1,05 MB, cada um ≤300 KB), embutidos no `index.html` (1,6 MB; limite 2 MB).
 
 - Para regerar os atlas: `python scripts/preparar_sprites.py` (lê `imagens/`, remove o fundo, alinha os pés,
   escreve `src/assets/` e `src/js/config/quadros-sprites.js`), depois `npm run verificar:sprites`.
@@ -93,8 +93,11 @@ sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os r
   ilustrada (parada, porta aberta, andando); e sequências com dois personagens: o menino descendo da Kombi
   (1,2 s), correndo até a porta e entrando (1,0 s) e o cão alcançando o menino (1,4 s, tom amigável).
   As pernas/patas seguem a distância percorrida (0,22 rad/u no menino, 0,24 rad/u no cão), então nada "patina".
-- **Ainda sem sprite** (não entregues ou mantidos vetoriais): gestos do leiturista (leitura do hidrômetro, turbo, escudo,
-  comemoração, olhar para trás), hidrômetros, obstáculos e power-ups (continuam vetoriais, com contorno).
+- **Gestos do leiturista**: escanear o hidrômetro, joinha (ouro/anomalia), soco no ar (coleta aérea perfeita), turbo, escudo,
+  acenar para a Kombi que parte, olhar o cão chegar / olhar para trás com a ameaça alta, e pular de alegria ao fim da rota.
+  São reações curtas (0,16 a 0,45 s) a eventos, para não congelar a corrida; no ar só valem o soco e o escudo. No fim da rota
+  o cão espera sentado e fica contente quando o menino entra na Kombi.
+- **Ainda vetoriais** (por escolha do demandante): hidrômetros, obstáculos e power-ups (com contorno), além do cenário.
 - Reserva: se as imagens não carregarem, o jogo continua com o desenho vetorial (testado com as imagens
   bloqueadas). Kombi, hidrômetros, obstáculos e power-ups (vetoriais) ganharam contorno escuro para
   combinar com as ilustrações.
@@ -142,7 +145,7 @@ headless com rasterização por CPU como aproximação do pior caso.
 
 ## Histórico de versões
 
-- **4.2.0 (2026-09-29)** — sprites da fase 2: pulo completo, caminhada, cão latindo correndo/investindo/com o osso,
+- **4.2.0 (2026-09-29)** — sprites da fase 2: gestos do leiturista, pulo completo, caminhada, cão latindo correndo/investindo/com o osso,
   Kombi ilustrada, sequências de descer/entrar na Kombi e da derrota; obstáculos somem sob a cena da derrota;
   correção da cadência das pernas na abertura e no embarque; correção do evento de power-up (som e faíscas
   nunca disparavam); atlas em qualidade 80. Ver `docs/specs/SPEC-2026-005…` e `docs/evidencias/EVID-2026-005.md`.

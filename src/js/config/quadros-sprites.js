@@ -14,6 +14,7 @@ export const SPRITES = {
     'leiturista-pulo': {"colunas": 4, "quadros": 8, "celula": [218, 274], "grupo": "leiturista", "pivo": [109, 271], "upp": 0.38333},
     'leiturista-caminhada': {"colunas": 4, "quadros": 8, "celula": [168, 253], "grupo": "leiturista", "pivo": [84, 250], "upp": 0.38333},
     'cao-latido': {"colunas": 3, "quadros": 6, "celula": [274, 189], "grupo": "cao", "pivo": [137, 186], "upp": 0.38333},
+    'leiturista-gestos': {"colunas": 4, "quadros": 8, "celula": [266, 252], "grupo": "leiturista", "pivo": [133, 249], "upp": 0.38333},
     'derrota': {"colunas": 2, "quadros": 4, "celula": [400, 244], "grupo": "final", "pivo": [3, 241], "upp": 0.38333},
     'kombi': {"colunas": 2, "quadros": 4, "celula": [466, 250], "grupo": "kombi", "pivo": [463, 247], "upp": 0.38333},
     'kombi-descer': {"colunas": 2, "quadros": 4, "celula": [451, 262], "grupo": "kombi", "pivo": [448, 243], "upp": 0.38333, "alinhamento": "teto"},

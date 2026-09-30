@@ -14,6 +14,7 @@ de escala do menino), área da coleira vermelha (idem para o cão) e largura do 
 | `leiturista-acoes` | igual à corrida | 404 px em pé | 0,2338 | parado ≈ 94 u |
 | `leiturista-pulo` | faixas amarelas ≈ as da corrida | mediana ~890 vs ~870 | 0,2338 | 80 a 103 u conforme a pose |
 | `leiturista-caminhada` | altura em pé 461 px contra 404 px do parado | ×0,876 | 0,2048 | ≈ 94,4 u |
+| `leiturista-gestos` | poses em pé ≈437 px (contra 404 do parado) e faixas ≈1.100 px² (×1,12) | ×0,91 | 0,212 | ≈ 92,6 u em pé |
 | `cao-galope` (referência) | largura mediana | 484 px | 0,1983 | cão ≈ 96 u de comprimento |
 | `cao-latido` | coleira ≈ igual à do galope | 1.898 a 1.998 vs 1.946 px² | 0,1983 | igual ao galope |
 | `cena-final` (fase 1) | razão escolhida a olho | — | 0,735 × corrida | — |

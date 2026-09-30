@@ -144,6 +144,26 @@ export const MUTACOES = [
     descricao: 'o menino sumiria ao chegar à porta, sem a sequência de entrar na Kombi'
   },
   {
+    id: 'leitura-perfeita-sem-soco', tipo: 'unidade', testes: ['ilustracoes-cenas.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: "if (e.perfeita) return { pose: 'soco', duracao: 0.4 };", para: "if (e.perfeita) return { pose: 'scan', duracao: 0.4 };",
+    descricao: 'a coleta aérea perfeita não teria a comemoração com o soco no ar'
+  },
+  {
+    id: 'gesto-interrompe-o-pulo', tipo: 'unidade', testes: ['ilustracoes-cenas.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: "if (gesto && (!o.noAr || GESTOS_NO_AR.has(gesto)))", para: "if (gesto)",
+    descricao: 'escanear um hidrômetro no ar trocaria a pose do pulo por uma pose parada'
+  },
+  {
+    id: 'sem-comemoracao-no-encerramento', tipo: 'unidade', testes: ['ilustracoes-cenas.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: "if (estagio === 'encerramento' && subestagio === 'chegada') return 'festa';", para: "if (estagio === 'encerramento' && subestagio === 'chegada') return 'corre';",
+    descricao: 'o menino ficaria correndo parado (pose congelada) enquanto a Kombi chega'
+  },
+  {
+    id: 'cao-corre-parado-no-fim', tipo: 'unidade', testes: ['ilustracoes-cenas.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: "if (estagio !== 'encerramento') return { sentado: false, feliz: false };", para: "if (true) return { sentado: false, feliz: false };",
+    descricao: 'o cão ficaria com o galope congelado no ar enquanto a Kombi chega'
+  },
+  {
     id: 'ilustracao-com-falha-derruba-o-jogo', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/js/render/ilustracoes/atlas.js',
     de: '.catch(() => { estado.falhou = true; });', para: ".catch(() => { throw new Error('imagem'); });",
     descricao: 'se a imagem não carregar (rede, memória), o jogo acusaria erro em vez de usar o desenho vetorial'

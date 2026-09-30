@@ -1,7 +1,7 @@
 # SPEC — Sprites da fase 2: pulo, caminhada, cão, Kombi e sequências
 
 **Spec ID:** SPEC-2026-005
-**Status:** DRAFT (implementada em 2026-09-29; evidência em `docs/evidencias/EVID-2026-005.md`; **aprovação humana pendente**)
+**Status:** APPROVED (aprovada pelo demandante em 2026-09-29, ver §8; implementada, evidência em `docs/evidencias/EVID-2026-005.md`)
 **Owner:** CTI SEMAE Piracicaba (demandante: Maurício Pinheiro)
 **Created:** 2026-09-29
 **Risco:** moderado (arte e desenho; a simulação ganha subestágios e tempos, sem mudar regras, pontuação, save ou Hub)
@@ -11,8 +11,8 @@
 Depois da v4.1.0 restavam movimentos sem sprite: pulo com uma só pose de subida e uma de descida, caminhada
 sem ciclo, cão latindo parado enquanto se move, cão sem reação ao osso, Kombi vetorial, o menino que aparece do
 nada ao lado da Kombi e some ao chegar à porta, e a derrota sem cena (5 s de tropeço piscando). O demandante gerou
-no ChatGPT as folhas pedidas em `docs/arte/PROMPTS-SPRITES-FASE-2.md`, **exceto** `leiturista-gestos.png`
-(não entregue), hidrômetros, obstáculos e power-ups (mantidos vetoriais por escolha do demandante).
+no ChatGPT as folhas pedidas em `docs/arte/PROMPTS-SPRITES-FASE-2.md`, **exceto** hidrômetros, obstáculos e
+power-ups (mantidos vetoriais por escolha do demandante). `leiturista-gestos.png` chegou depois, junto com a aprovação, e foi integrado.
 
 ## 2. Goals
 
@@ -25,7 +25,7 @@ no ChatGPT as folhas pedidas em `docs/arte/PROMPTS-SPRITES-FASE-2.md`, **exceto*
 ## 3. Non-goals
 
 - NG-301: Alterar caixas de colisão, física, pontuação, dificuldade, save ou mensagens ao Hub.
-- NG-302: Ilustrar hidrômetros, obstáculos e power-ups, ou usar poses de gestos (folha não entregue).
+- NG-302: Ilustrar hidrômetros, obstáculos e power-ups (seguem vetoriais).
 - NG-303: Publicar sem pedido explícito.
 
 ## 4. Requisitos
@@ -67,6 +67,12 @@ Coletar um power-up MUST emitir o evento `powerup` (som e faíscas), com o campo
 Cada atlas MUST ter ≤300 KB, o `index.html` ≤2 MB e o custo médio por quadro sem GPU ≤4,5 ms (paisagem/retrato ≤1,5). Os quadros MUST estar sem fundo magenta e
 com a camisa no azul oficial do SEMAE (REQ-209 da SPEC-2026-004), inclusive a faixa azul da Kombi.
 
+### REQ-312 — Gestos e espera do cão
+O leiturista MUST reagir a eventos com gestos curtos (0,16 a 0,45 s): escanear na leitura comum, joinha na leitura de ouro/anomalia, soco no ar na coleta aérea perfeita,
+turbo, escudo (ao pegar e ao bloquear uma batida) e olhar para trás ao latido e, com ameaça ≥75, por 0,3 s a cada 1,8 s. No ar só valem o soco e o escudo, e o tropeço vence todos.
+A abertura MUST mostrar o menino acenando para a Kombi que parte e olhando o cão chegar; o encerramento, comemorando até a Kombi parar. No encerramento o cão MUST esperar sentado
+(contente quando o menino entra na Kombi), em vez de ficar com o galope congelado.
+
 ### REQ-311 — Capa
 A nova capa (`docs/arte/capa-jogo.jpg`, 1376×774) MUST estar pronta para substituir a do Hub; a troca no Hub depende de publicação autorizada.
 
@@ -82,6 +88,7 @@ A nova capa (`docs/arte/capa-jogo.jpg`, 1376×774) MUST estar pronta para substi
 - AC-308: `npm run verificar:sprites` nos 12 atlas (recorte limpo, pés/teto alinhados, ≤300 KB, camisa no azul oficial).
 - AC-309: e2e de custo e de peso dentro dos limites.
 - AC-310: `docs/arte/capa-jogo.jpg` existe com as dimensões e o peso combinados.
+- AC-311: testes unitários dos gestos: mapeamento evento -> gesto, duração curta, regras no ar/tropeço, poses de estágio, olhar para trás, cão esperando; capturas de tela revisadas.
 
 ## 6. Dados e segurança
 
@@ -89,10 +96,10 @@ Imagens estáticas embutidas como `data:` URI; nenhuma requisição externa; nen
 
 ## 7. Questões em aberto
 
-- [ ] Q-301: `leiturista-gestos.png` (leitura do hidrômetro, turbo, escudo, comemorações, olhar para trás) não foi entregue; sem ele essas poses seguem sem sprite.
+- [x] Q-301: `leiturista-gestos.png` foi entregue depois da aprovação e integrado (REQ-312).
 - [ ] Q-302: A van sozinha (`kombi.png`) e as folhas com o menino diferem alguns por cento (porta, logotipo). Regerar `kombi.png` a partir da van de `kombi-descer.png` eliminaria o deslocamento visível na troca.
 - [ ] Q-303: Na `derrota.png` o tamanho relativo menino/cão difere das fichas (ver `docs/arte/CALIBRACAO-DE-ESCALA.md`).
 
 ## 8. Aprovação
 
-**Approved by:** (pendente — não preenchido pelo agente)
+**Approved by:** Maurício Pinheiro (demandante), em conversa com o agente, 2026-09-29: "aprovo publicar. Mas veja se está faltando mais sprites. Subi o gestos que pediu". Registro feito pelo agente a partir dessa mensagem. A aprovação cobre o resultado visto até então (fase 2 sem os gestos) e autoriza a publicação; a integração dos gestos e do cão esperando (REQ-312) foi feita depois, a pedido do próprio demandante, e entra na mesma publicação.

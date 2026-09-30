@@ -13,6 +13,7 @@ import { desenharObstaculo } from './sprites/obstaculos.js';
 import { desenharPowerup, desenharPlaca } from './sprites/powerups.js';
 import { pintarLeituristaIlustrado, pintarCaoIlustrado } from './ilustracoes/pintura.js';
 import { desnivelDaRua } from './cenas.js';
+import { poseDoEstagio, olhandoParaTras, caoNoEncerramento } from './ilustracoes/quadros.js';
 
 /** @param {[number, number]|null} livre faixa de x (u) sem obstáculos: a cena da derrota ocupa esse espaço */
 export function desenharCarga(ctx, sim, chaoY, k, relogio, livre = null) {
@@ -31,12 +32,13 @@ export function desenharCaoDaCena(ctx, cao, sim, chaoY, relogio, k, osso = null)
   const latindo = cao.latido > 0;
   elipse(ctx, x + 37, chaoY + 2, 36, 5, 'rgba(0,0,0,0.25)');
   const investindo = (cao.investida || 0) > 6;
-  const ilustrado = pintarCaoIlustrado(ctx, k, { x: x + 30, y: chaoY, latindo, investindo, osso, fase: cao.fasePerna, tempo: relogio });
+  const espera = caoNoEncerramento(sim.estagio, sim.subestagio);
+  const ilustrado = pintarCaoIlustrado(ctx, k, { x: x + 30, y: chaoY, latindo, investindo, osso, ...espera, fase: cao.fasePerna, tempo: relogio });
   if (!ilustrado) {
     const y = chaoY - CAO.altura + Math.sin(cao.fasePerna * 2) * 1.6;
     ctx.save();
     ctx.translate(x, y);
-    desenharCao(ctx, { fase: cao.fasePerna, boca: sim.ameaca > 70 || latindo, latido: latindo, tempo: relogio });
+    desenharCao(ctx, { fase: cao.fasePerna, boca: sim.ameaca > 70 || latindo, latido: latindo, tempo: relogio, ...espera });
     ctx.restore();
   }
   if (cao.latido > 0.6) {
@@ -71,18 +73,24 @@ function auras(ctx, sim, cx, cy, relogio) {
   }
 }
 
-/** @param {object} pose { pose, fase } sobrescreve a pose da corrida (usado no menu e na cena final) */
-export function desenharJogador(ctx, sim, chaoY, relogio, k, pose = null) {
+/**
+ * @param {string|null} reacao gesto passageiro (ver quadros.reacaoDoEvento)
+ * @param {object} pose { pose, fase } sobrescreve a pose da corrida (usado no menu e na cena final)
+ */
+export function desenharJogador(ctx, sim, chaoY, relogio, k, reacao = null, pose = null) {
   const j = sim.jogador;
   if (!j.visivel) return;
   const escala = Math.max(0.25, 1 - j.alt / 200);
-  const desnivel = desnivelDaRua(sim);
-  elipse(ctx, j.x + 22.5, chaoY + 3 + desnivel, 26 * escala, 6 * escala, `rgba(0,0,0,${0.26 * escala})`);
+  const poseAtual = pose?.pose || poseDoEstagio(sim.estagio, sim.subestagio);
+  const saltinho = poseAtual === 'festa' && j.noChao ? 10 + 8 * Math.abs(Math.sin(relogio * 7)) : 0;
+  const desnivel = desnivelDaRua(sim) - saltinho;
+  elipse(ctx, j.x + 22.5, chaoY + 3 + desnivelDaRua(sim), 26 * escala, 6 * escala, `rgba(0,0,0,${0.26 * escala})`);
   const amassado = j.amassar > 0 ? Math.sin((j.amassar / 0.15) * Math.PI) * 0.09 : 0;
   ctx.save();
   if (j.machucado > 0 && Math.floor(j.machucado / 0.07) % 2 === 0) ctx.globalAlpha = 0.4;
   const dados = {
-    fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, alt: j.alt, pose: pose?.pose || 'corre',
+    fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, alt: j.alt, pose: poseAtual,
+    reacao: reacao || (sim.estagio === 'corrida' && olhandoParaTras(sim.ameaca, relogio) ? 'olhaTras' : null),
     machucado: j.machucado > 0, amassando: j.amassar > 0.06, tempo: relogio
   };
   ctx.translate(j.x + 22.5, chaoY - j.alt + desnivel);

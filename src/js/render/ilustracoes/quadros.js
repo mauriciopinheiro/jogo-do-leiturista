@@ -10,6 +10,7 @@ export const FOLHA = {
   acoesL: 'leiturista-acoes',
   pulo: 'leiturista-pulo',
   caminhada: 'leiturista-caminhada',
+  gestos: 'leiturista-gestos',
   galope: 'cao-galope',
   acoesC: 'cao-acoes',
   latido: 'cao-latido',
@@ -24,6 +25,10 @@ export const FOLHA = {
 export const L_ACAO = { agachado: 0, subindo: 1, descendo: 2, tropeco: 3, parado: 4, piscando: 5, vitoria: 6, curvado: 7 };
 /** Índices em `leiturista-pulo` (um pulo completo, em ordem). */
 export const L_PULO = { agachado: 0, decolagem: 1, subindo: 2, quaseTopo: 3, topo: 4, comecaCair: 5, descendo: 6, prestesPisar: 7 };
+/** Índices em `leiturista-gestos`: cada gesto tem o nome da pose que o pede. */
+export const GESTOS = { scan: 0, joinha: 1, soco: 2, turbo: 3, escudo: 4, acena: 5, festa: 6, olhaTras: 7 };
+/** Gestos que valem também com o menino no ar (os outros esperam ele pisar no chão). */
+const GESTOS_NO_AR = new Set(['soco', 'escudo']);
 /** Índices em `cao-acoes`. */
 export const C_ACAO = { late1: 0, late2: 1, sentadoLingua: 2, sentadoFeliz: 3, sentadoOlhando: 4, pulo: 5 };
 /** Índices em `cao-latido`. */
@@ -75,11 +80,13 @@ export function quadroDePulo(vy, alt) {
 }
 
 /**
- * @param {{pose:string, fase:number, noAr:boolean, vy:number, alt:number, machucado:boolean, amassando:boolean, tempo:number}} o
+ * @param {{pose:string, reacao:(string|null), fase:number, noAr:boolean, vy:number, alt:number, machucado:boolean, amassando:boolean, tempo:number}} o
  * @returns {{folha:string, quadro:number}}
  */
 export function escolherQuadroLeiturista(o) {
   if (o.machucado) return { folha: FOLHA.acoesL, quadro: L_ACAO.tropeco };
+  const gesto = o.reacao || (o.pose in GESTOS ? o.pose : null);
+  if (gesto && (!o.noAr || GESTOS_NO_AR.has(gesto))) return { folha: FOLHA.gestos, quadro: GESTOS[gesto] };
   if (o.noAr) return { folha: FOLHA.pulo, quadro: quadroDePulo(o.vy, o.alt ?? 999) };
   if (o.amassando) return { folha: FOLHA.acoesL, quadro: L_ACAO.agachado };
   switch (o.pose) {
@@ -92,6 +99,43 @@ export function escolherQuadroLeiturista(o) {
     case 'anda': return { folha: FOLHA.caminhada, quadro: quadroDeCaminhada(o.fase) };
     default: return { folha: FOLHA.corrida, quadro: quadroDeCorrida(o.fase) };
   }
+}
+
+/**
+ * Reação passageira do menino a um evento da simulação: `{ pose, duracao }` (pose de GESTOS, duração em s) ou null.
+ * Leitura perfeita = soco no ar; ouro/anomalia = joinha; leitura comum = escanear; turbo/escudo; latido = olhar para trás.
+ */
+export function reacaoDoEvento(e) {
+  switch (e.tipo) {
+    case 'leitura':
+      if (e.perfeita) return { pose: 'soco', duracao: 0.4 };
+      return e.ouro || e.anomalia ? { pose: 'joinha', duracao: 0.35 } : { pose: 'scan', duracao: 0.16 };
+    case 'powerup':
+      if (e.qual === 'turbo') return { pose: 'turbo', duracao: 0.45 };
+      return e.qual === 'escudo' ? { pose: 'escudo', duracao: 0.4 } : null;
+    case 'escudo-bloqueou': return { pose: 'escudo', duracao: 0.45 };
+    case 'latido': return { pose: 'olhaTras', duracao: 0.45 };
+    default: return null;
+  }
+}
+
+/** Pose do menino que vem do estágio da partida (e não de um evento): acena para a Kombi que parte, olha o cão chegar, comemora. */
+export function poseDoEstagio(estagio, subestagio) {
+  if (estagio === 'abertura' && subestagio === 'partida') return 'acena';
+  if (estagio === 'abertura' && subestagio === 'cao') return 'olhaTras';
+  if (estagio === 'encerramento' && subestagio === 'chegada') return 'festa';
+  return 'corre';
+}
+
+/** No fim da rota o cão para de correr e espera sentado; fica contente quando o menino entra na Kombi. */
+export function caoNoEncerramento(estagio, subestagio) {
+  if (estagio !== 'encerramento') return { sentado: false, feliz: false };
+  return { sentado: true, feliz: subestagio === 'entrando' || subestagio === 'saida' };
+}
+
+/** Com a ameaça alta o menino olha para trás de tempos em tempos (0,3 s a cada 1,8 s). */
+export function olhandoParaTras(ameaca, tempo) {
+  return ameaca >= 75 && tempo % 1.8 < 0.3;
 }
 
 /** Estágio do cão com o osso pelo tempo (s) desde que o osso foi pego; null = acabou. */

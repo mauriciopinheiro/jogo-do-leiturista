@@ -11,7 +11,7 @@ import { limparAtlasEscalados, prepararAtlas, ilustracoesProntas } from './ilust
 import { criarTela } from './primitivas.js';
 import { desenharCarga, desenharCaoDaCena, desenharJogador } from './entidades.js';
 import { desenharKombiDaCena, desenharDerrota, emDerrota } from './cenas.js';
-import { estagioDoOsso } from './ilustracoes/quadros.js';
+import { estagioDoOsso, reacaoDoEvento } from './ilustracoes/quadros.js';
 
 const SEM_TREMOR = { x: 0, y: 0 };
 
@@ -39,6 +39,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
   let vinheta = null;
   let relogio = 0;
   let rolagemMenu = 0;
+  let reacao = null;      // gesto passageiro do menino: { pose, restante }
   let tempoOsso = null;   // s desde que o cão pegou o osso (null = não pegou)
 
   const api = {
@@ -61,6 +62,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
     },
     atualizar(dt) {
       relogio += dt;
+      if (reacao && (reacao.restante -= dt) <= 0) reacao = null;
       if (tempoOsso !== null) tempoOsso = estagioDoOsso(tempoOsso + dt) === null ? null : tempoOsso + dt;
       if (sim.estagio === 'inativo') rolagemMenu += 26 * dt;
       efeitos.atualizar(dt);
@@ -70,6 +72,8 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
       for (const e of eventos) {
         efeitoDoEvento(efeitos, e, sim, layout.chaoY);
         if (e.tipo === 'powerup' && e.qual === 'osso') tempoOsso = 0;
+        const nova = reacaoDoEvento(e);
+        if (nova) reacao = { pose: nova.pose, restante: nova.duracao };
       }
     },
     desenhar() {
@@ -94,7 +98,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
         desenharCarga(ctx, sim, chaoY, k, relogio, derrota ? [sim.jogador.x - 60, sim.jogador.x + 130] : null);
         if (!(derrota && desenharDerrota(ctx, sim, chaoY, k))) {
           if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio, k, tempoOsso === null ? null : estagioDoOsso(tempoOsso));
-          desenharJogador(ctx, sim, chaoY, relogio, k);
+          desenharJogador(ctx, sim, chaoY, relogio, k, reacao ? reacao.pose : null);
         }
       }
       efeitos.desenhar(ctx);

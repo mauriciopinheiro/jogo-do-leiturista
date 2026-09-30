@@ -93,7 +93,7 @@ def main() -> int:
     problemas: list[str] = []
     for nome, meta in metadados.items():
         verificar_folha(nome, meta, problemas)
-    for nome in ("leiturista-corrida", "leiturista-acoes", "leiturista-pulo", "leiturista-caminhada"):
+    for nome in ("leiturista-corrida", "leiturista-acoes", "leiturista-pulo", "leiturista-caminhada", "leiturista-gestos"):
         verificar_cor_da_camisa(nome, problemas)
     extras = sorted(p.stem for p in ASSETS.glob("*.webp") if p.stem not in metadados)
     if extras:

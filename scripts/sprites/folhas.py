@@ -23,6 +23,7 @@ FOLHAS = [
     dict(nome="leiturista-pulo", arquivo="leiturista-pulo.png", colunas=4, linhas=2, ancora="tronco", grupo="leiturista", u_px=0.2338),
     dict(nome="leiturista-caminhada", arquivo="leiturista-caminhada.png", colunas=4, linhas=2, ancora="tronco", grupo="leiturista", u_px=0.2048),
     dict(nome="cao-latido", arquivo="cao-osso-latido.png", colunas=3, linhas=2, ancora="massa", grupo="cao", u_px=0.1983),
+    dict(nome="leiturista-gestos", arquivo="leiturista-gestos.png", colunas=4, linhas=2, ancora="tronco", grupo="leiturista", u_px=0.212),
     dict(nome="derrota", arquivo="derrota.png", colunas=2, linhas=2, ancora="esquerda", grupo="final", u_px=0.20),
     dict(nome="kombi", arquivo="kombi.png", colunas=2, linhas=2, ancora="direita", grupo="kombi", u_px=0.2465),
     dict(nome="kombi-descer", arquivo="kombi-descer.png", colunas=2, linhas=2, ancora="direita", grupo="kombi", u_px=0.2328, alinhamento="teto"),

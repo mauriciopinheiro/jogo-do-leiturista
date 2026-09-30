@@ -10,6 +10,7 @@ import acoesC from '../../../assets/cao-acoes.webp';
 import cena from '../../../assets/cena-final.webp';
 import pulo from '../../../assets/leiturista-pulo.webp';
 import caminhada from '../../../assets/leiturista-caminhada.webp';
+import gestos from '../../../assets/leiturista-gestos.webp';
 import latido from '../../../assets/cao-latido.webp';
 import derrota from '../../../assets/derrota.webp';
 import kombi from '../../../assets/kombi.webp';
@@ -24,6 +25,7 @@ export const ARQUIVOS = {
   'cena-final': cena,
   'leiturista-pulo': pulo,
   'leiturista-caminhada': caminhada,
+  'leiturista-gestos': gestos,
   'cao-latido': latido,
   derrota,
   kombi,

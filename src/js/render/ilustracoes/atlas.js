@@ -69,7 +69,7 @@ export function obterQuadro(nome, quadro, k) {
 }
 
 /** Atlas usados o tempo todo na corrida; os das cenas (Kombi, derrota, final) são criados na hora. */
-const ATLAS_DA_CORRIDA = ['leiturista-corrida', 'leiturista-acoes', 'leiturista-pulo', 'cao-galope', 'cao-acoes', 'cao-latido', 'kombi'];
+const ATLAS_DA_CORRIDA = ['leiturista-corrida', 'leiturista-acoes', 'leiturista-pulo', 'leiturista-gestos', 'cao-galope', 'cao-acoes', 'cao-latido', 'kombi'];
 
 /** Prepara (fora do quadro de jogo) os atlas da corrida na resolução da tela. */
 export function prepararAtlas(k) {
