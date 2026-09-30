@@ -2,6 +2,8 @@
  * Catálogo de defeitos realistas para a verificação por mutação. Cada item troca `de` por `para`
  * em `arquivo` e indica qual teste (unidade ou e2e) deve acusar o defeito.
  */
+import { MUTACOES_NITIDEZ } from './mutacoes-nitidez.mjs';
+
 export const MUTACOES = [
   {
     id: 'hub-envia-na-derrota', tipo: 'unidade', testes: ['interface.test.js'], arquivo: 'src/js/integracao/portal.js',
@@ -167,5 +169,6 @@ export const MUTACOES = [
     id: 'ilustracao-com-falha-derruba-o-jogo', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/js/render/ilustracoes/atlas.js',
     de: '.catch(() => { estado.falhou = true; });', para: ".catch(() => { throw new Error('imagem'); });",
     descricao: 'se a imagem não carregar (rede, memória), o jogo acusaria erro em vez de usar o desenho vetorial'
-  }
+  },
+  ...MUTACOES_NITIDEZ
 ];

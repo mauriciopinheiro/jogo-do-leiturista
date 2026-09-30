@@ -64,7 +64,10 @@
   .hud-ameaca strong { min-width: 0; }
   .barra { min-width: 44px; }
   .hud-flow { width: 84px; }
-  .faixa { top: 20%; width: min(70vw, 560px); }
+  .faixa { width: min(70vw, 560px); }
+  .faixa.vitoria { top: 20%; }
+  /* na faixa de asfalto baixa do celular deitado, aviso e dica de toque ficariam um sobre o outro */
+  .faixa.visivel:not(.vitoria) ~ .dica { opacity: 0; transition: none; }
   .faixa strong { font-size: clamp(1.05rem, 6.4vh, 1.7rem); }
   .faixa span { font-size: clamp(0.8rem, 4.4vh, 1.05rem); }
   .painel-resultado { width: min(100%, 940px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }

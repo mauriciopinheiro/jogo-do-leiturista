@@ -6,6 +6,16 @@
 import { redimensionarMundo } from '../simulacao/criar.js';
 
 /**
+ * Os avisos da corrida ficam na faixa de asfalto, abaixo do chão da corrida: ali não há hidrômetro, obstáculo
+ * nem placa de rua, então o aviso nunca cobre nada que o jogador precisa ler.
+ */
+function posicionarFaixa(documento, layout, altura) {
+  const chao = layout.chaoY * layout.escala;
+  const topo = chao + (altura - chao) * 0.14;
+  documento.documentElement.style.setProperty('--faixa-topo', `${topo.toFixed(1)}px`);
+}
+
+/**
  * @param {{janela:Window, sim:object, renderizador:object, aoOcultar:()=>void, aoMostrar:()=>void,
  *   redesenhar:()=>void}} d
  */
@@ -20,6 +30,7 @@ export function ligarJanela({ janela, sim, renderizador, aoOcultar, aoMostrar, r
     if (largura < 2 || altura < 2) return;
     const layout = renderizador.redimensionar(largura, altura, janela.devicePixelRatio || 1);
     redimensionarMundo(sim, layout);
+    posicionarFaixa(janela.document, layout, altura);
     redesenhar();
   }
 

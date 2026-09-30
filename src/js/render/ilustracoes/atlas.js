@@ -32,12 +32,12 @@ export function ilustracoesProntas() {
 }
 
 /** Atlas reduzido para `k` pixels por unidade, com células de tamanho inteiro (cópia 1:1 depois). */
-function atlasEscalado(nome, k) {
-  const chave = `${nome}|${k.toFixed(3)}`;
+function atlasEscalado(nome, k, fator = 1) {
+  const chave = `${nome}|${k.toFixed(3)}|${fator}`;
   let atlas = estado.escalados.get(chave);
   if (atlas) return atlas;
   const meta = SPRITES.folhas[nome];
-  const porPixel = meta.upp;
+  const porPixel = meta.upp * fator;   // unidades do jogo por pixel do atlas (fator < 1 encolhe o personagem)
   const s = Math.min(1, k * porPixel);
   const [cw0, ch0] = meta.celula;
   const cw = Math.max(1, Math.round(cw0 * s));
@@ -58,12 +58,13 @@ function atlasEscalado(nome, k) {
 }
 
 /**
+ * @param {number} fator tamanho relativo do personagem (1 = o da corrida)
  * @returns {{tela, sx, sy, cw, ch, u, px, py}|null} `u` = unidades do jogo por pixel do quadro;
  * o pivô (pé) está em (px, py) pixels do quadro.
  */
-export function obterQuadro(nome, quadro, k) {
+export function obterQuadro(nome, quadro, k, fator = 1) {
   if (!estado.pronta) return null;
-  const a = atlasEscalado(nome, k);
+  const a = atlasEscalado(nome, k, fator);
   const colunas = SPRITES.folhas[nome].colunas;
   return { tela: a.tela, sx: (quadro % colunas) * a.cw, sy: Math.floor(quadro / colunas) * a.ch, cw: a.cw, ch: a.ch, u: a.u, px: a.px, py: a.py };
 }

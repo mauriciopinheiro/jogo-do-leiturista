@@ -12,6 +12,8 @@ import { criarTela } from './primitivas.js';
 import { desenharCarga, desenharCaoDaCena, desenharJogador } from './entidades.js';
 import { desenharKombiDaCena, desenharDerrota, emDerrota } from './cenas.js';
 import { estagioDoOsso, reacaoDoEvento } from './ilustracoes/quadros.js';
+import { TEMPOS, TREMOR } from '../config/constantes.js';
+import { definirRazaoDePixels } from './leitura.js';
 
 const SEM_TREMOR = { x: 0, y: 0 };
 
@@ -48,6 +50,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
     /** Ajusta o canvas interno e devolve o layout (a simulação usa L, chaoY e jogadorX). */
     redimensionar(largura, altura, dpr) {
       layout = calcularLayout({ largura, altura, dpr, leve });
+      definirRazaoDePixels(layout.pxRatio);
       canvas.width = layout.pixelsW;
       canvas.height = layout.pixelsH;
       cenario = null;
@@ -83,7 +86,8 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
       if (!cenario || cenario.chave !== chaveDoCenario(faseIdx, layout)) cenario = criarCenario(faseIdx, layout);
       ctx.setTransform(k, 0, 0, k, 0, 0);
       const tremer = sim.tremor > 0 && !reduzirMovimento;
-      const tremor = tremer ? { x: Math.round((Math.random() - 0.5) * 9 * k), y: Math.round((Math.random() - 0.5) * 6 * k) } : SEM_TREMOR;
+      const forca = tremer ? Math.min(1, sim.tremor / TEMPOS.tremor) : 0;
+      const tremor = tremer ? { x: Math.round(Math.sin(relogio * TREMOR.frequencia) * TREMOR.x * forca * k), y: Math.round(Math.cos(relogio * TREMOR.frequencia * 0.8) * TREMOR.y * forca * k) } : SEM_TREMOR;
       const noMenu = sim.estagio === 'inativo';
       const vista = noMenu ? { ...sim, rolagem: rolagemMenu, travessia: 0 } : sim;
       desenharCenario(ctx, cenario, vista, layout, relogio, !reduzirMovimento, { tremor });
@@ -105,7 +109,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
       ctx.restore();
       if (sim.ameaca > 60 && sim.estagio === 'corrida') {
         vinheta = vinheta || criarVinheta(layout);
-        ctx.globalAlpha = Math.min(0.55, ((sim.ameaca - 60) / 40) * (0.55 + Math.sin(relogio * 8) * 0.25));
+        ctx.globalAlpha = Math.min(0.34, ((sim.ameaca - 60) / 40) * (0.32 + Math.sin(relogio * 4) * 0.08));
         ctx.drawImage(vinheta, 0, 0, layout.L, layout.A);
         ctx.globalAlpha = 1;
       }

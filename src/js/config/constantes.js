@@ -7,7 +7,7 @@
 
 /** Identificador histórico da v3: mantê-lo preserva os saves já gravados nos aparelhos. */
 export const ID_APP = 'jogo-do-leiturista-3';
-export const VERSAO_APP = '4.2.0';
+export const VERSAO_APP = '4.2.1';
 export const ESQUEMA_SAVE = 2;
 export const CHAVE_SAVE = `semae.${ID_APP}.v${ESQUEMA_SAVE}`;
 export const CHAVE_SAVE_V1 = `semae.${ID_APP}.v1`;
@@ -68,6 +68,19 @@ export const AMEACA = {
   osso: -30,
   limite: 100
 };
+
+/**
+ * O cão avulso (sentado 88 u de altura, galope 97 u de comprimento) foi desenhado para ser um perseguidor
+ * grande; nos quadros da cena final o cão sentado tem ~56 u e o menino ajoelhado ~77 u. Para o cão não
+ * "crescer" ao virar a pose composta, na cena ele é desenhado nesta proporção do tamanho da corrida.
+ */
+export const FATOR_CAO_NA_CENA = 0.68;
+
+/** Placa de rua: largura (u) e folga mínima entre duas placas (cobre a ampliação em telas pequenas). */
+export const PLACA = { largura: 260, folga: 100 };
+
+/** Tremor de tela ao bater: amplitude máxima (u) em x e y; decai até zero durante TEMPOS.tremor. */
+export const TREMOR = { x: 2.6, y: 1.6, frequencia: 95 };
 
 /** Distância mínima entre o fim de um padrão e o início do seguinte. */
 export const FOLGA_ENTRE_PADROES = 160;

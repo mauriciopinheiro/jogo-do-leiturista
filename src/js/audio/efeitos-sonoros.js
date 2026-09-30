@@ -22,7 +22,7 @@ export function tocarEvento(audio, e) {
     case 'flow-pronto': n(880, 0.1, 0.04, 'triangle', 300); break;
     case 'flow-ativo': n(1040, 0.12, 0.04, 'sine', 300); break;
     case 'rua-concluida': n(620, 0.08, 0.03, 'triangle', 180); n(930, 0.1, 0.03, 'triangle', 160, 'efeito', 0.09); break;
-    case 'rua-nova': if (!e.primeira) { n(520, 0.08, 0.03, 'sine', 100); n(660, 0.1, 0.03, 'sine', 150, 'efeito', 0.12); } break;
+    case 'rua-nova': if (!e.primeira && e.placa) { n(520, 0.08, 0.03, 'sine', 100); n(660, 0.1, 0.03, 'sine', 150, 'efeito', 0.12); } break;
     case 'rota-finalizada': n(780, 0.1, 0.03, 'triangle', 200); n(1180, 0.12, 0.03, 'triangle', 150, 'efeito', 0.12); break;
     case 'latido': n(165, 0.07, 0.035, 'square', -35); n(130, 0.09, 0.028, 'sawtooth', -25, 'efeito', 0.065); break;
     case 'derrota': n(220, 0.3, 0.05, 'sawtooth', -140); break;

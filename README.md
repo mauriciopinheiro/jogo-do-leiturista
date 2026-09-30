@@ -1,4 +1,4 @@
-# Jogo do Leiturista — SEMAE Piracicaba (v4.2.0)
+# Jogo do Leiturista — SEMAE Piracicaba (v4.2.1)
 
 Jogo educativo de corrida em HTML5 Canvas, publicado no Hub de Educação como **"Semana de Leiturista"**.
 O jogador é o leiturista do SEMAE: corre pelas ruas reais das rotas de Piracicaba, lê os hidrômetros,
@@ -102,6 +102,18 @@ sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os r
   bloqueadas). Kombi, hidrômetros, obstáculos e power-ups (vetoriais) ganharam contorno escuro para
   combinar com as ilustrações.
 
+## Nitidez e leitura (v4.2.1)
+
+- **Itens em movimento nítidos**: hidrômetros, power-ups, placas e quadros dos personagens são copiados ao canvas em pixels
+  inteiros, na escala exata da tela (sem reamostrar a cada quadro); o brilho pulsa por transparência, não por escala.
+- **Texto legível em qualquer aparelho**: o número do hidrômetro (até 1,6×) e o nome da placa (até 1,35×) crescem quando a tela tem menos de
+  1,15 pixel CSS por unidade (celular em pé); a medida é o pixel CSS, então celulares 2×/3× também ampliam.
+- **Placas de rua sem sobreposição**: duas placas nunca ficam a menos de 360 u; quando ruas curtas terminam juntas, vale a rua com mais
+  hidrômetros. O nome usa o maior tamanho que couber, em uma ou duas linhas.
+- **Avisos fora da área de leitura**: os avisos da corrida ficam na faixa de asfalto, abaixo do chão; tremor de tela e vinheta de ameaça ficaram mais suaves.
+- **Cão da cena final** na proporção do menino (`FATOR_CAO_NA_CENA` em `src/js/config/constantes.js`).
+- **Limites conhecidos**: o borrão de movimento próprio de telas LCD não é corrigível por software; em celulares 3× o canvas é limitado a 2,2 Mpx e o navegador o amplia.
+
 ## Salvamento
 
 Chave `semae.jogo-do-leiturista-3.v2` no `localStorage` (limite de 256 KB), mesmo envelope da v3.4.0
@@ -145,6 +157,9 @@ headless com rasterização por CPU como aproximação do pior caso.
 
 ## Histórico de versões
 
+- **4.2.1 (2026-09-30)** — nitidez e leitura nas fases avançadas: sprites copiados em pixels inteiros (sem tremulação nem borrão), número do hidrômetro e
+  nome da placa ampliados por tamanho físico, placas de rua sem sobreposição (vale a rua com mais hidrômetros), avisos da corrida na faixa de asfalto,
+  tremor de tela e vinheta suaves, cão da cena final na proporção do menino. Ver `docs/specs/SPEC-2026-006…` e `docs/evidencias/EVID-2026-006.md`.
 - **4.2.0 (2026-09-29)** — sprites da fase 2: gestos do leiturista, pulo completo, caminhada, cão latindo correndo/investindo/com o osso,
   Kombi ilustrada, sequências de descer/entrar na Kombi e da derrota; obstáculos somem sob a cena da derrota;
   correção da cadência das pernas na abertura e no embarque; correção do evento de power-up (som e faíscas

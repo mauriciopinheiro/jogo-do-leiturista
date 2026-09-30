@@ -1,19 +1,22 @@
 /**
  * @file medidor.js
- * @description Hidrômetro coletável: base pré-renderizada (anel, mostrador, marcas) + partes
- * dinâmicas (consumo em m³ e ponteiro). Ouro tem anel dourado e estrela.
+ * @description Hidrômetro coletável: base pré-renderizada (anel, mostrador, marcas, visor) + partes
+ * dinâmicas (consumo em m³ e ponteiro). Ouro tem anel dourado e estrela. Tudo é copiado 1:1 em pixels
+ * inteiros e, em telas pequenas, já nasce ampliado (`escalaDeLeitura`) para o número ser legível.
  */
 import { arredondado, circulo, poligono } from '../primitivas.js';
+import { escalaDeLeitura } from '../leitura.js';
 import { obterSprite, pintarSprite } from './cache.js';
-
-const CONTORNO = 1.7;
 
 export const RAIO_VISUAL = 22;
 const CAIXA = { w: 76, h: 76, ox: 38, oy: 38 };
+const CAIXA_ROTULO = { w: 34, h: 14, ox: 17, oy: 7 };
+const CONTORNO = 1.7;
 const CORES = {
   comum: { anel: '#5FDCF2', corpo: ['#1a5fd0', '#0a2a66'], brilho: 'rgba(95,220,242,0.5)' },
   ouro: { anel: '#ffd23f', corpo: ['#b7791f', '#6b3f0c'], brilho: 'rgba(255,210,63,0.6)' }
 };
+const FONTE_ROTULO = "700 9.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
 
 function estrela(ctx, x, y, r, cor) {
   const pontos = [];
@@ -53,17 +56,32 @@ function corpo(ctx, tipo) {
   ctx.beginPath();
   ctx.ellipse(-6, -9, 8, 4, -0.6, 0, Math.PI * 2);
   ctx.fill();
-  arredondado(ctx, -13, 2.5, 26, 9.5, 2.5, '#0b1a2e');
+  arredondado(ctx, -15, 2, 30, 12, 3, '#0b1a2e');
   if (tipo === 'ouro') estrela(ctx, 14, -16, 7, '#fff3a3');
 }
 
-/** Halo (sem contorno) e corpo (com contorno) do medidor, guardados em cache. Origem = centro. */
-export function pintarBaseMedidor(ctx, tipo, k, escala = 1) {
-  pintarSprite(ctx, obterSprite(`medidor-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0, escala);
-  pintarSprite(ctx, obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => corpo(c, tipo), CONTORNO), 0, 0, escala);
+/**
+ * Halo (sem contorno, com transparência própria) e corpo (com contorno), com a origem no centro.
+ * @param {number} zoom ampliação visual (ver leitura.js)
+ * @param {number} alfaHalo 0..1: o halo "pulsa" pela transparência, sem reamostrar o bitmap
+ */
+export function pintarBaseMedidor(ctx, tipo, k, zoom = 1, alfaHalo = 1) {
+  const anterior = ctx.globalAlpha;
+  ctx.globalAlpha = anterior * alfaHalo;
+  pintarSprite(ctx, obterSprite(`medidor-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo), 0, zoom), 0, 0);
+  ctx.globalAlpha = anterior;
+  pintarSprite(ctx, obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => corpo(c, tipo), CONTORNO, zoom), 0, 0);
 }
 
-const ROTULO = "700 8.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
+function rotulo(texto, k, zoom) {
+  return obterSprite(`rotulo-${texto}`, k, CAIXA_ROTULO, (c) => {
+    c.font = FONTE_ROTULO;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillStyle = '#ffffff';
+    c.fillText(texto, 0, 0.6);
+  }, 0, zoom);
+}
 
 /**
  * @param {object} m medidor da simulação
@@ -71,22 +89,19 @@ const ROTULO = "700 8.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
  */
 export function desenharMedidor(ctx, m, y, k, relogio) {
   const tipo = m.tipo === 'ouro' ? 'ouro' : 'comum';
-  const pulso = 1 + Math.sin(relogio * 5 + m.girar) * 0.045;
+  const z = escalaDeLeitura(k);
   ctx.save();
   ctx.translate(m.x, y);
-  pintarBaseMedidor(ctx, tipo, k, pulso);
-  ctx.restore();
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffffff';
-  ctx.font = ROTULO;
-  ctx.fillText(`${m.dados.media3m} m³`, m.x, y + 10);
+  pintarBaseMedidor(ctx, tipo, k, z, 0.72 + Math.sin(relogio * 5 + m.girar) * 0.28);
   const a = m.girar * 1.6 - Math.PI / 2;
   ctx.strokeStyle = '#dc2626';
-  ctx.lineWidth = 1.7;
+  ctx.lineWidth = 1.7 * z;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(m.x, y - 4);
-  ctx.lineTo(m.x + Math.cos(a) * 9.5, y - 4 + Math.sin(a) * 9.5);
+  ctx.moveTo(0, -4 * z);
+  ctx.lineTo(Math.cos(a) * 9.5 * z, -4 * z + Math.sin(a) * 9.5 * z);
   ctx.stroke();
-  circulo(ctx, m.x, y - 4, 2, '#dc2626');
+  circulo(ctx, 0, -4 * z, 2 * z, '#dc2626');
+  pintarSprite(ctx, rotulo(`${m.dados.media3m} m³`, k, z), 0, 8 * z);
+  ctx.restore();
 }

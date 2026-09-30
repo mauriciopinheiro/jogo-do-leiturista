@@ -1,6 +1,6 @@
 /**
  * @file powerups.js
- * @description Emblemas de power-up (turbo, escudo, osso) e placa de rua. Os ícones são
+ * @description Emblemas de power-up (turbo, escudo, osso). Os ícones são
  * desenhados como caminhos, sem emoji, para ficarem nítidos e baratos.
  */
 import { arredondado, circulo, poligono, linha } from '../primitivas.js';
@@ -60,36 +60,19 @@ function emblema(ctx, tipo) {
   icone(ctx, tipo);
 }
 
-/** Halo (sem contorno) e emblema (com contorno) do power-up, guardados em cache. Origem = centro. */
-export function pintarBasePowerup(ctx, tipo, k, escala = 1) {
-  pintarSprite(ctx, obterSprite(`power-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0, escala);
-  pintarSprite(ctx, obterSprite(`power-${tipo}`, k, CAIXA, (c) => emblema(c, tipo), CONTORNO), 0, 0, escala);
+/** Halo (sem contorno, transparência própria) e emblema (com contorno) do power-up. Origem = centro. */
+export function pintarBasePowerup(ctx, tipo, k, alfaHalo = 1) {
+  const anterior = ctx.globalAlpha;
+  ctx.globalAlpha = anterior * alfaHalo;
+  pintarSprite(ctx, obterSprite(`power-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0);
+  ctx.globalAlpha = anterior;
+  pintarSprite(ctx, obterSprite(`power-${tipo}`, k, CAIXA, (c) => emblema(c, tipo), CONTORNO), 0, 0);
 }
 
 export function desenharPowerup(ctx, p, y, k, relogio) {
   const balanco = Math.sin(relogio * 4 + p.x * 0.01) * 3;
   ctx.save();
   ctx.translate(p.x, y + balanco);
-  pintarBasePowerup(ctx, p.tipo, k, 1 + Math.sin(relogio * 6) * 0.05);
+  pintarBasePowerup(ctx, p.tipo, k, 0.75 + Math.sin(relogio * 6) * 0.25);
   ctx.restore();
-}
-
-/** Placa de rua azul com o nome; guardada em cache por nome. */
-export function desenharPlaca(ctx, placa, y, k) {
-  const largura = 250;
-  const sprite = obterSprite(`placa-${placa.nome}`, k, { w: largura + 8, h: 64, ox: 4, oy: 4 }, (c) => {
-    c.fillStyle = '#4b5563';
-    c.fillRect(largura / 2 - 3, 44, 6, 16);
-    arredondado(c, 0, 0, largura, 44, 8, '#f8fafc');
-    arredondado(c, 3, 3, largura - 6, 38, 6, '#0C326F');
-    c.fillStyle = '#FFCD07';
-    c.fillRect(3, 34, largura - 6, 4);
-    circulo(c, 16, 18, 6.5, '#5FDCF2');
-    poligono(c, [[16, 8], [21, 16], [11, 16]], '#5FDCF2');
-    c.fillStyle = '#ffffff';
-    c.font = "900 13.5px Bahnschrift, 'Trebuchet MS', system-ui, sans-serif";
-    c.textAlign = 'center';
-    c.fillText(placa.nome.toUpperCase(), largura / 2 + 8, 25, largura - 44);
-  });
-  pintarSprite(ctx, sprite, placa.x, y);
 }

@@ -97,18 +97,23 @@
   position: absolute;
   z-index: 5;
   left: 50%;
-  top: 30%;
+  /* faixa de asfalto, abaixo do chão da corrida (definido em janela.js): nunca cobre placa, item nem obstáculo */
+  top: var(--faixa-topo, 74%);
   width: min(92vw, 640px);
   text-align: center;
   pointer-events: none;
   opacity: 0;
   transform: translate(-50%, 8px);
-  text-shadow: 0 2px 0 rgba(8, 32, 47, 0.9), 0 0 14px rgba(8, 32, 47, 0.9), 2px 2px 0 rgba(8, 32, 47, 0.9), -2px 2px 0 rgba(8, 32, 47, 0.9);
+  /* contorno nítido (sem brilho borrado): o texto continua legível sobre a corrida em movimento */
+  paint-order: stroke fill;
+  -webkit-text-stroke: 5px rgba(8, 32, 47, 0.95);
+  text-shadow: 0 2px 0 rgba(8, 32, 47, 0.95);
 }
 .faixa.visivel { opacity: 1; transform: translate(-50%, 0); transition: opacity 0.18s ease, transform 0.18s ease; }
 .faixa strong { display: block; font-family: var(--fonte-titulo); font-size: clamp(1.25rem, 5.6vw, 2.1rem); font-weight: 900; letter-spacing: 0.03em; color: var(--amarelo); }
 .faixa span { display: block; margin-top: 4px; font-size: clamp(0.85rem, 3.2vw, 1.1rem); font-weight: 700; color: #fff; }
 .faixa.flow strong { color: var(--agua-clara); }
+.faixa.vitoria { top: 30%; } /* cena final: céu livre acima dos personagens */
 .faixa.vitoria strong { color: var(--sucesso); }
 .faixa.aviso strong { color: #fff; font-size: clamp(1rem, 4.2vw, 1.5rem); }
 

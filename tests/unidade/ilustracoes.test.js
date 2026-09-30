@@ -131,21 +131,59 @@ test('todo quadro escolhido existe no atlas gerado (índice dentro da folha)', (
   }
 });
 
-test('AC-201: espelhar vira o personagem em torno do pé; sem espelhar, não', () => {
+/** Contexto falso que registra as chamadas; `matriz` é a transformação atual (getTransform). */
+function contextoFalso(matriz) {
   const chamadas = [];
   const ctx = {
     save: () => chamadas.push('save'), restore: () => chamadas.push('restore'),
+    getTransform: () => matriz,
+    setTransform: (...m) => chamadas.push(['setTransform', ...m]),
     translate: (x, y) => chamadas.push(['translate', x, y]),
     scale: (x, y) => chamadas.push(['scale', x, y]),
     drawImage: (...a) => chamadas.push(['drawImage', ...a.slice(1)])
   };
+  return { ctx, chamadas };
+}
+
+test('AC-201: com zoom de câmera, espelhar vira o personagem em torno do pé; sem espelhar, não', () => {
   const q = { tela: {}, sx: 10, sy: 20, cw: 50, ch: 60, u: 0.5, px: 25, py: 58 };
+  const zoom = { a: 1.4, b: 0, c: 0, d: 1.4, e: 0, f: 0 };   // 0,5 u/px x 1,4 px/u != 1: cópia escalada
+  const { ctx, chamadas } = contextoFalso(zoom);
   pintarQuadro(ctx, q, 100, 200, true);
   assert.deepEqual(chamadas, ['save', ['translate', 100, 200], ['scale', -1, 1],
     ['drawImage', 10, 20, 50, 60, -12.5, -29, 25, 30], 'restore']);
-  chamadas.length = 0;
-  pintarQuadro(ctx, q, 100, 200);
-  assert.ok(!chamadas.some((c) => Array.isArray(c) && c[0] === 'scale'));
+  const sem = contextoFalso(zoom);
+  pintarQuadro(sem.ctx, q, 100, 200);
+  assert.ok(!sem.chamadas.some((c) => Array.isArray(c) && c[0] === 'scale'));
+});
+
+test('nitidez: no tamanho normal o quadro é copiado 1:1 em pixels inteiros do dispositivo', () => {
+  const q = { tela: {}, sx: 10, sy: 20, cw: 50, ch: 60, u: 0.5, px: 24.7, py: 57.6 };
+  const normal = { a: 2, b: 0, c: 0, d: 2, e: 3.3, f: -1.6 };   // 0,5 u/px x 2 px/u = 1
+  for (const [x, y] of [[100, 200], [100.37, 200.61], [100.5, 199.5]]) {
+    const { ctx, chamadas } = contextoFalso(normal);
+    pintarQuadro(ctx, q, x, y);
+    const copia = chamadas.find((c) => Array.isArray(c) && c[0] === 'drawImage');
+    assert.ok(copia, 'deveria copiar o quadro');
+    const [, , , , , dx, dy, dw, dh] = copia;
+    assert.ok(Number.isInteger(dx) && Number.isInteger(dy), `posição fracionária (${dx}, ${dy}) em x=${x}, y=${y}`);
+    assert.deepEqual([dw, dh], [50, 60], 'sem mudança de escala');
+    assert.ok(chamadas.some((c) => Array.isArray(c) && c[0] === 'setTransform'), 'copia em pixels do dispositivo');
+  }
+});
+
+test('nitidez: espelhado, o pé continua no mesmo pixel e a imagem se estende para o outro lado', () => {
+  const q = { tela: {}, sx: 0, sy: 0, cw: 50, ch: 60, u: 0.5, px: 30, py: 58 };
+  const normal = { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 };
+  const reto = contextoFalso(normal);
+  pintarQuadro(reto.ctx, q, 100, 200);
+  const espelho = contextoFalso(normal);
+  pintarQuadro(espelho.ctx, q, 100, 200, true);
+  const esquerdaReto = reto.chamadas.find((c) => c[0] === 'drawImage')[5];
+  const traslado = espelho.chamadas.find((c) => c[0] === 'translate');
+  assert.equal(esquerdaReto, 200 - 30, 'pivô na coluna 30 do bitmap');
+  assert.equal(traslado[1] - 50, 200 - (50 - 30), 'espelhado: a borda esquerda fica a (cw - px) do pivô');
+  assert.ok(espelho.chamadas.some((c) => c[0] === 'scale' && c[1] === -1));
 });
 
 test('REQ-209: o uniforme é um só e usa o azul oficial do SEMAE (logotipo, #005E9F)', () => {

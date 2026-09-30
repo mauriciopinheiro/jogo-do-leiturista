@@ -208,18 +208,23 @@ button { font: inherit; color: inherit; }
   position: absolute;
   z-index: 5;
   left: 50%;
-  top: 30%;
+  /* faixa de asfalto, abaixo do chão da corrida (definido em janela.js): nunca cobre placa, item nem obstáculo */
+  top: var(--faixa-topo, 74%);
   width: min(92vw, 640px);
   text-align: center;
   pointer-events: none;
   opacity: 0;
   transform: translate(-50%, 8px);
-  text-shadow: 0 2px 0 rgba(8, 32, 47, 0.9), 0 0 14px rgba(8, 32, 47, 0.9), 2px 2px 0 rgba(8, 32, 47, 0.9), -2px 2px 0 rgba(8, 32, 47, 0.9);
+  /* contorno nítido (sem brilho borrado): o texto continua legível sobre a corrida em movimento */
+  paint-order: stroke fill;
+  -webkit-text-stroke: 5px rgba(8, 32, 47, 0.95);
+  text-shadow: 0 2px 0 rgba(8, 32, 47, 0.95);
 }
 .faixa.visivel { opacity: 1; transform: translate(-50%, 0); transition: opacity 0.18s ease, transform 0.18s ease; }
 .faixa strong { display: block; font-family: var(--fonte-titulo); font-size: clamp(1.25rem, 5.6vw, 2.1rem); font-weight: 900; letter-spacing: 0.03em; color: var(--amarelo); }
 .faixa span { display: block; margin-top: 4px; font-size: clamp(0.85rem, 3.2vw, 1.1rem); font-weight: 700; color: #fff; }
 .faixa.flow strong { color: var(--agua-clara); }
+.faixa.vitoria { top: 30%; } /* cena final: céu livre acima dos personagens */
 .faixa.vitoria strong { color: var(--sucesso); }
 .faixa.aviso strong { color: #fff; font-size: clamp(1rem, 4.2vw, 1.5rem); }
 
@@ -525,7 +530,10 @@ button { font: inherit; color: inherit; }
   .hud-ameaca strong { min-width: 0; }
   .barra { min-width: 44px; }
   .hud-flow { width: 84px; }
-  .faixa { top: 20%; width: min(70vw, 560px); }
+  .faixa { width: min(70vw, 560px); }
+  .faixa.vitoria { top: 20%; }
+  /* na faixa de asfalto baixa do celular deitado, aviso e dica de toque ficariam um sobre o outro */
+  .faixa.visivel:not(.vitoria) ~ .dica { opacity: 0; transition: none; }
   .faixa strong { font-size: clamp(1.05rem, 6.4vh, 1.7rem); }
   .faixa span { font-size: clamp(0.8rem, 4.4vh, 1.05rem); }
   .painel-resultado { width: min(100%, 940px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -638,7 +646,7 @@ button { font: inherit; color: inherit; }
           </div>
         </details>
         <input id="inputImportar" type="file" accept="application/json,.json" hidden>
-        <p class="versao" id="versao">v4.2.0 · SEMAE Piracicaba</p>
+        <p class="versao" id="versao">v4.2.1 · SEMAE Piracicaba</p>
       </div>
     </div>
   </section>
@@ -689,7 +697,7 @@ button { font: inherit; color: inherit; }
 (() => {
   // src/js/config/constantes.js
   var ID_APP = "jogo-do-leiturista-3";
-  var VERSAO_APP = "4.2.0";
+  var VERSAO_APP = "4.2.1";
   var ESQUEMA_SAVE = 2;
   var CHAVE_SAVE = `semae.${ID_APP}.v${ESQUEMA_SAVE}`;
   var CHAVE_SAVE_V1 = `semae.${ID_APP}.v1`;
@@ -733,6 +741,9 @@ button { font: inherit; color: inherit; }
     osso: -30,
     limite: 100
   };
+  var FATOR_CAO_NA_CENA = 0.68;
+  var PLACA = { largura: 260, folga: 100 };
+  var TREMOR = { x: 2.6, y: 1.6, frequencia: 95 };
   var FOLGA_ENTRE_PADROES = 160;
   var MARGEM_SPAWN = 40;
   var RAIO_MEDIDOR = 18;
@@ -1088,6 +1099,27 @@ button { font: inherit; color: inherit; }
     return sim.ameaca >= AMEACA.limite;
   }
 
+  // src/js/simulacao/placas.js
+  var AFASTAMENTO = PLACA.largura + PLACA.folga;
+  var ENTRADA_MINIMA = 80;
+  function adicionarPlaca(placas, nova, larguraMundo) {
+    const jaVista = (p) => p.x < larguraMundo - ENTRADA_MINIMA;
+    for (let volta = 0; volta < 12; volta++) {
+      const conflitos = placas.filter((p) => Math.abs(p.x - nova.x) < AFASTAMENTO);
+      if (conflitos.length === 0) {
+        placas.push(nova);
+        return true;
+      }
+      if (nova.total <= Math.max(...conflitos.map((p) => p.total))) return false;
+      for (const p of conflitos) {
+        if (!jaVista(p)) placas.splice(placas.indexOf(p), 1);
+      }
+      const vistas = conflitos.filter(jaVista);
+      if (vistas.length > 0) nova.x = Math.max(nova.x, ...vistas.map((p) => p.x + AFASTAMENTO));
+    }
+    return false;
+  }
+
   // src/js/simulacao/ruas.js
   function registrarNaRua(sim, ruaIdx, campo) {
     const rua2 = sim.fila.porRua[ruaIdx];
@@ -1099,7 +1131,8 @@ button { font: inherit; color: inherit; }
     return idx === -1 ? fila.porRua.length - 1 : idx;
   }
   function anunciarPlaca(sim, rota, idx) {
-    sim.placas.push({ nome: rota.ruas[idx].nome, x: sim.mundo.L + 40 });
+    const rua2 = rota.ruas[idx];
+    return adicionarPlaca(sim.placas, { nome: rua2.nome, x: sim.mundo.L + 40, total: rua2.hidrometros }, sim.mundo.L);
   }
   function atualizarRuas(sim) {
     const rota = sim.rotas[sim.faseIdx];
@@ -1117,9 +1150,9 @@ button { font: inherit; color: inherit; }
     if (sim.ruaAnunciada === sim.ruaAtual || sim.estagio !== "corrida") return;
     const primeira = sim.ruaAnunciada === -1;
     sim.ruaAnunciada = sim.ruaAtual;
-    anunciarPlaca(sim, rota, sim.ruaAtual);
-    emitir(sim, "rua-nova", { nome: rota.ruas[sim.ruaAtual].nome, primeira });
-    if (!primeira) {
+    const comPlaca = anunciarPlaca(sim, rota, sim.ruaAtual);
+    emitir(sim, "rua-nova", { nome: rota.ruas[sim.ruaAtual].nome, primeira, placa: comPlaca });
+    if (!primeira && comPlaca) {
       sim.travessia = TEMPOS.travessiaRua;
       emitirAviso(sim, "\u{1F6B8} ATRAVESSANDO A RUA\u2026", `Entrando na ${rota.ruas[sim.ruaAtual].nome}`, "checkpoint", 2.3);
     }
@@ -2782,24 +2815,34 @@ button { font: inherit; color: inherit; }
     c.drawImage(tela, 0, 0);
     return saida;
   }
-  function obterSprite(chave, k, caixa, desenhar, contorno = 0) {
-    const kk = Math.round(k * 4) / 4;
-    const id = `${chave}@${kk}`;
+  function obterSprite(chave, k, caixa, desenhar, contorno = 0, zoom = 1) {
+    const ke = k * zoom;
+    const id = `${chave}@${ke.toFixed(3)}`;
     let sprite = guardados.get(id);
     if (!sprite) {
-      const tela = criarTela(caixa.w * kk, caixa.h * kk);
+      const largura = Math.max(1, Math.ceil(caixa.w * ke));
+      const altura = Math.max(1, Math.ceil(caixa.h * ke));
+      const tela = criarTela(largura, altura);
       const ctx = tela.getContext("2d");
-      ctx.scale(kk, kk);
+      const sx = largura / caixa.w;
+      const sy = altura / caixa.h;
+      ctx.scale(sx, sy);
       ctx.translate(caixa.ox, caixa.oy);
       desenhar(ctx);
-      const final = contorno > 0 ? comContorno(tela, Math.max(1.2, contorno * kk)) : tela;
-      sprite = { tela: final, x: -caixa.ox, y: -caixa.oy, w: caixa.w, h: caixa.h };
+      const final = contorno > 0 ? comContorno(tela, Math.max(1.2, contorno * ke)) : tela;
+      sprite = { tela: final, oxPx: caixa.ox * sx, oyPx: caixa.oy * sy };
       guardados.set(id, sprite);
     }
     return sprite;
   }
-  function pintarSprite(ctx, sprite, x, y, escala = 1) {
-    ctx.drawImage(sprite.tela, x + sprite.x * escala, y + sprite.y * escala, sprite.w * escala, sprite.h * escala);
+  function pintarSprite(ctx, sprite, x, y) {
+    const t = ctx.getTransform();
+    const dx = Math.round(t.a * x + t.c * y + t.e - sprite.oxPx);
+    const dy = Math.round(t.b * x + t.d * y + t.f - sprite.oyPx);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(sprite.tela, dx, dy);
+    ctx.restore();
   }
   function limparSprites() {
     guardados.clear();
@@ -2903,12 +2946,12 @@ button { font: inherit; color: inherit; }
   function ilustracoesProntas() {
     return estado.pronta;
   }
-  function atlasEscalado(nome, k) {
-    const chave = `${nome}|${k.toFixed(3)}`;
+  function atlasEscalado(nome, k, fator = 1) {
+    const chave = `${nome}|${k.toFixed(3)}|${fator}`;
     let atlas = estado.escalados.get(chave);
     if (atlas) return atlas;
     const meta = SPRITES.folhas[nome];
-    const porPixel = meta.upp;
+    const porPixel = meta.upp * fator;
     const s = Math.min(1, k * porPixel);
     const [cw0, ch0] = meta.celula;
     const cw = Math.max(1, Math.round(cw0 * s));
@@ -2927,9 +2970,9 @@ button { font: inherit; color: inherit; }
     estado.escalados.set(chave, atlas);
     return atlas;
   }
-  function obterQuadro(nome, quadro, k) {
+  function obterQuadro(nome, quadro, k, fator = 1) {
     if (!estado.pronta) return null;
-    const a = atlasEscalado(nome, k);
+    const a = atlasEscalado(nome, k, fator);
     const colunas = SPRITES.folhas[nome].colunas;
     return { tela: a.tela, sx: quadro % colunas * a.cw, sy: Math.floor(quadro / colunas) * a.ch, cw: a.cw, ch: a.ch, u: a.u, px: a.px, py: a.py };
   }
@@ -3150,14 +3193,27 @@ button { font: inherit; color: inherit; }
     cabeca2(ctx, { ...o, orelha: Math.sin(o.fase * 2) * 0.35 }, 61, 15);
   }
 
+  // src/js/render/leitura.js
+  var PIXELS_POR_UNIDADE_ALVO = 1.15;
+  var razaoDePixels = 1;
+  function definirRazaoDePixels(razao) {
+    razaoDePixels = razao > 0 ? razao : 1;
+  }
+  function escalaDeLeitura(k, maximo = 1.6) {
+    if (!(k > 0)) return 1;
+    return Math.min(maximo, Math.max(1, PIXELS_POR_UNIDADE_ALVO / (k / razaoDePixels)));
+  }
+
   // src/js/render/sprites/medidor.js
-  var CONTORNO = 1.7;
   var RAIO_VISUAL = 22;
   var CAIXA = { w: 76, h: 76, ox: 38, oy: 38 };
+  var CAIXA_ROTULO = { w: 34, h: 14, ox: 17, oy: 7 };
+  var CONTORNO = 1.7;
   var CORES = {
     comum: { anel: "#5FDCF2", corpo: ["#1a5fd0", "#0a2a66"], brilho: "rgba(95,220,242,0.5)" },
     ouro: { anel: "#ffd23f", corpo: ["#b7791f", "#6b3f0c"], brilho: "rgba(255,210,63,0.6)" }
   };
+  var FONTE_ROTULO = "700 9.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
   function estrela(ctx, x, y, r, cor) {
     const pontos = [];
     for (let i = 0; i < 10; i++) {
@@ -3194,34 +3250,42 @@ button { font: inherit; color: inherit; }
     ctx.beginPath();
     ctx.ellipse(-6, -9, 8, 4, -0.6, 0, Math.PI * 2);
     ctx.fill();
-    arredondado(ctx, -13, 2.5, 26, 9.5, 2.5, "#0b1a2e");
+    arredondado(ctx, -15, 2, 30, 12, 3, "#0b1a2e");
     if (tipo === "ouro") estrela(ctx, 14, -16, 7, "#fff3a3");
   }
-  function pintarBaseMedidor(ctx, tipo, k, escala = 1) {
-    pintarSprite(ctx, obterSprite(`medidor-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo)), 0, 0, escala);
-    pintarSprite(ctx, obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => corpo(c, tipo), CONTORNO), 0, 0, escala);
+  function pintarBaseMedidor(ctx, tipo, k, zoom = 1, alfaHalo = 1) {
+    const anterior = ctx.globalAlpha;
+    ctx.globalAlpha = anterior * alfaHalo;
+    pintarSprite(ctx, obterSprite(`medidor-halo-${tipo}`, k, CAIXA, (c) => halo(c, tipo), 0, zoom), 0, 0);
+    ctx.globalAlpha = anterior;
+    pintarSprite(ctx, obterSprite(`medidor-${tipo}`, k, CAIXA, (c) => corpo(c, tipo), CONTORNO, zoom), 0, 0);
   }
-  var ROTULO = "700 8.6px Consolas, 'SF Mono', 'DejaVu Sans Mono', monospace";
+  function rotulo(texto, k, zoom) {
+    return obterSprite(`rotulo-${texto}`, k, CAIXA_ROTULO, (c) => {
+      c.font = FONTE_ROTULO;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillStyle = "#ffffff";
+      c.fillText(texto, 0, 0.6);
+    }, 0, zoom);
+  }
   function desenharMedidor(ctx, m, y, k, relogio) {
     const tipo = m.tipo === "ouro" ? "ouro" : "comum";
-    const pulso = 1 + Math.sin(relogio * 5 + m.girar) * 0.045;
+    const z = escalaDeLeitura(k);
     ctx.save();
     ctx.translate(m.x, y);
-    pintarBaseMedidor(ctx, tipo, k, pulso);
-    ctx.restore();
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffffff";
-    ctx.font = ROTULO;
-    ctx.fillText(`${m.dados.media3m} m\xB3`, m.x, y + 10);
+    pintarBaseMedidor(ctx, tipo, k, z, 0.72 + Math.sin(relogio * 5 + m.girar) * 0.28);
     const a = m.girar * 1.6 - Math.PI / 2;
     ctx.strokeStyle = "#dc2626";
-    ctx.lineWidth = 1.7;
+    ctx.lineWidth = 1.7 * z;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(m.x, y - 4);
-    ctx.lineTo(m.x + Math.cos(a) * 9.5, y - 4 + Math.sin(a) * 9.5);
+    ctx.moveTo(0, -4 * z);
+    ctx.lineTo(Math.cos(a) * 9.5 * z, -4 * z + Math.sin(a) * 9.5 * z);
     ctx.stroke();
-    circulo(ctx, m.x, y - 4, 2, "#dc2626");
+    circulo(ctx, 0, -4 * z, 2 * z, "#dc2626");
+    pintarSprite(ctx, rotulo(`${m.dados.media3m} m\xB3`, k, z), 0, 8 * z);
+    ctx.restore();
   }
 
   // src/js/render/sprites/obstaculos.js
@@ -3376,34 +3440,78 @@ button { font: inherit; color: inherit; }
     ctx.fill();
     icone(ctx, tipo);
   }
-  function pintarBasePowerup(ctx, tipo, k, escala = 1) {
-    pintarSprite(ctx, obterSprite(`power-halo-${tipo}`, k, CAIXA2, (c) => halo2(c, tipo)), 0, 0, escala);
-    pintarSprite(ctx, obterSprite(`power-${tipo}`, k, CAIXA2, (c) => emblema(c, tipo), CONTORNO3), 0, 0, escala);
+  function pintarBasePowerup(ctx, tipo, k, alfaHalo = 1) {
+    const anterior = ctx.globalAlpha;
+    ctx.globalAlpha = anterior * alfaHalo;
+    pintarSprite(ctx, obterSprite(`power-halo-${tipo}`, k, CAIXA2, (c) => halo2(c, tipo)), 0, 0);
+    ctx.globalAlpha = anterior;
+    pintarSprite(ctx, obterSprite(`power-${tipo}`, k, CAIXA2, (c) => emblema(c, tipo), CONTORNO3), 0, 0);
   }
   function desenharPowerup(ctx, p, y, k, relogio) {
     const balanco = Math.sin(relogio * 4 + p.x * 0.01) * 3;
     ctx.save();
     ctx.translate(p.x, y + balanco);
-    pintarBasePowerup(ctx, p.tipo, k, 1 + Math.sin(relogio * 6) * 0.05);
+    pintarBasePowerup(ctx, p.tipo, k, 0.75 + Math.sin(relogio * 6) * 0.25);
     ctx.restore();
   }
+
+  // src/js/render/sprites/placa.js
+  var ALTURA_PLACA = 52;
+  var ALTURA_POSTE = 12;
+  var CAIXA3 = { w: PLACA.largura + 8, h: ALTURA_PLACA + ALTURA_POSTE + 8, ox: PLACA.largura / 2 + 4, oy: ALTURA_PLACA + ALTURA_POSTE + 4 };
+  var FONTE = (px) => `900 ${px}px Bahnschrift, 'Trebuchet MS', system-ui, sans-serif`;
+  var TAMANHOS = [18, 17, 16, 15, 14];
+  var LARGURA_TEXTO = PLACA.largura - 58;
+  function dividirNome(nome) {
+    const palavras = nome.split(" ");
+    if (palavras.length < 2) return [nome];
+    let melhor = 1;
+    let menorDiferenca = Infinity;
+    for (let i = 1; i < palavras.length; i++) {
+      const diferenca = Math.abs(palavras.slice(0, i).join(" ").length - palavras.slice(i).join(" ").length);
+      if (diferenca < menorDiferenca) {
+        menorDiferenca = diferenca;
+        melhor = i;
+      }
+    }
+    return [palavras.slice(0, melhor).join(" "), palavras.slice(melhor).join(" ")];
+  }
+  function escolherLetra(ctx, linhas) {
+    for (const px of TAMANHOS) {
+      ctx.font = FONTE(px);
+      if (linhas.every((l) => ctx.measureText(l).width <= LARGURA_TEXTO)) return px;
+    }
+    return TAMANHOS.at(-1);
+  }
+  function desenharPlacaBase(c, nome) {
+    const topo = -(ALTURA_PLACA + ALTURA_POSTE);
+    const esquerda = -PLACA.largura / 2;
+    c.fillStyle = "#4b5563";
+    c.fillRect(-3, topo + ALTURA_PLACA - 1, 6, ALTURA_POSTE + 1);
+    arredondado(c, esquerda, topo, PLACA.largura, ALTURA_PLACA, 9, "#f8fafc");
+    arredondado(c, esquerda + 3, topo + 3, PLACA.largura - 6, ALTURA_PLACA - 6, 7, "#0C326F");
+    c.fillStyle = "#FFCD07";
+    c.fillRect(esquerda + 3, topo + ALTURA_PLACA - 11, PLACA.largura - 6, 4);
+    circulo(c, esquerda + 20, topo + 22, 7.5, "#5FDCF2");
+    poligono(c, [[esquerda + 20, topo + 10], [esquerda + 26, topo + 19], [esquerda + 14, topo + 19]], "#5FDCF2");
+    const texto = nome.toUpperCase();
+    let linhas = [texto];
+    c.font = FONTE(TAMANHOS[2]);
+    if (c.measureText(texto).width > LARGURA_TEXTO) linhas = dividirNome(texto);
+    const px = escolherLetra(c, linhas);
+    c.font = FONTE(px);
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillStyle = "#ffffff";
+    const centroX = esquerda + 40 + LARGURA_TEXTO / 2;
+    const centroY = topo + (ALTURA_PLACA - 11) / 2 + 1;
+    const passo2 = px + 1;
+    linhas.forEach((linha2, i) => c.fillText(linha2, centroX, centroY + (i - (linhas.length - 1) / 2) * passo2));
+  }
   function desenharPlaca(ctx, placa, y, k) {
-    const largura = 250;
-    const sprite = obterSprite(`placa-${placa.nome}`, k, { w: largura + 8, h: 64, ox: 4, oy: 4 }, (c) => {
-      c.fillStyle = "#4b5563";
-      c.fillRect(largura / 2 - 3, 44, 6, 16);
-      arredondado(c, 0, 0, largura, 44, 8, "#f8fafc");
-      arredondado(c, 3, 3, largura - 6, 38, 6, "#0C326F");
-      c.fillStyle = "#FFCD07";
-      c.fillRect(3, 34, largura - 6, 4);
-      circulo(c, 16, 18, 6.5, "#5FDCF2");
-      poligono(c, [[16, 8], [21, 16], [11, 16]], "#5FDCF2");
-      c.fillStyle = "#ffffff";
-      c.font = "900 13.5px Bahnschrift, 'Trebuchet MS', system-ui, sans-serif";
-      c.textAlign = "center";
-      c.fillText(placa.nome.toUpperCase(), largura / 2 + 8, 25, largura - 44);
-    });
-    pintarSprite(ctx, sprite, placa.x, y);
+    const z = escalaDeLeitura(k, 1.35);
+    const sprite = obterSprite(`placa-${placa.nome}`, k, CAIXA3, (c) => desenharPlacaBase(c, placa.nome), 0, z);
+    pintarSprite(ctx, sprite, placa.x + PLACA.largura / 2, y + ALTURA_PLACA + ALTURA_POSTE);
   }
 
   // src/js/render/ilustracoes/quadros.js
@@ -3545,7 +3653,27 @@ button { font: inherit; color: inherit; }
   }
 
   // src/js/render/ilustracoes/quadro.js
+  function umParaUm(q, t) {
+    return t.b === 0 && t.c === 0 && Math.abs(q.u * t.a - 1) < 2e-3 && Math.abs(q.u * t.d - 1) < 2e-3;
+  }
   function pintarQuadro(ctx, q, x, y, espelhar = false) {
+    const t = ctx.getTransform();
+    if (umParaUm(q, t)) {
+      const pivoX = t.a * x + t.e;
+      const esquerda = Math.round(espelhar ? pivoX - (q.cw - q.px) : pivoX - q.px);
+      const topo = Math.round(t.d * y + t.f - q.py);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (espelhar) {
+        ctx.translate(esquerda + q.cw, topo);
+        ctx.scale(-1, 1);
+        ctx.drawImage(q.tela, q.sx, q.sy, q.cw, q.ch, 0, 0, q.cw, q.ch);
+      } else {
+        ctx.drawImage(q.tela, q.sx, q.sy, q.cw, q.ch, esquerda, topo, q.cw, q.ch);
+      }
+      ctx.restore();
+      return;
+    }
     ctx.save();
     ctx.translate(x, y);
     if (espelhar) ctx.scale(-1, 1);
@@ -3563,7 +3691,7 @@ button { font: inherit; color: inherit; }
   }
   function pintarCaoIlustrado(ctx, k, o) {
     const { folha, quadro } = escolherQuadroCao(o);
-    const q = obterQuadro(folha, quadro, k);
+    const q = obterQuadro(folha, quadro, k, o.fator || 1);
     if (!q) return false;
     pintarQuadro(ctx, q, o.x, o.y, o.espelhar);
     return true;
@@ -3584,7 +3712,7 @@ button { font: inherit; color: inherit; }
   }
 
   // src/js/render/sprites/kombi.js
-  var CAIXA3 = { w: 190, h: 118, ox: 10, oy: 10 };
+  var CAIXA4 = { w: 190, h: 118, ox: 10, oy: 10 };
   var CONTORNO4 = 2.2;
   function roda(ctx, x, y, giro) {
     circulo(ctx, x, y, 17.4, COR_CONTORNO);
@@ -3635,7 +3763,7 @@ button { font: inherit; color: inherit; }
   }
   function desenharKombi(ctx, o, k) {
     elipse(ctx, 86, 102, 82, 8, "rgba(0,0,0,0.25)");
-    const sprite = obterSprite(`kombi-${o.portaAberta ? "aberta" : "fechada"}`, k, CAIXA3, (c) => carroceria(c, o.portaAberta), CONTORNO4);
+    const sprite = obterSprite(`kombi-${o.portaAberta ? "aberta" : "fechada"}`, k, CAIXA4, (c) => carroceria(c, o.portaAberta), CONTORNO4);
     pintarSprite(ctx, sprite, 0, o.balanco || 0);
     roda(ctx, 38, 90, o.giro || 0);
     roda(ctx, 132, 90, o.giro || 0);
@@ -3810,6 +3938,7 @@ button { font: inherit; color: inherit; }
       /** Ajusta o canvas interno e devolve o layout (a simulação usa L, chaoY e jogadorX). */
       redimensionar(largura, altura, dpr) {
         layout = calcularLayout({ largura, altura, dpr, leve });
+        definirRazaoDePixels(layout.pxRatio);
         canvas.width = layout.pixelsW;
         canvas.height = layout.pixelsH;
         cenario = null;
@@ -3845,7 +3974,8 @@ button { font: inherit; color: inherit; }
         if (!cenario || cenario.chave !== chaveDoCenario(faseIdx, layout)) cenario = criarCenario(faseIdx, layout);
         ctx.setTransform(k, 0, 0, k, 0, 0);
         const tremer = sim.tremor > 0 && !reduzirMovimento;
-        const tremor = tremer ? { x: Math.round((Math.random() - 0.5) * 9 * k), y: Math.round((Math.random() - 0.5) * 6 * k) } : SEM_TREMOR;
+        const forca = tremer ? Math.min(1, sim.tremor / TEMPOS.tremor) : 0;
+        const tremor = tremer ? { x: Math.round(Math.sin(relogio * TREMOR.frequencia) * TREMOR.x * forca * k), y: Math.round(Math.cos(relogio * TREMOR.frequencia * 0.8) * TREMOR.y * forca * k) } : SEM_TREMOR;
         const noMenu = sim.estagio === "inativo";
         const vista = noMenu ? { ...sim, rolagem: rolagemMenu, travessia: 0 } : sim;
         desenharCenario(ctx, cenario, vista, layout, relogio, !reduzirMovimento, { tremor });
@@ -3867,7 +3997,7 @@ button { font: inherit; color: inherit; }
         ctx.restore();
         if (sim.ameaca > 60 && sim.estagio === "corrida") {
           vinheta = vinheta || criarVinheta(layout);
-          ctx.globalAlpha = Math.min(0.55, (sim.ameaca - 60) / 40 * (0.55 + Math.sin(relogio * 8) * 0.25));
+          ctx.globalAlpha = Math.min(0.34, (sim.ameaca - 60) / 40 * (0.32 + Math.sin(relogio * 4) * 0.08));
           ctx.drawImage(vinheta, 0, 0, layout.L, layout.A);
           ctx.globalAlpha = 1;
         }
@@ -4330,13 +4460,15 @@ button { font: inherit; color: inherit; }
     if (modoIlustrado()) {
       if (pintarComposicao(ctx, cena, k, chaoY)) return;
       const { jogador: p, cao: c } = cena;
-      elipse(ctx, c.x + PIVO_CAO, chaoY + 3, 36, 5, "rgba(0,0,0,0.25)");
+      const f = FATOR_CAO_NA_CENA;
+      elipse(ctx, c.x + PIVO_CAO * f, chaoY + 3, 36 * f, 5, "rgba(0,0,0,0.25)");
       pintarCaoIlustrado(ctx, k, {
-        x: c.x + PIVO_CAO,
+        x: c.x + PIVO_CAO * f,
         y: chaoY,
         espelhar: c.olhando < 0,
         sentado: c.sentado,
         feliz: c.feliz,
+        fator: f,
         fase: c.fase * RITMO_GALOPE,
         tempo
       });
@@ -5013,7 +5145,7 @@ button { font: inherit; color: inherit; }
         n(930, 0.1, 0.03, "triangle", 160, "efeito", 0.09);
         break;
       case "rua-nova":
-        if (!e.primeira) {
+        if (!e.primeira && e.placa) {
           n(520, 0.08, 0.03, "sine", 100);
           n(660, 0.1, 0.03, "sine", 150, "efeito", 0.12);
         }
@@ -5457,6 +5589,11 @@ button { font: inherit; color: inherit; }
   }
 
   // src/js/app/janela.js
+  function posicionarFaixa(documento, layout, altura) {
+    const chao = layout.chaoY * layout.escala;
+    const topo = chao + (altura - chao) * 0.14;
+    documento.documentElement.style.setProperty("--faixa-topo", `${topo.toFixed(1)}px`);
+  }
   function ligarJanela({ janela: janela2, sim, renderizador, aoOcultar, aoMostrar, redesenhar }) {
     let agendado = false;
     function ajustar() {
@@ -5467,6 +5604,7 @@ button { font: inherit; color: inherit; }
       if (largura < 2 || altura < 2) return;
       const layout = renderizador.redimensionar(largura, altura, janela2.devicePixelRatio || 1);
       redimensionarMundo(sim, layout);
+      posicionarFaixa(janela2.document, layout, altura);
       redesenhar();
     }
     function pedir() {

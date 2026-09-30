@@ -4,6 +4,7 @@
  * (inclusive as poses em que os dois aparecem juntos) e, senão, o desenho vetorial de reserva.
  */
 import { UNIFORME } from '../config/uniformes.js';
+import { FATOR_CAO_NA_CENA } from '../config/constantes.js';
 import { desenharLeiturista } from '../render/sprites/leiturista.js';
 import { desenharCao } from '../render/sprites/cao.js';
 import { elipse } from '../render/primitivas.js';
@@ -15,6 +16,7 @@ import { CENA, FOLHA } from '../render/ilustracoes/quadros.js';
 export const ENCONTRO = { vetor: 123, ilustrado: 78 };
 /** Do canto esquerdo do cão ilustrado até o pivô (centro de massa) do quadro. */
 const PIVO_CAO = 46;
+
 /** A ilustração do cão galopa em quadros; na cena a fase corre mais devagar que no jogo. */
 const RITMO_GALOPE = 2.8;
 const COMPOSTAS = { mao: CENA.mao, tigela: CENA.tigela, afaga: CENA.carinho };
@@ -53,9 +55,10 @@ export function pintarPersonagens(ctx, cena, k, chaoY, tempo) {
   if (modoIlustrado()) {
     if (pintarComposicao(ctx, cena, k, chaoY)) return;
     const { jogador: p, cao: c } = cena;
-    elipse(ctx, c.x + PIVO_CAO, chaoY + 3, 36, 5, 'rgba(0,0,0,0.25)');
+    const f = FATOR_CAO_NA_CENA;
+    elipse(ctx, c.x + PIVO_CAO * f, chaoY + 3, 36 * f, 5, 'rgba(0,0,0,0.25)');
     pintarCaoIlustrado(ctx, k, {
-      x: c.x + PIVO_CAO, y: chaoY, espelhar: c.olhando < 0, sentado: c.sentado, feliz: c.feliz, fase: c.fase * RITMO_GALOPE, tempo
+      x: c.x + PIVO_CAO * f, y: chaoY, espelhar: c.olhando < 0, sentado: c.sentado, feliz: c.feliz, fator: f, fase: c.fase * RITMO_GALOPE, tempo
     });
     elipse(ctx, p.x + 22.5, chaoY + 3, 24, 5, 'rgba(0,0,0,0.25)');
     pintarLeituristaIlustrado(ctx, k, { x: p.x + 22.5, y: chaoY, espelhar: p.olhando < 0, pose: p.pose, fase: p.fase, tempo });

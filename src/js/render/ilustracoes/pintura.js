@@ -21,10 +21,10 @@ export function pintarLeituristaIlustrado(ctx, k, o) {
   return true;
 }
 
-/** @param {object} o { x (centro do corpo), y (pé), espelhar, sentado, feliz, latindo, investindo, osso, fase, tempo } */
+/** @param {object} o { x (centro do corpo), y (pé), espelhar, sentado, feliz, latindo, investindo, osso, fator, fase, tempo } */
 export function pintarCaoIlustrado(ctx, k, o) {
   const { folha, quadro } = escolherQuadroCao(o);
-  const q = obterQuadro(folha, quadro, k);
+  const q = obterQuadro(folha, quadro, k, o.fator || 1);
   if (!q) return false;
   pintarQuadro(ctx, q, o.x, o.y, o.espelhar);
   return true;

@@ -1,6 +1,6 @@
 {
   "name": "jogo-do-leiturista",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "private": true,
   "type": "module",
   "description": "Jogo do Leiturista - SEMAE Piracicaba. Fontes modulares em src/ geram o index.html unico.",

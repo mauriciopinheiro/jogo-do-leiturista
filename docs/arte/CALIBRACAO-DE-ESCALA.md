@@ -35,3 +35,9 @@ Notas:
   quando a van troca de "sozinha" para "com o menino".
 - Para ajustar um tamanho: altere `u_px` da folha em `folhas.py`, rode `python scripts/preparar_sprites.py` e
   `npm run verificar:sprites`, e confira em `--previa`.
+
+## Cão avulso na cena final (v4.2.1)
+
+O cão da cena final vem do atlas `cao-acoes` (sentado ≈ 88,3 u), mas ao lado dos quadros compostos (`cena-final`, menino + cão) o cão mede ≈ 54,8 u sentado. Sem correção
+o cão avulso parecia quase do tamanho do menino. `FATOR_CAO_NA_CENA = 0,68` (em `src/js/config/constantes.js`) reduz o cão avulso para ≈ 60 u (1,10× o do quadro composto), com sombra e pivô na mesma proporção.
+Para ajustar, mude a constante e confira a cena final; o teste `nitidez.test.js` exige a razão entre 0,95 e 1,2.

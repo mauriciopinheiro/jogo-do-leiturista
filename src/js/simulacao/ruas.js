@@ -6,6 +6,7 @@
 import { AMEACA, TEMPOS } from '../config/constantes.js';
 import { emitir, emitirAviso } from './eventos.js';
 import { aumentarAmeaca } from './cao.js';
+import { adicionarPlaca } from './placas.js';
 
 export function registrarNaRua(sim, ruaIdx, campo) {
   const rua = sim.fila.porRua[ruaIdx];
@@ -20,8 +21,10 @@ export function ruaEmAndamento(fila) {
   return idx === -1 ? fila.porRua.length - 1 : idx;
 }
 
+/** @returns {boolean} false se a placa foi descartada por cobrir outra de uma rua com mais hidrômetros */
 function anunciarPlaca(sim, rota, idx) {
-  sim.placas.push({ nome: rota.ruas[idx].nome, x: sim.mundo.L + 40 });
+  const rua = rota.ruas[idx];
+  return adicionarPlaca(sim.placas, { nome: rua.nome, x: sim.mundo.L + 40, total: rua.hidrometros }, sim.mundo.L);
 }
 
 /**
@@ -44,9 +47,9 @@ export function atualizarRuas(sim) {
   if (sim.ruaAnunciada === sim.ruaAtual || sim.estagio !== 'corrida') return;
   const primeira = sim.ruaAnunciada === -1;
   sim.ruaAnunciada = sim.ruaAtual;
-  anunciarPlaca(sim, rota, sim.ruaAtual);
-  emitir(sim, 'rua-nova', { nome: rota.ruas[sim.ruaAtual].nome, primeira });
-  if (!primeira) {
+  const comPlaca = anunciarPlaca(sim, rota, sim.ruaAtual);
+  emitir(sim, 'rua-nova', { nome: rota.ruas[sim.ruaAtual].nome, primeira, placa: comPlaca });
+  if (!primeira && comPlaca) {
     sim.travessia = TEMPOS.travessiaRua;
     emitirAviso(sim, '🚸 ATRAVESSANDO A RUA…', `Entrando na ${rota.ruas[sim.ruaAtual].nome}`, 'checkpoint', 2.3);
   }
