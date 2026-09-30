@@ -918,3 +918,143 @@ change_sets:
       - "npm test: 70 testes aprovados; npm run testar:e2e: 12 cenários aprovados; tests/mutacao: 33 defeitos injetados, 33 detectados"
       - "python scripts/verificar_limite_200_linhas.py: PASS (127 arquivos); npm run verificar:sprites: OK (13 atlas)"
       - "Arquivos binários (sem linhas) fora dos intervalos: src/assets/cao-acoes.webp, src/assets/cao-galope.webp, src/assets/cao-latido.webp, src/assets/cena-final.webp, src/assets/derrota.webp, src/assets/kombi-descer.webp, src/assets/kombi-entrar.webp, src/assets/kombi.webp, src/assets/leiturista-acoes.webp, src/assets/leiturista-caminhada.webp, src/assets/leiturista-corrida.webp, src/assets/leiturista-gestos.webp, src/assets/leiturista-pulo.webp"
+
+  - id: "CS-2026-006"
+    title: "Jogo do Leiturista v4.2.1 — nitidez e leitura nas fases avançadas: sprites 1:1, texto legível, placas sem sobreposição, avisos fora da área de leitura, cão proporcional na cena final"
+    spec: "docs/specs/SPEC-2026-006-leiturista-nitidez-e-leitura.md"
+    requirements:
+      - "REQ-401: Sprites e quadros copiados 1:1 em pixels inteiros, cache na escala exata"
+      - "REQ-402: Número do hidrômetro e nome da placa ampliados pelo tamanho físico (pixel CSS)"
+      - "REQ-403: Nome da placa no maior tamanho que caiba, em uma ou duas linhas"
+      - "REQ-404: Placas sem sobreposição; na disputa vale a rua com mais hidrômetros"
+      - "REQ-405: Tremor de tela, vinheta e avisos suaves e nítidos"
+      - "REQ-406: Avisos da corrida na faixa de asfalto, fora da área de leitura"
+      - "REQ-407: Cão da cena final na proporção do menino"
+    acceptance_criteria:
+      - "AC-401: Zero quadros com placas sobrepostas (unidade e e2e em 4 aparelhos); no máximo 3 placas na tela"
+      - "AC-402: O aviso da corrida nunca começa acima do chão em 4 aparelhos"
+      - "AC-403: Fotos do e2e revisadas: placa e hidrômetros legíveis nos 4 aparelhos"
+      - "AC-404: pintarSprite desenha em coordenadas inteiras sem mudar a escala"
+      - "AC-405: escalaDeLeitura respeita limites, monotonia e a razão de pixels do aparelho"
+      - "AC-406: dividirNome e proporção do cão da cena final"
+      - "AC-407: Sem regressão nas suítes anteriores, custo e peso dentro dos limites"
+    tasks:
+      - "TASK-2026-006: Corrigir nitidez e leitura nas fases avançadas"
+    files:
+      - path: "README.md"
+        ranges:
+          - start: 1
+            end: 183
+      - path: "index.html"
+        ranges:
+          - start: 1
+            end: 5790
+      - path: "package.json"
+        ranges:
+          - start: 1
+            end: 17
+      - path: "src/css/hud.css"
+        ranges:
+          - start: 1
+            end: 137
+      - path: "src/css/responsivo.css"
+        ranges:
+          - start: 1
+            end: 107
+      - path: "src/index.html"
+        ranges:
+          - start: 1
+            end: 146
+      - path: "src/js/app/janela.js"
+        ranges:
+          - start: 1
+            end: 50
+      - path: "src/js/audio/efeitos-sonoros.js"
+        ranges:
+          - start: 1
+            end: 37
+      - path: "src/js/cena-final/personagens.js"
+        ranges:
+          - start: 1
+            end: 68
+      - path: "src/js/config/constantes.js"
+        ranges:
+          - start: 1
+            end: 92
+      - path: "src/js/render/entidades.js"
+        ranges:
+          - start: 1
+            end: 105
+      - path: "src/js/render/ilustracoes/atlas.js"
+        ranges:
+          - start: 1
+            end: 84
+      - path: "src/js/render/ilustracoes/pintura.js"
+        ranges:
+          - start: 1
+            end: 52
+      - path: "src/js/render/ilustracoes/quadro.js"
+        ranges:
+          - start: 1
+            end: 42
+      - path: "src/js/render/leitura.js"
+        ranges:
+          - start: 1
+            end: 25
+      - path: "src/js/render/renderizador.js"
+        ranges:
+          - start: 1
+            end: 119
+      - path: "src/js/render/sprites/cache.js"
+        ranges:
+          - start: 1
+            end: 76
+      - path: "src/js/render/sprites/medidor.js"
+        ranges:
+          - start: 1
+            end: 107
+      - path: "src/js/render/sprites/placa.js"
+        ranges:
+          - start: 1
+            end: 73
+      - path: "src/js/render/sprites/powerups.js"
+        ranges:
+          - start: 1
+            end: 78
+      - path: "src/js/simulacao/placas.js"
+        ranges:
+          - start: 1
+            end: 38
+      - path: "src/js/simulacao/ruas.js"
+        ranges:
+          - start: 1
+            end: 56
+      - path: "tests/e2e/cenarios/07-offline.mjs"
+        ranges:
+          - start: 1
+            end: 39
+      - path: "tests/e2e/cenarios/13-nitidez.mjs"
+        ranges:
+          - start: 1
+            end: 62
+      - path: "tests/mutacao/mutacoes-nitidez.mjs"
+        ranges:
+          - start: 1
+            end: 46
+      - path: "tests/mutacao/mutacoes.mjs"
+        ranges:
+          - start: 1
+            end: 174
+      - path: "tests/unidade/ilustracoes.test.js"
+        ranges:
+          - start: 1
+            end: 194
+      - path: "tests/unidade/nitidez.test.js"
+        ranges:
+          - start: 1
+            end: 145
+    evidence:
+      - "docs/evidencias/EVID-2026-006.md"
+      - "npm test: 82 testes aprovados; npm run testar:e2e: 13 cenários aprovados; tests/mutacao: 41 defeitos injetados, 41 detectados"
+      - "python scripts/verificar_limite_200_linhas.py: PASS (133 arquivos); npm run verificar:sprites: OK (13 atlas)"
+      - "Arquivos binários (sem linhas) fora dos intervalos: nenhum"
