@@ -26,6 +26,7 @@ LIMITE_BYTES = 300 * 1024
 LIMITE_MAGENTA = 100      # magentice legítima da arte é <= 45 (coleira vermelha)
 LIMITE_LILAS_POR_QUADRO = 25
 TOLERANCIA_PE_PX = 1
+MARGEM = 3                # margem transparente de cada célula (sprites/atlas.py)
 TOLERANCIA_COR = 10       # por canal, na camisa (azul oficial do SEMAE, do logotipo)
 
 
@@ -62,9 +63,12 @@ def verificar_folha(nome: str, meta: dict, problemas: list[str]) -> None:
             problemas.append(f"{nome}[{i}]: {magenta} pixel(s) de magenta opaco")
         if lilas > LIMITE_LILAS_POR_QUADRO:
             problemas.append(f"{nome}[{i}]: {lilas} pixel(s) lilás (franja do fundo)")
-        base = int(np.where((quadro[..., 3] > 60).any(axis=1))[0].max())
-        if abs(base - meta["pivo"][1]) > TOLERANCIA_PE_PX:
-            problemas.append(f"{nome}[{i}]: pé em y={base}, esperado {meta['pivo'][1]}")
+        linhas_opacas = np.where((quadro[..., 3] > 60).any(axis=1))[0]
+        if meta.get("alinhamento") == "teto":   # cenas com a van: o teto fica na margem; os pés podem descer abaixo das rodas
+            if abs(int(linhas_opacas.min()) - MARGEM) > TOLERANCIA_PE_PX:
+                problemas.append(f"{nome}[{i}]: teto em y={int(linhas_opacas.min())}, esperado {MARGEM}")
+        elif abs(int(linhas_opacas.max()) - meta["pivo"][1]) > TOLERANCIA_PE_PX:
+            problemas.append(f"{nome}[{i}]: pé em y={int(linhas_opacas.max())}, esperado {meta['pivo'][1]}")
 
 
 def verificar_cor_da_camisa(nome: str, problemas: list[str]) -> None:
@@ -89,7 +93,7 @@ def main() -> int:
     problemas: list[str] = []
     for nome, meta in metadados.items():
         verificar_folha(nome, meta, problemas)
-    for nome in ("leiturista-corrida", "leiturista-acoes"):
+    for nome in ("leiturista-corrida", "leiturista-acoes", "leiturista-pulo", "leiturista-caminhada"):
         verificar_cor_da_camisa(nome, problemas)
     extras = sorted(p.stem for p in ASSETS.glob("*.webp") if p.stem not in metadados)
     if extras:

@@ -7,7 +7,7 @@
 
 /** Identificador histórico da v3: mantê-lo preserva os saves já gravados nos aparelhos. */
 export const ID_APP = 'jogo-do-leiturista-3';
-export const VERSAO_APP = '4.1.0';
+export const VERSAO_APP = '4.2.0';
 export const ESQUEMA_SAVE = 2;
 export const CHAVE_SAVE = `semae.${ID_APP}.v${ESQUEMA_SAVE}`;
 export const CHAVE_SAVE_V1 = `semae.${ID_APP}.v1`;
@@ -36,6 +36,17 @@ export const JOGADOR = {
 
 export const CAO = { largura: 75, altura: 48, distanciaMinima: 60, distanciaMaxima: 230 };
 
+/**
+ * Kombi ilustrada (u = unidades do jogo). `x` da Kombi na simulação = canto traseiro; a frente fica em x + largura.
+ * As rodas ficam `chaoDaVan` abaixo da calçada (a van para na rua); nos quadros com a van os pés do menino
+ * ficam `desnivel` abaixo da calçada. `saidaX` e `portaX`: centro do menino, contado do canto traseiro da van,
+ * ao terminar de descer e ao chegar à porta para embarcar.
+ */
+export const KOMBI_CENA = { largura: 176, chaoDaVan: 23, desnivel: 27, saidaX: 145, portaX: 88 };
+
+/** Derrota ilustrada: duração da sequência (s) e quanto o menino fica à frente da ponta traseira do cão (u). */
+export const DERROTA_CENA = { duracao: 1.4, meninoX: 66 };
+
 export const TEMPOS = {
   combo: 3,
   turbo: 5,
@@ -45,7 +56,9 @@ export const TEMPOS = {
   decaimentoGolpes: 6,
   intervaloPowerup: [10, 16],
   travessiaRua: 1.4,
-  respiroDerrota: 0.9
+  respiroDerrota: 1.6,
+  saidaDaKombi: 1.2,
+  embarqueNaKombi: 1.0
 };
 
 export const AMEACA = {

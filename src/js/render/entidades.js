@@ -8,31 +8,30 @@ import { UNIFORME } from '../config/uniformes.js';
 import { elipse } from './primitivas.js';
 import { desenharLeiturista } from './sprites/leiturista.js';
 import { desenharCao } from './sprites/cao.js';
-import { desenharKombi } from './sprites/kombi.js';
 import { desenharMedidor } from './sprites/medidor.js';
 import { desenharObstaculo } from './sprites/obstaculos.js';
 import { desenharPowerup, desenharPlaca } from './sprites/powerups.js';
 import { pintarLeituristaIlustrado, pintarCaoIlustrado } from './ilustracoes/pintura.js';
+import { desnivelDaRua } from './cenas.js';
 
-export function desenharCarga(ctx, sim, chaoY, k, relogio) {
+/** @param {[number, number]|null} livre faixa de x (u) sem obstáculos: a cena da derrota ocupa esse espaço */
+export function desenharCarga(ctx, sim, chaoY, k, relogio, livre = null) {
   for (const placa of sim.placas) desenharPlaca(ctx, placa, chaoY - 232, k);
-  for (const o of sim.obstaculos) desenharObstaculo(ctx, o, chaoY + o.dy, k, relogio);
+  for (const o of sim.obstaculos) {
+    if (livre && o.x + o.w > livre[0] && o.x < livre[1]) continue;
+    desenharObstaculo(ctx, o, chaoY + o.dy, k, relogio);
+  }
   for (const m of sim.medidores) desenharMedidor(ctx, m, chaoY + m.dy, k, relogio);
   for (const p of sim.powerups) desenharPowerup(ctx, p, chaoY + p.dy, k, relogio);
 }
 
-export function desenharKombiDaCena(ctx, kombi, chaoY, relogio, emMovimento, k) {
-  ctx.save();
-  ctx.translate(kombi.x, chaoY - 82);
-  desenharKombi(ctx, { portaAberta: kombi.portaAberta, giro: kombi.x * 0.07, balanco: emMovimento ? Math.sin(relogio * 26) * 0.7 : 0 }, k);
-  ctx.restore();
-}
-
-export function desenharCaoDaCena(ctx, cao, sim, chaoY, relogio, k) {
+/** @param {number|null} osso estágio do cão com o osso (0 fareja, 1 pega, 2 trota) ou null */
+export function desenharCaoDaCena(ctx, cao, sim, chaoY, relogio, k, osso = null) {
   const x = cao.x + (cao.investida || 0);
   const latindo = cao.latido > 0;
   elipse(ctx, x + 37, chaoY + 2, 36, 5, 'rgba(0,0,0,0.25)');
-  const ilustrado = pintarCaoIlustrado(ctx, k, { x: x + 30, y: chaoY, latindo, fase: cao.fasePerna, tempo: relogio });
+  const investindo = (cao.investida || 0) > 6;
+  const ilustrado = pintarCaoIlustrado(ctx, k, { x: x + 30, y: chaoY, latindo, investindo, osso, fase: cao.fasePerna, tempo: relogio });
   if (!ilustrado) {
     const y = chaoY - CAO.altura + Math.sin(cao.fasePerna * 2) * 1.6;
     ctx.save();
@@ -77,15 +76,16 @@ export function desenharJogador(ctx, sim, chaoY, relogio, k, pose = null) {
   const j = sim.jogador;
   if (!j.visivel) return;
   const escala = Math.max(0.25, 1 - j.alt / 200);
-  elipse(ctx, j.x + 22.5, chaoY + 3, 26 * escala, 6 * escala, `rgba(0,0,0,${0.26 * escala})`);
+  const desnivel = desnivelDaRua(sim);
+  elipse(ctx, j.x + 22.5, chaoY + 3 + desnivel, 26 * escala, 6 * escala, `rgba(0,0,0,${0.26 * escala})`);
   const amassado = j.amassar > 0 ? Math.sin((j.amassar / 0.15) * Math.PI) * 0.09 : 0;
   ctx.save();
   if (j.machucado > 0 && Math.floor(j.machucado / 0.07) % 2 === 0) ctx.globalAlpha = 0.4;
   const dados = {
-    fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, pose: pose?.pose || 'corre',
+    fase: pose?.fase ?? j.fasePerna, noAr: !j.noChao, vy: j.vy, alt: j.alt, pose: pose?.pose || 'corre',
     machucado: j.machucado > 0, amassando: j.amassar > 0.06, tempo: relogio
   };
-  ctx.translate(j.x + 22.5, chaoY - j.alt);
+  ctx.translate(j.x + 22.5, chaoY - j.alt + desnivel);
   if (!pintarLeituristaIlustrado(ctx, k, { ...dados, x: 0, y: 0 })) {
     ctx.scale(1 + amassado, 1 - amassado);
     ctx.translate(-22.5, -JOGADOR.altura + (j.noChao ? Math.abs(Math.sin(j.fasePerna)) * -1.6 : 0));

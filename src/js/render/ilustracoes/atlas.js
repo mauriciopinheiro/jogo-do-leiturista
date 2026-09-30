@@ -37,7 +37,7 @@ function atlasEscalado(nome, k) {
   let atlas = estado.escalados.get(chave);
   if (atlas) return atlas;
   const meta = SPRITES.folhas[nome];
-  const porPixel = SPRITES.unidadesPorPixel[meta.grupo];
+  const porPixel = meta.upp;
   const s = Math.min(1, k * porPixel);
   const [cw0, ch0] = meta.celula;
   const cw = Math.max(1, Math.round(cw0 * s));
@@ -68,10 +68,13 @@ export function obterQuadro(nome, quadro, k) {
   return { tela: a.tela, sx: (quadro % colunas) * a.cw, sy: Math.floor(quadro / colunas) * a.ch, cw: a.cw, ch: a.ch, u: a.u, px: a.px, py: a.py };
 }
 
-/** Prepara (fora do quadro de jogo) os atlas do leiturista e da cena final na resolução da tela. */
+/** Atlas usados o tempo todo na corrida; os das cenas (Kombi, derrota, final) são criados na hora. */
+const ATLAS_DA_CORRIDA = ['leiturista-corrida', 'leiturista-acoes', 'leiturista-pulo', 'cao-galope', 'cao-acoes', 'cao-latido', 'kombi'];
+
+/** Prepara (fora do quadro de jogo) os atlas da corrida na resolução da tela. */
 export function prepararAtlas(k) {
   if (!estado.pronta) return;
-  for (const nome of ['leiturista-corrida', 'leiturista-acoes', 'cao-galope', 'cao-acoes']) atlasEscalado(nome, k);
+  for (const nome of ATLAS_DA_CORRIDA) atlasEscalado(nome, k);
 }
 
 /** Descarta as versões pré-escaladas (mudou o tamanho da tela); mantém as imagens. */

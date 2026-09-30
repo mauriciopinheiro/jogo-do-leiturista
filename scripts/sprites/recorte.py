@@ -82,13 +82,15 @@ def separar_quadros(rgba: np.ndarray, colunas: int, linhas: int) -> list[np.ndar
 
 
 def ancora_x(quadro: np.ndarray, modo: str) -> float:
-    """Coluna do pivô horizontal: 'tronco' (massa da metade superior), 'massa', 'centro' ou 'esquerda'."""
+    """Coluna do pivô horizontal: 'tronco' (massa da metade superior), 'massa', 'centro', 'esquerda' ou 'direita'."""
     alfa = quadro[..., 3].astype(np.float64)
     altura, largura = alfa.shape
     if modo == "centro":
         return largura / 2.0
     if modo == "esquerda":
         return 0.0
+    if modo == "direita":
+        return float(largura)
     faixa = alfa[: int(altura * 0.55)] if modo == "tronco" else alfa
     colunas = np.arange(largura)
     peso = faixa.sum(axis=0)

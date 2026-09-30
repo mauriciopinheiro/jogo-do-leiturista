@@ -7,9 +7,11 @@ import { calcularLayout } from './camera.js';
 import { criarCenario, desenharCenario, chaveDoCenario } from './cenario/index.js';
 import { criarEfeitos, efeitoDoEvento } from './efeitos.js';
 import { limparSprites } from './sprites/cache.js';
-import { limparAtlasEscalados, prepararAtlas } from './ilustracoes/atlas.js';
+import { limparAtlasEscalados, prepararAtlas, ilustracoesProntas } from './ilustracoes/atlas.js';
 import { criarTela } from './primitivas.js';
-import { desenharCarga, desenharKombiDaCena, desenharCaoDaCena, desenharJogador } from './entidades.js';
+import { desenharCarga, desenharCaoDaCena, desenharJogador } from './entidades.js';
+import { desenharKombiDaCena, desenharDerrota, emDerrota } from './cenas.js';
+import { estagioDoOsso } from './ilustracoes/quadros.js';
 
 const SEM_TREMOR = { x: 0, y: 0 };
 
@@ -37,6 +39,7 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
   let vinheta = null;
   let relogio = 0;
   let rolagemMenu = 0;
+  let tempoOsso = null;   // s desde que o cão pegou o osso (null = não pegou)
 
   const api = {
     efeitos,
@@ -58,12 +61,16 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
     },
     atualizar(dt) {
       relogio += dt;
+      if (tempoOsso !== null) tempoOsso = estagioDoOsso(tempoOsso + dt) === null ? null : tempoOsso + dt;
       if (sim.estagio === 'inativo') rolagemMenu += 26 * dt;
       efeitos.atualizar(dt);
     },
     processarEventos(eventos) {
       if (!layout) return;
-      for (const e of eventos) efeitoDoEvento(efeitos, e, sim, layout.chaoY);
+      for (const e of eventos) {
+        efeitoDoEvento(efeitos, e, sim, layout.chaoY);
+        if (e.tipo === 'powerup' && e.qual === 'osso') tempoOsso = 0;
+      }
     },
     desenhar() {
       if (!layout) return;
@@ -80,12 +87,15 @@ export function criarRenderizador({ canvas, sim, reduzirMovimento, leve }) {
       ctx.translate(tremor.x / k, tremor.y / k);
       const { chaoY } = layout;
       if (noMenu) {
-        desenharKombiDaCena(ctx, { x: layout.L * 0.62, portaAberta: false }, chaoY, relogio, false, k);
+        desenharKombiDaCena(ctx, sim, { x: layout.L * 0.62, portaAberta: false }, chaoY, relogio, k);
       } else {
-        if (sim.kombi.visivel) desenharKombiDaCena(ctx, sim.kombi, chaoY, relogio, sim.subestagio !== 'embarque', k);
-        desenharCarga(ctx, sim, chaoY, k, relogio);
-        if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio, k);
-        desenharJogador(ctx, sim, chaoY, relogio, k);
+        if (sim.kombi.visivel) desenharKombiDaCena(ctx, sim, sim.kombi, chaoY, relogio, k);
+        const derrota = emDerrota(sim) && ilustracoesProntas();
+        desenharCarga(ctx, sim, chaoY, k, relogio, derrota ? [sim.jogador.x - 60, sim.jogador.x + 130] : null);
+        if (!(derrota && desenharDerrota(ctx, sim, chaoY, k))) {
+          if (sim.cao.visivel) desenharCaoDaCena(ctx, sim.cao, sim, chaoY, relogio, k, tempoOsso === null ? null : estagioDoOsso(tempoOsso));
+          desenharJogador(ctx, sim, chaoY, relogio, k);
+        }
       }
       efeitos.desenhar(ctx);
       ctx.restore();

@@ -1,4 +1,4 @@
-# Jogo do Leiturista — SEMAE Piracicaba (v4.1.0)
+# Jogo do Leiturista — SEMAE Piracicaba (v4.2.0)
 
 Jogo educativo de corrida em HTML5 Canvas, publicado no Hub de Educação como **"Semana de Leiturista"**.
 O jogador é o leiturista do SEMAE: corre pelas ruas reais das rotas de Piracicaba, lê os hidrômetros,
@@ -58,6 +58,7 @@ src/js/simulacao/      regras do jogo SEM DOM: física, cão, geração, colisõ
 src/js/persistencia/   assinatura, armazenamento, save v2, migração v1, gestor
 src/js/render/         câmera responsiva, cenário em camadas pré-renderizadas, sprites vetoriais, efeitos
 src/js/render/ilustracoes/  personagens ilustrados: escolha de quadro, espelhamento, atlas
+src/js/render/cenas.js  Kombi (parada, andando, menino descendo e entrando) e a cena da derrota
 src/assets/            atlas WebP dos personagens (embutidos no HTML como data URI pelo build)
 src/js/cena-final/     retrospectiva e encerramento narrativo
 src/js/audio/          motor Web Audio, efeitos, música procedural
@@ -71,13 +72,13 @@ scripts/               build, limite de linhas, e a preparação dos sprites (re
 versoes-preservadas/   v3.4.0 que estava no ar (com SHA-256) e o README antigo
 ```
 
-## Personagens ilustrados (v4.1.0)
+## Personagens ilustrados (v4.1.0) e sequências (v4.2.0)
 
 O leiturista e o cão usam ilustrações **geradas por inteligência artificial (ChatGPT) a pedido do
 demandante** (CTI/SEMAE), a partir de um roteiro de instruções de arte. Os originais (PNG com fundo
 magenta) estão versionados em `imagens/` (decisão do demandante em 2026-09-29, SPEC-2026-004 Q-201/Q-202,
 sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os recortes otimizados em
-`src/assets/*.webp` (5 atlas, ~457 KB, cada um ≤300 KB), embutidos no `index.html`.
+`src/assets/*.webp` (12 atlas, ~970 KB, cada um ≤300 KB), embutidos no `index.html` (1,5 MB; limite 2 MB).
 
 - Para regerar os atlas: `python scripts/preparar_sprites.py` (lê `imagens/`, remove o fundo, alinha os pés,
   escreve `src/assets/` e `src/js/config/quadros-sprites.js`), depois `npm run verificar:sprites`.
@@ -87,6 +88,13 @@ sem restrição adicional ao uso de imagens geradas por IA); o jogo usa só os r
   boné e calça mais escuros que a camisa, sombras e contornos); a faixa refletiva continua amarela. Não há
   mais troca nem desbloqueio de uniformes; saves antigos com outro uniforme continuam aceitos e o valor é
   ignorado. Para mudar a cor: `AZUL_OFICIAL` em `uniforme.py` e `AZUL_SEMAE` em `config/uniformes.js`.
+- **Movimentos com sprite (v4.2.0)**: corrida, pulo completo (8 quadros, escolhidos pela velocidade vertical), pouso,
+  tropeço, parado, caminhada (8 quadros), cão galopando, latindo correndo, investindo, com o osso; a Kombi
+  ilustrada (parada, porta aberta, andando); e sequências com dois personagens: o menino descendo da Kombi
+  (1,2 s), correndo até a porta e entrando (1,0 s) e o cão alcançando o menino (1,4 s, tom amigável).
+  As pernas/patas seguem a distância percorrida (0,22 rad/u no menino, 0,24 rad/u no cão), então nada "patina".
+- **Ainda sem sprite** (não entregues ou mantidos vetoriais): gestos do leiturista (leitura do hidrômetro, turbo, escudo,
+  comemoração, olhar para trás), hidrômetros, obstáculos e power-ups (continuam vetoriais, com contorno).
 - Reserva: se as imagens não carregarem, o jogo continua com o desenho vetorial (testado com as imagens
   bloqueadas). Kombi, hidrômetros, obstáculos e power-ups (vetoriais) ganharam contorno escuro para
   combinar com as ilustrações.
@@ -134,6 +142,10 @@ headless com rasterização por CPU como aproximação do pior caso.
 
 ## Histórico de versões
 
+- **4.2.0 (2026-09-29)** — sprites da fase 2: pulo completo, caminhada, cão latindo correndo/investindo/com o osso,
+  Kombi ilustrada, sequências de descer/entrar na Kombi e da derrota; obstáculos somem sob a cena da derrota;
+  correção da cadência das pernas na abertura e no embarque; correção do evento de power-up (som e faíscas
+  nunca disparavam); atlas em qualidade 80. Ver `docs/specs/SPEC-2026-005…` e `docs/evidencias/EVID-2026-005.md`.
 - **4.1.0 (2026-09-29)** — personagens ilustrados (leiturista e cão animados por quadros, poses da cena
   final), uniforme único na cor oficial do SEMAE (sem troca de uniformes), contorno escuro no vetorial (Kombi, hidrômetros,
   obstáculos, power-ups), coreografia da cena final centrada na tela e sem emendas no chão com zoom.
@@ -146,8 +158,8 @@ headless com rasterização por CPU como aproximação do pior caso.
 
 ## Governança (SDD)
 
-`docs/specs/SPEC-2026-003…` e `SPEC-2026-004…`, `docs/plans/PLAN-…`, `docs/tasks/TASK-…`,
-`docs/evidencias/EVID-2026-003.md` e `EVID-2026-004.md`. Validação: `python scripts/validate_sdd.py` e
+`docs/specs/SPEC-2026-003…`, `SPEC-2026-004…` e `SPEC-2026-005…`, `docs/plans/PLAN-…`, `docs/tasks/TASK-…`,
+`docs/evidencias/EVID-2026-003.md`, `EVID-2026-004.md` e `EVID-2026-005.md`. Validação: `python scripts/validate_sdd.py` e
 `python scripts/verificar_limite_200_linhas.py`.
 
 *SEMAE Piracicaba — Serviço Municipal de Água e Esgoto · Coordenadoria de Tecnologia da Informação*

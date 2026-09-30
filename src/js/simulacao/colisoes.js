@@ -96,6 +96,6 @@ export function coletarPowerup(sim, p) {
   else if (p.tipo === 'escudo') sim.escudo = true;
   else aumentarAmeaca(sim, AMEACA.osso);
   const textos = { turbo: '🥾 TURBO OPERACIONAL!', escudo: '🛡️ ESCUDO SEMAE!', osso: '🦴 CÃO DISTRAÍDO!' };
-  emitir(sim, 'powerup', { tipo: p.tipo, x: p.x, dy: p.dy });
+  emitir(sim, 'powerup', { qual: p.tipo, x: p.x, dy: p.dy });
   emitirAviso(sim, textos[p.tipo], '', 'aviso', 1.4);
 }

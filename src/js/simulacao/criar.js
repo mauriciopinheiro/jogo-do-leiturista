@@ -13,6 +13,7 @@ export function estadoInicial(rotas, mundo) {
     mundo: { ...mundo },
     estagio: 'inativo',
     subestagio: '',
+    tempoSub: 0,
     pausado: false,
     infinito: false,
     faseIdx: 0,

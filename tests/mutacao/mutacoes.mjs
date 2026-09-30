@@ -114,6 +114,36 @@ export const MUTACOES = [
     descricao: 'o botão de trocar uniforme voltaria ao menu (o uniforme deve ser um só)'
   },
   {
+    id: 'pulo-decolagem-errada', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: 'if (vy > 820) return L_PULO.decolagem;', para: 'if (vy > 820) return L_PULO.prestesPisar;',
+    descricao: 'o pulo começaria já com a pose de pouso'
+  },
+  {
+    id: 'caminhada-usa-a-corrida', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: "case 'anda': return { folha: FOLHA.caminhada,", para: "case 'anda': return { folha: FOLHA.corrida,",
+    descricao: 'na cena final o menino correria em vez de caminhar'
+  },
+  {
+    id: 'saida-da-kombi-instantanea', tipo: 'unidade', testes: ['kombi.test.js'], arquivo: 'src/js/simulacao/kombi.js',
+    de: 'if (sim.tempoSub >= TEMPOS.saidaDaKombi) {', para: 'if (true) {',
+    descricao: 'o menino apareceria correndo sem a sequência de descer da Kombi'
+  },
+  {
+    id: 'evento-de-powerup-perdido', tipo: 'unidade', testes: ['kombi.test.js'], arquivo: 'src/js/simulacao/colisoes.js',
+    de: "emitir(sim, 'powerup', { qual: p.tipo,", para: "emitir(sim, 'powerup', { tipo: p.tipo,",
+    descricao: 'pegar power-up ficaria sem som nem faíscas (o campo tipo sobrescrevia o tipo do evento)'
+  },
+  {
+    id: 'derrota-corta-a-sequencia', tipo: 'unidade', testes: ['ilustracoes-cenas.test.js'], arquivo: 'src/js/config/constantes.js',
+    de: 'respiroDerrota: 1.6,', para: 'respiroDerrota: 0.9,',
+    descricao: 'a tela de resultado abriria no meio da cena do cão alcançando o menino'
+  },
+  {
+    id: 'embarque-sem-sequencia', tipo: 'e2e', teste: '12-sequ', arquivo: 'src/js/render/cenas.js',
+    de: "else if (sub === 'entrando') pintarSequencia(", para: "else if (false) pintarSequencia(",
+    descricao: 'o menino sumiria ao chegar à porta, sem a sequência de entrar na Kombi'
+  },
+  {
     id: 'ilustracao-com-falha-derruba-o-jogo', tipo: 'e2e', teste: '11-ilustr', arquivo: 'src/js/render/ilustracoes/atlas.js',
     de: '.catch(() => { estado.falhou = true; });', para: ".catch(() => { throw new Error('imagem'); });",
     descricao: 'se a imagem não carregar (rede, memória), o jogo acusaria erro em vez de usar o desenho vetorial'

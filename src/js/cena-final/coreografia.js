@@ -9,6 +9,8 @@ import { ENCONTRO } from './personagens.js';
 /** Quanto o leiturista caminha até o cão e a que velocidade (chega em 1,2 s). */
 export const APROXIMACAO = 84;
 const VELOCIDADE = APROXIMACAO / 1.2;
+/** Radianos de fase por unidade caminhada (a caminhada ilustrada tem 8 quadros a cada ~110 u). */
+const FASE_POR_UNIDADE = 0.0917;
 
 const AGACHADO = ['ajoelhado', 'tigela', 'afaga'];
 
@@ -55,7 +57,7 @@ export function coreografiaAmizade(cena, dt, { chaoY, audio }) {
   const { jogador, cao } = cena;
   const alvo = xDoEncontro(cao.x, cena.ilustrado);
   if (cena.tempoCena < 1.2) {
-    if (jogador.x > alvo) { jogador.x = Math.max(alvo, jogador.x - VELOCIDADE * dt); jogador.fase += 10 * dt; } else jogador.pose = 'parado';
+    if (jogador.x > alvo) { jogador.x = Math.max(alvo, jogador.x - VELOCIDADE * dt); jogador.fase += FASE_POR_UNIDADE * VELOCIDADE * dt; } else jogador.pose = 'parado';
   } else if (cena.ilustrado) {
     linhaDoTempoIlustrada(cena);
   } else {

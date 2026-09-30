@@ -4,11 +4,17 @@
  * encerramento (a Kombi volta e leva o leiturista). Velocidades em u/s.
  */
 import { emitir, emitirAviso } from './eventos.js';
+import { KOMBI_CENA, TEMPOS } from '../config/constantes.js';
 import { posicaoAlvoDoCao } from './cao.js';
 import { resumoDaRota } from './fases.js';
 import { atualizarRuas } from './ruas.js';
 
-const PASSO_PERNA = 13.2;
+/** Cadência das pernas proporcional à distância (como na corrida): 0,22 rad por unidade percorrida. */
+const RAD_POR_UNIDADE = 0.22;
+const VELOCIDADE_DESEMBARQUE = 150;
+const VELOCIDADE_EMBARQUE = 228;
+const RAD_POR_UNIDADE_CAO = 0.24;
+const VELOCIDADE_CAO_ABERTURA = 270;
 
 function comecarCorrida(sim) {
   const { jogador, cao, mundo } = sim;
@@ -33,18 +39,30 @@ export function pularAbertura(sim) {
   comecarCorrida(sim);
 }
 
+/** Onde a Kombi para: o menino termina de descer 25 u antes do ponto onde começa a correr. */
+function xDaKombiParada(mundo) {
+  return Math.max(-10, mundo.jogadorX + 22.5 - KOMBI_CENA.saidaX - 25);
+}
+
 function abertura(sim, dt) {
   const { kombi, jogador, cao, mundo } = sim;
   if (sim.subestagio === 'chegada') {
-    kombi.x = Math.min(80, kombi.x + 240 * dt);
-    if (kombi.x >= 80) {
+    const alvo = xDaKombiParada(mundo);
+    kombi.x = Math.min(alvo, kombi.x + 240 * dt);
+    if (kombi.x >= alvo) {
+      sim.subestagio = 'saindo';
+      sim.tempoSub = 0;
+    }
+  } else if (sim.subestagio === 'saindo') {
+    sim.tempoSub += dt;
+    if (sim.tempoSub >= TEMPOS.saidaDaKombi) {
       jogador.visivel = true;
-      jogador.x = 90;
+      jogador.x = kombi.x + KOMBI_CENA.saidaX - 22.5;
       sim.subestagio = 'desembarque';
     }
   } else if (sim.subestagio === 'desembarque') {
-    jogador.x = Math.min(mundo.jogadorX, jogador.x + 150 * dt);
-    jogador.fasePerna += PASSO_PERNA * dt;
+    jogador.x = Math.min(mundo.jogadorX, jogador.x + VELOCIDADE_DESEMBARQUE * dt);
+    jogador.fasePerna += RAD_POR_UNIDADE * VELOCIDADE_DESEMBARQUE * dt;
     if (jogador.x >= mundo.jogadorX) {
       kombi.portaAberta = false;
       sim.subestagio = 'partida';
@@ -57,8 +75,8 @@ function abertura(sim, dt) {
       sim.subestagio = 'cao';
     }
   } else if (sim.subestagio === 'cao') {
-    cao.x += 270 * dt;
-    cao.fasePerna += 14 * dt;
+    cao.x += VELOCIDADE_CAO_ABERTURA * dt;
+    cao.fasePerna += RAD_POR_UNIDADE_CAO * VELOCIDADE_CAO_ABERTURA * dt;
     if (cao.x >= 35) comecarCorrida(sim);
   }
 }
@@ -67,7 +85,8 @@ function encerramento(sim, dt) {
   const { kombi, jogador, mundo } = sim;
   sim.velocidadeEfetiva = Math.max(0, sim.velocidadeEfetiva - 500 * dt);
   sim.rolagem += sim.velocidadeEfetiva * dt;
-  jogador.fasePerna += 0.22 * Math.max(sim.velocidadeEfetiva, 120) * dt;
+  const correndoAteAPorta = sim.subestagio === 'embarque' && jogador.noChao;
+  jogador.fasePerna += RAD_POR_UNIDADE * (correndoAteAPorta ? VELOCIDADE_EMBARQUE : Math.max(sim.velocidadeEfetiva, 120)) * dt;
   if (sim.subestagio === 'chegada') {
     kombi.x -= 270 * dt;
     if (kombi.x <= mundo.L - 160) {
@@ -75,9 +94,15 @@ function encerramento(sim, dt) {
       sim.subestagio = 'embarque';
     }
   } else if (sim.subestagio === 'embarque') {
-    if (jogador.noChao) jogador.x += 228 * dt;
-    if (jogador.x >= kombi.x + 25 && jogador.noChao) {
+    if (jogador.noChao) jogador.x += VELOCIDADE_EMBARQUE * dt;
+    if (jogador.x >= kombi.x + KOMBI_CENA.portaX - 22.5 && jogador.noChao) {
       jogador.visivel = false;
+      sim.subestagio = 'entrando';
+      sim.tempoSub = 0;
+    }
+  } else if (sim.subestagio === 'entrando') {
+    sim.tempoSub += dt;
+    if (sim.tempoSub >= TEMPOS.embarqueNaKombi) {
       kombi.portaAberta = false;
       sim.subestagio = 'saida';
     }
