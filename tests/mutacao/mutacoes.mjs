@@ -94,9 +94,9 @@ export const MUTACOES = [
     descricao: 'o cão nunca alcançaria o jogador (ninguém perderia)'
   },
   {
-    id: 'sprite-subida-e-descida-trocadas', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
-    de: 'o.vy > 240 ? L_ACAO.subindo : L_ACAO.descendo', para: 'o.vy > 240 ? L_ACAO.descendo : L_ACAO.subindo',
-    descricao: 'o leiturista subiria com a pose de queda e cairia com a pose de pulo'
+    id: 'pulo-topo-errado', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadros.js',
+    de: 'if (vy > -180) return L_PULO.topo;', para: 'if (vy > -180) return L_PULO.quaseTopo;',
+    descricao: 'o leiturista nunca teria a pose de topo do pulo (e a sequência voltaria atrás)'
   },
   {
     id: 'sprite-nao-espelha', tipo: 'unidade', testes: ['ilustracoes.test.js'], arquivo: 'src/js/render/ilustracoes/quadro.js',

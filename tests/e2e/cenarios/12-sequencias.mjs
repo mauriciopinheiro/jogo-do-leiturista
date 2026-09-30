@@ -69,7 +69,11 @@ async function derrota(ctx, nav, rotulo, ilustrado) {
   await nav.avaliar("window.__leiturista.controlador.sairParaMenu && window.__leiturista.controlador.sairParaMenu()");
   await ctx.esperar(200);
   await nav.avaliar("document.getElementById('btnIniciar').click()");
-  await nav.avaliar("window.__robo.jogar({ perfil: 'parado', semente: 7, ate: (s) => s.estagio === 'derrota' })");
+  // A semente da partida é aleatória e um robô parado às vezes vence a rota curta: a ameaça em 100 garante a derrota.
+  await nav.avaliar("window.__robo.jogar({ perfil: 'parado', semente: 7, ate: (s) => s.estagio === 'corrida' })");
+  await nav.avaliar('window.__leiturista.sim.ameaca = 100');
+  const r0 = await avancarAte(nav, "s.estagio === 'derrota'", 0.02, 3);
+  ctx.verificar(r0.ok, `${rotulo}: a derrota não começou (${r0.estagio})`);
   const j = (await estado(nav)).jx;
   const faixa = [j - 90, j + 130];
   const a = await nav.avaliar(`window.__amostra(${faixa[0]}, ${faixa[1]})`);
